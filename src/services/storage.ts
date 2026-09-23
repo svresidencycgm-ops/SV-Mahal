@@ -14,14 +14,6 @@ const KEYS = {
 
 export const storageService = {
   initialize() {
-    // Force reset of local storage to clear existing large dataset
-    localStorage.removeItem(KEYS.CUSTOMERS);
-    localStorage.removeItem(KEYS.BOOKINGS);
-    localStorage.removeItem(KEYS.PAYMENTS);
-    localStorage.removeItem(KEYS.EXPENSES);
-    localStorage.removeItem(KEYS.LOGS);
-    localStorage.removeItem(KEYS.NOTIFICATIONS);
-    
     if (!localStorage.getItem(KEYS.ROOMS)) {
       localStorage.setItem(KEYS.ROOMS, JSON.stringify(SEED_ROOMS));
     }
@@ -29,22 +21,22 @@ export const storageService = {
       localStorage.setItem(KEYS.MAHAL, JSON.stringify(SEED_MAHAL));
     }
     if (!localStorage.getItem(KEYS.CUSTOMERS)) {
-      localStorage.setItem(KEYS.CUSTOMERS, JSON.stringify(SEED_CUSTOMERS.slice(0, 2)));
+      localStorage.setItem(KEYS.CUSTOMERS, JSON.stringify([]));
     }
     if (!localStorage.getItem(KEYS.BOOKINGS)) {
-      localStorage.setItem(KEYS.BOOKINGS, JSON.stringify(SEED_BOOKINGS.slice(0, 2)));
+      localStorage.setItem(KEYS.BOOKINGS, JSON.stringify([]));
     }
     if (!localStorage.getItem(KEYS.PAYMENTS)) {
-      localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(SEED_PAYMENTS.slice(0, 2)));
+      localStorage.setItem(KEYS.PAYMENTS, JSON.stringify([]));
     }
     if (!localStorage.getItem(KEYS.EXPENSES)) {
-      localStorage.setItem(KEYS.EXPENSES, JSON.stringify(SEED_EXPENSES.slice(0, 2)));
+      localStorage.setItem(KEYS.EXPENSES, JSON.stringify([]));
     }
     if (!localStorage.getItem(KEYS.LOGS)) {
-      localStorage.setItem(KEYS.LOGS, JSON.stringify(SEED_LOGS.slice(0, 2)));
+      localStorage.setItem(KEYS.LOGS, JSON.stringify([]));
     }
     if (!localStorage.getItem(KEYS.NOTIFICATIONS)) {
-      localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(SEED_NOTIFICATIONS.slice(0, 2)));
+      localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify([]));
     }
   },
 

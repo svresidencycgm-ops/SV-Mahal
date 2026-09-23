@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
+import { printInvoice } from '../utils/invoicePrinter';
 import { invoiceService } from '../services/invoiceService';
 import { 
   X, Calendar, User, DollarSign, CreditCard, Trash2, Printer, 
@@ -188,16 +189,41 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
             <span style={{ fontSize: '10pt', fontWeight: 800, letterSpacing: '0.1em', color: '#0F2942' }}>{copyLabel}</span>
           </div>
 
-          {/* Business Details Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div>
-              <h1 style={{ fontSize: '18pt', fontWeight: 800, color: '#0F2942', margin: 0, fontFamily: 'var(--font-sans)' }}>SV MAHAL & RESIDENCY</h1>
-              <p style={{ fontSize: '8.5pt', color: '#475569', margin: '2px 0 0 0' }}>
-                No.859/B, SV Thirumana Mahal Opposite, Bangalore Main Road, Chengam
-              </p>
-              <p style={{ fontSize: '8.5pt', color: '#475569', margin: 0 }}>
-                Ph: 9500821550, 9043780215 | GSTIN: 33GTSPD9038L1Z1
-              </p>
+          {/* Business Details Header with Official Logo */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  border: '2px solid #C9A227',
+                  boxShadow: '0 0 10px rgba(201, 162, 39, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}
+              >
+                <img 
+                  src="/logo.png" 
+                  alt="SV Logo" 
+                  style={{ width: '90%', height: '90%', objectFit: 'contain' }} 
+                />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '17pt', fontWeight: 800, color: '#0F2942', margin: 0, fontFamily: 'var(--font-sans)', letterSpacing: '0.02em' }}>
+                  SV MAHAL & RESIDENCY
+                </h1>
+                <p style={{ fontSize: '8.5pt', color: '#475569', margin: '2px 0 0 0' }}>
+                  No.859/B, SV Thirumana Mahal Opposite, Bangalore Main Road, Chengam - 606701
+                </p>
+                <p style={{ fontSize: '8.5pt', color: '#475569', margin: 0 }}>
+                  Ph: 95008 21550, 90437 80215 | GSTIN: 33GTSPD9038L1Z1
+                </p>
+              </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <h2 style={{ fontSize: '16pt', fontWeight: 800, color: '#C9A227', margin: 0 }}>INVOICE</h2>
@@ -1997,6 +2023,172 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Print Copy Selector Modal */}
+      {isPrintSelectorOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px'
+          }}
+          onClick={() => setIsPrintSelectorOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #E2E8F0',
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Printer size={22} color="#D97706" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+                    Print Tax Invoice
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                    A4 Official Bill with SV Logo, GSTIN & Terms
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPrintSelectorOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+              Choose invoice format to print for Booking <strong>{selectedBooking.id}</strong> ({selectedBooking.customerName}):
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  printInvoice(selectedBooking, 'customer');
+                  setIsPrintSelectorOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#EFF6FF';
+                  e.currentTarget.style.borderColor = '#3B82F6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F8FAFC';
+                  e.currentTarget.style.borderColor = '#CBD5E1';
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, color: '#0F2942', fontSize: '0.92rem' }}>
+                    👤 Customer Copy
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
+                    Guest tax invoice with stay tariff, payment receipt & GST breakdown
+                  </div>
+                </div>
+                <Printer size={18} color="#0F2942" />
+              </button>
+
+              <button
+                onClick={() => {
+                  printInvoice(selectedBooking, 'admin');
+                  setIsPrintSelectorOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#EFF6FF';
+                  e.currentTarget.style.borderColor = '#3B82F6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F8FAFC';
+                  e.currentTarget.style.borderColor = '#CBD5E1';
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, color: '#0F2942', fontSize: '0.92rem' }}>
+                    🏢 Administration Copy
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
+                    Internal accounts filing copy with official seal & ledger tracking
+                  </div>
+                </div>
+                <Printer size={18} color="#0F2942" />
+              </button>
+
+              <button
+                onClick={() => {
+                  printInvoice(selectedBooking, 'both');
+                  setIsPrintSelectorOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  backgroundColor: '#0F2942',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '0.92rem' }}>
+                    📑 Print Complete Set (Both Copies)
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#CBD5E1', marginTop: '2px' }}>
+                    Dual-page set (Page 1: Customer Copy, Page 2: Office Copy)
+                  </div>
+                </div>
+                <Printer size={18} color="#DFB943" />
+              </button>
+            </div>
           </div>
         </div>
       )}

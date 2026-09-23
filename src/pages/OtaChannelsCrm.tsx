@@ -52,7 +52,7 @@ export const OtaChannelsCrm: React.FC = () => {
     (b) => b.bookingSource === 'MakeMyTrip' || b.bookingSource === 'Goibibo'
   );
 
-  // Default sample OTA reservations if none exist yet
+  // Empty sample OTA reservations
   const sampleOtaList: Array<{
     id: string;
     otaRef: string;
@@ -65,47 +65,7 @@ export const OtaChannelsCrm: React.FC = () => {
     grossAmount: number;
     commissionPct: number;
     status: string;
-  }> = [
-    {
-      id: 'OTA-MMT-101',
-      otaRef: 'MMT-8829104',
-      source: 'MakeMyTrip',
-      guestName: 'Karthik Narayanan',
-      guestPhone: '+91 98401 23456',
-      roomType: 'Deluxe AC Room',
-      checkIn: '2026-09-25',
-      checkOut: '2026-09-27',
-      grossAmount: 4800,
-      commissionPct: 15,
-      status: 'Confirmed'
-    },
-    {
-      id: 'OTA-GIB-102',
-      otaRef: 'GIB-4491023',
-      source: 'Goibibo',
-      guestName: 'Priya Sundaram',
-      guestPhone: '+91 94440 98765',
-      roomType: 'Premium King Room',
-      checkIn: '2026-09-26',
-      checkOut: '2026-09-28',
-      grossAmount: 6400,
-      commissionPct: 15,
-      status: 'Confirmed'
-    },
-    {
-      id: 'OTA-MMT-103',
-      otaRef: 'MMT-9182041',
-      source: 'MakeMyTrip',
-      guestName: 'Dr. R. Venkatraman (Temple Yatra)',
-      guestPhone: '+91 97890 54321',
-      roomType: 'Family Room (AC)',
-      checkIn: '2026-09-30',
-      checkOut: '2026-10-02',
-      grossAmount: 7600,
-      commissionPct: 15,
-      status: 'Confirmed'
-    }
-  ];
+  }> = [];
 
   // Combined list for display
   const displayOtaBookings = [

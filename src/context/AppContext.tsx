@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { storageService } from '../services/storage';
 import { bookingService } from '../services/bookingService';
 import { invoiceService } from '../services/invoiceService';
+import { apiService } from '../services/api';
 import type {
   Booking,
   Room,
@@ -281,6 +282,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to parse customer_user:', e);
       }
     }
+
+    // Fetch and sync with MongoDB Atlas
+    apiService.fetchAllData().then((mongoData) => {
+      if (mongoData) {
+        if (Array.isArray(mongoData.bookings)) {
+          setBookings(mongoData.bookings);
+          storageService.saveBookings(mongoData.bookings);
+        }
+        if (Array.isArray(mongoData.customers)) {
+          setCustomers(mongoData.customers);
+          storageService.saveCustomers(mongoData.customers);
+        }
+        if (Array.isArray(mongoData.payments)) {
+          setPayments(mongoData.payments);
+          storageService.savePayments(mongoData.payments);
+        }
+        if (Array.isArray(mongoData.expenses)) {
+          setExpenses(mongoData.expenses);
+          storageService.saveExpenses(mongoData.expenses);
+        }
+        if (Array.isArray(mongoData.rooms) && mongoData.rooms.length > 0) {
+          setRooms(mongoData.rooms);
+          storageService.saveRooms(mongoData.rooms);
+        }
+        if (mongoData.mahal && Object.keys(mongoData.mahal).length > 0) {
+          setMahalConfig(mongoData.mahal);
+          storageService.saveMahal(mongoData.mahal);
+        }
+      }
+    }).catch(err => {
+      console.warn('MongoDB live sync error:', err);
+    });
   };
 
   // Navigations
@@ -366,6 +399,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedCustomers = [...customers, newCust];
     setCustomers(updatedCustomers);
     storageService.saveCustomers(updatedCustomers);
+    apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
     return newCust;
   };
@@ -430,6 +464,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBookings = [newBooking, ...bookings];
     setBookings(updatedBookings);
     storageService.saveBookings(updatedBookings);
+    apiService.saveBooking(newBooking);
 
     // Update Room global statuses for active bookings checks
     if (newBooking.serviceType === 'room' && newBooking.status === 'Checked-in') {
@@ -459,6 +494,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const updatedPayments = [...payments, newPayment];
       setPayments(updatedPayments);
       storageService.savePayments(updatedPayments);
+      apiService.savePayment(newPayment);
     }
 
     addLog(`Created booking ${newId}`, 'Booking', newId);
@@ -528,6 +564,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBookings = bookings.map(b => (b.id === updatedBooking.id ? updatedBooking : b));
     setBookings(updatedBookings);
     storageService.saveBookings(updatedBookings);
+    apiService.saveBooking(updatedBooking);
 
     addLog(`Updated booking ${updatedBooking.id}`, 'Booking', updatedBooking.id);
     addToast('Booking Updated', `Details for booking ${updatedBooking.id} were updated.`, 'success');
@@ -559,6 +596,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBookings = bookings.map(b => (b.id === bookingId ? cancelledBooking : b));
     setBookings(updatedBookings);
     storageService.saveBookings(updatedBookings);
+    apiService.saveBooking(cancelledBooking);
 
     addLog(`Cancelled booking ${bookingId}`, 'Booking', bookingId);
     triggerNotification(
@@ -593,6 +631,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBookings = bookings.filter(b => b.id !== bookingId);
     setBookings(updatedBookings);
     storageService.saveBookings(updatedBookings);
+    apiService.deleteBooking(bookingId);
 
     // Also remove matching payments
     const updatedPayments = payments.filter(p => p.bookingId !== bookingId);
@@ -622,6 +661,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedPayments = [...payments, newPayment];
     setPayments(updatedPayments);
     storageService.savePayments(updatedPayments);
+    apiService.savePayment(newPayment);
 
     // Filter payments specifically for this booking to calculate new balance
     const bookingPayments = updatedPayments.filter(p => p.bookingId === paymentData.bookingId);
@@ -630,6 +670,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBookings = bookings.map(b => (b.id === parentBooking.id ? updatedBooking : b));
     setBookings(updatedBookings);
     storageService.saveBookings(updatedBookings);
+    apiService.saveBooking(updatedBooking);
 
     addLog(`Recorded payment of ₹${paymentData.amount} for ${paymentData.bookingId}`, 'Payment', newPayment.id);
     triggerNotification(
@@ -651,6 +692,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedPayments = payments.filter(p => p.id !== paymentId);
     setPayments(updatedPayments);
     storageService.savePayments(updatedPayments);
+    apiService.deletePayment(paymentId);
 
     // Recalculate parent booking balance
     const parentBooking = bookings.find(b => b.id === payment.bookingId);
@@ -660,6 +702,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const updatedBookings = bookings.map(b => (b.id === parentBooking.id ? updatedBooking : b));
       setBookings(updatedBookings);
       storageService.saveBookings(updatedBookings);
+      apiService.saveBooking(updatedBooking);
     }
 
     addLog(`Deleted payment ${paymentId}`, 'Payment', paymentId);
@@ -683,6 +726,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedExpenses = [newExpense, ...expenses];
     setExpenses(updatedExpenses);
     storageService.saveExpenses(updatedExpenses);
+    apiService.saveExpense(newExpense);
 
     addLog(`Recorded expense ₹${expenseData.amount} for ${expenseData.category}`, 'Expense', newExpense.id);
     addToast('Expense Added', `Recorded ₹${expenseData.amount} under ${expenseData.category}.`, 'success');
@@ -697,6 +741,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedExpenses = expenses.filter(e => e.id !== expenseId);
     setExpenses(updatedExpenses);
     storageService.saveExpenses(updatedExpenses);
+    apiService.deleteExpense(expenseId);
 
     addLog(`Deleted expense ${expenseId}`, 'Expense', expenseId);
     addToast('Expense Deleted', 'Expense record was removed.', 'warning');
@@ -712,6 +757,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedCustomers = [...customers, newCust];
     setCustomers(updatedCustomers);
     storageService.saveCustomers(updatedCustomers);
+    apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
     addToast('Customer Created', `Customer profile ${newCust.name} added.`, 'success');
     return newCust;
@@ -721,6 +767,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedCustomers = customers.map(c => (c.id === updatedCustomer.id ? updatedCustomer : c));
     setCustomers(updatedCustomers);
     storageService.saveCustomers(updatedCustomers);
+    apiService.saveCustomer(updatedCustomer);
 
     addLog(`Updated customer ${updatedCustomer.name}`, 'Customer', updatedCustomer.id);
     addToast('Customer Updated', `Profile details for ${updatedCustomer.name} updated.`, 'success');
@@ -744,6 +791,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedRooms = rooms.map(r => (r.id === updatedRoom.id ? updatedRoom : r));
     setRooms(updatedRooms);
     storageService.saveRooms(updatedRooms);
+    apiService.saveRooms([updatedRoom]);
 
     addLog(`Updated room config for Room ${updatedRoom.number}`, 'Room', updatedRoom.id);
     addToast('Room Configured', `Room ${updatedRoom.number} settings saved.`, 'success');
@@ -776,6 +824,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setMahalConfig(updatedConfig);
     storageService.saveMahal(updatedConfig);
+    apiService.saveMahal(updatedConfig);
 
     addLog('Updated Mahal Configuration', 'MahalConfig', updatedConfig.id);
     addToast('Mahal Configured', 'Mahal settings and pricing packages saved.', 'success');

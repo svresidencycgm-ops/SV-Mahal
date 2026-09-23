@@ -4,6 +4,7 @@ import { invoiceService } from '../services/invoiceService';
 import { bookingService } from '../services/bookingService';
 import { UpiPaymentModal } from '../components/UpiPaymentModal';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
+import { printInvoice } from '../utils/invoicePrinter';
 import { 
   Building, Bed, CheckCircle, ChevronRight, ChevronLeft, Sparkles, 
   UtensilsCrossed, ShieldAlert, Download, Printer 
@@ -835,7 +836,11 @@ export const BookingFlow: React.FC = () => {
                   <Download size={16} /> Download Invoice
                 </button>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    if (finalBookingObj) {
+                      printInvoice(finalBookingObj, 'customer');
+                    }
+                  }}
                   style={{
                     padding: '12px 24px',
                     borderRadius: '6px',

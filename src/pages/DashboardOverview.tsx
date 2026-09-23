@@ -7,7 +7,7 @@ import {
 export const DashboardOverview: React.FC = () => {
   const { bookings, rooms, payments, setView, setSelectedBooking, currentUserRole, customers, updateBooking, addToast } = useApp();
 
-  const todayStr = '2026-08-16'; // Synced current local time from metadata
+  const todayStr = new Date().toISOString().split('T')[0];
 
   // CALCULATE CORE KPIs
   const checkInsToday = bookings.filter(
@@ -70,7 +70,7 @@ export const DashboardOverview: React.FC = () => {
             Operations Command Console
           </h2>
           <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
-            Live Status Matrix for August 16, 2026 • Welcome back, {currentUserRole === 'admin' ? 'Administrator' : 'Duty Manager'}.
+            Live Status Matrix • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} • Welcome back, {currentUserRole === 'admin' ? 'Administrator' : 'Duty Manager'}.
           </p>
         </div>
       </div>
