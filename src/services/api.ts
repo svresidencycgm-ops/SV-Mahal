@@ -137,5 +137,31 @@ export const apiService = {
       console.error('Failed to save mahal to MongoDB:', err);
       return false;
     }
+  },
+
+  async fetchOtaReservations(): Promise<Booking[]> {
+    try {
+      const res = await fetch('/api/ota/reservations');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.reservations || [];
+    } catch (err) {
+      console.warn('Could not fetch OTA reservations from API:', err);
+      return [];
+    }
+  },
+
+  async createOtaReservation(payload: any): Promise<boolean> {
+    try {
+      const res = await fetch('/api/ota/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Failed to post OTA reservation to API:', err);
+      return false;
+    }
   }
 };

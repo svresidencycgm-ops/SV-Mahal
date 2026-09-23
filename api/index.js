@@ -8,7 +8,8 @@ import {
   saveExpense,
   deleteExpense,
   saveRooms,
-  saveMahal
+  saveMahal,
+  getOtaReservations
 } from './db.js';
 
 export default async function handler(req, res) {
@@ -41,6 +42,54 @@ export default async function handler(req, res) {
       if (req.method === 'GET') {
         const data = await getAllAppData();
         return res.status(200).json(data);
+      }
+    }
+
+    // /api/ota/reservations (MakeMyTrip & Goibibo Live Extranet Webhook & Feed)
+    if (pathname.startsWith('/ota/reservations')) {
+      if (req.method === 'GET') {
+        const reservations = await getOtaReservations();
+        return res.status(200).json({ success: true, count: reservations.length, reservations });
+      }
+      if (req.method === 'POST') {
+        const payload = req.body;
+        const totalAmt = Number(payload.totalAmount || payload.amount || payload.tariff || 2400);
+        const otaBooking = {
+          id: payload.id || `OTA-${Date.now()}`,
+          customerName: payload.guestName || payload.customerName || 'IngoMMT Traveler',
+          customerPhone: payload.guestPhone || payload.customerPhone || 'N/A',
+          customerEmail: payload.guestEmail || payload.customerEmail || `${(payload.guestName || 'guest').toLowerCase().replace(/\s+/g, '')}@ota-guest.com`,
+          customerAddress: payload.customerAddress || `Booked via IngoMMT ${payload.otaSource || 'MakeMyTrip'} Partner Channel`,
+          serviceType: 'room',
+          serviceId: payload.roomType || 'Deluxe',
+          checkInDate: payload.checkIn || payload.checkInDate || new Date().toISOString().split('T')[0],
+          checkOutDate: payload.checkOut || payload.checkOutDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          guestCount: Number(payload.guestCount) || 2,
+          roomCount: Number(payload.roomCount) || 1,
+          idType: 'Aadhaar / OTA Verified',
+          idNumber: payload.otaRef || payload.otaReference || 'MMT-INGOMMT-CONFIRMED',
+          specialRequirements: payload.specialRequirements || `IngoMMT API Reservation: ${payload.otaSource || 'MakeMyTrip'} | Ref: ${payload.otaRef || payload.otaReference || 'MMT-EXTRANET'}`,
+          financials: {
+            baseAmount: totalAmt,
+            subtotal: totalAmt,
+            discount: 0,
+            tax: Math.round(totalAmt * 0.12),
+            total: totalAmt,
+            advancePaid: totalAmt,
+            balanceDue: 0
+          },
+          status: 'Confirmed',
+          bookingSource: payload.otaSource === 'Goibibo' ? 'Goibibo' : 'MakeMyTrip',
+          otaReference: payload.otaRef || payload.otaReference || `${(payload.otaSource || 'MMT').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
+          otaCommission: Number(payload.commissionPct || 15),
+          otaPayoutStatus: 'Pending',
+          billingType: 'Normal',
+          createdAt: new Date().toISOString(),
+          createdBy: 'IngoMMT Webhook Gateway'
+        };
+
+        const saved = await saveBooking(otaBooking);
+        return res.status(200).json({ success: true, message: 'Reservation logged into MongoDB', booking: saved });
       }
     }
 

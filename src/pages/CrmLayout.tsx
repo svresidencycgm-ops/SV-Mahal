@@ -156,7 +156,16 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   const navItems = getNavItems();
 
   return (
-    <div className="grid-dashboard no-print" style={{ backgroundColor: '#F1F5F9', minHeight: '100vh', display: 'flex', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+    <div 
+      className="grid-dashboard no-print admin-crm-page crm-portal" 
+      style={{ 
+        backgroundColor: '#F1F5F9', 
+        minHeight: '100vh', 
+        display: 'flex', 
+        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        fontFamily: "var(--font-crm-sans, 'Aptos', 'Times New Roman', Times, serif)"
+      }}
+    >
       
       {/* 1. SIDEBAR PANEL */}
       {isMobile && isSidebarOpen && (

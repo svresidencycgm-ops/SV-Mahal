@@ -417,7 +417,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
       }}
     >
       <div
-        className="animate-slide-in"
+        className="animate-slide-in booking-details-modal-root"
         style={{
           width: '100%',
           maxWidth: '640px',
@@ -426,7 +426,8 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
           boxShadow: '-10px 0 25px -5px rgba(0,0,0,0.1)',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          fontFamily: "var(--font-crm-sans, 'Aptos', 'Times New Roman', Times, serif)"
         }}
       >
         {/* Header */}
@@ -445,7 +446,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
             <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#DFB943', fontWeight: 700 }}>
               {selectedBooking.serviceType === 'room' ? 'Room Booking' : 'Mahal Booking'} Details
             </span>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', fontFamily: 'var(--font-sans)', fontWeight: 700 }}>
+            <h2 style={{ margin: 0, fontSize: '1.4rem', fontFamily: "var(--font-crm-serif, 'Times New Roman', Times, serif)", fontWeight: 700 }}>
               {selectedBooking.id}
             </h2>
           </div>

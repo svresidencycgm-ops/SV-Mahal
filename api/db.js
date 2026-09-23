@@ -135,3 +135,13 @@ export async function saveMahal(mahal) {
   );
   return mahal;
 }
+
+export async function getOtaReservations() {
+  const collection = await getCollection('bookings');
+  const reservations = await collection
+    .find({ bookingSource: { $in: ['MakeMyTrip', 'Goibibo'] } })
+    .sort({ createdAt: -1 })
+    .toArray();
+  return reservations.map(({ _id, ...rest }) => rest);
+}
+

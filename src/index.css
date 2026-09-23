@@ -26,6 +26,8 @@
   /* Typography scale */
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif;
+  --font-crm-sans: 'Aptos', 'Calibri', 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-crm-serif: 'Times New Roman', Times, Baskerville, Georgia, serif;
   
   /* Component tokens */
   --radius-sm: 4px;
@@ -319,6 +321,57 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--white);
+}
+
+/* ==========================================================================
+   ADMIN & DUTY MANAGER PORTAL TYPOGRAPHY: APTOS & TIMES NEW ROMAN
+   ========================================================================== */
+.grid-dashboard,
+.crm-table,
+.crm-portal,
+.admin-crm-page,
+.booking-details-modal-root {
+  --font-sans: 'Aptos', 'Times New Roman', Times, serif, sans-serif !important;
+  --font-serif: 'Times New Roman', 'Aptos', Times, serif !important;
+  font-family: 'Aptos', 'Times New Roman', Times, serif, sans-serif !important;
+}
+
+/* Headings in Admin & Duty Manager portal */
+.grid-dashboard h1,
+.grid-dashboard h2,
+.grid-dashboard h3,
+.grid-dashboard h4,
+.grid-dashboard h5,
+.grid-dashboard h6,
+.booking-details-modal-root h1,
+.booking-details-modal-root h2,
+.booking-details-modal-root h3,
+.booking-details-modal-root h4 {
+  font-family: 'Times New Roman', 'Aptos', Times, serif !important;
+  letter-spacing: 0.01em;
+}
+
+/* Body text, inputs, buttons, badges, tables in Admin & Duty Manager portal */
+.grid-dashboard p,
+.grid-dashboard span,
+.grid-dashboard label,
+.grid-dashboard input,
+.grid-dashboard select,
+.grid-dashboard textarea,
+.grid-dashboard button,
+.grid-dashboard td,
+.grid-dashboard a,
+.grid-dashboard div,
+.booking-details-modal-root p,
+.booking-details-modal-root span,
+.booking-details-modal-root label,
+.booking-details-modal-root input,
+.booking-details-modal-root select,
+.booking-details-modal-root textarea,
+.booking-details-modal-root button,
+.booking-details-modal-root td,
+.booking-details-modal-root div {
+  font-family: 'Aptos', 'Times New Roman', Times, serif, sans-serif;
 }
 
 .crm-table {
