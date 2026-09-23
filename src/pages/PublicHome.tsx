@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MapPin, Phone, Star, Search, ChevronRight, Check, Calendar, Users, Sparkles, Bed, Building, MessageCircle } from 'lucide-react';
-import { OtaPartnersBanner } from '../components/OtaPartnersBanner';
+
 
 export const PublicHome: React.FC = () => {
   const { setView } = useApp();
@@ -504,9 +504,6 @@ export const PublicHome: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* MakeMyTrip & Goibibo Partner Banner */}
-      <OtaPartnersBanner />
 
       {/* 43 Authentic Wedding Decors & Stage Mandapam Showcase Preview */}
       <section style={{ padding: '60px 0', backgroundColor: '#FFFFFF' }}>

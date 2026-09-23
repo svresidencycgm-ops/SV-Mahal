@@ -1,11 +1,11 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Plus, Shield
+  Plus, Shield, Globe, Radio, ArrowRight, CheckCircle2, MessageCircle
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
-  const { bookings, rooms, payments, setView, setSelectedBooking, currentUserRole, customers } = useApp();
+  const { bookings, rooms, payments, setView, setSelectedBooking, currentUserRole, customers, updateBooking, addToast } = useApp();
 
   const todayStr = '2026-08-16'; // Synced current local time from metadata
 
@@ -43,6 +43,22 @@ export const DashboardOverview: React.FC = () => {
     }
     return b.checkInDate === todayStr;
   });
+
+  const otaBookings = bookings.filter(
+    b => b.bookingSource === 'MakeMyTrip' || b.bookingSource === 'Goibibo' || b.channel === 'makemytrip' || b.channel === 'goibibo'
+  );
+
+  const handleQuickCheckIn = (b: any) => {
+    updateBooking({ ...b, status: 'Active' });
+    addToast(`Guest ${b.customerName} checked in. Room allocated.`, 'success');
+  };
+
+  const handleWhatsAppGuest = (b: any) => {
+    const text = encodeURIComponent(
+      `Vanakkam ${b.customerName}, greeting from SV Residency Chengam! We have confirmed your ${b.bookingSource || 'IngoMMT API'} reservation (Ref: ${b.id}). Front desk helpline: 95008 21550 / 90437 80215.`
+    );
+    window.open(`https://wa.me/${(b.customerPhone || '9500821550').replace(/[^0-9]/g, '')}?text=${text}`, '_blank');
+  };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '30px', fontFamily: 'var(--font-sans)' }}>
@@ -359,6 +375,199 @@ export const DashboardOverview: React.FC = () => {
             View Customer base
           </button>
         </div>
+      </div>
+
+      {/* INCOMING OTA BOOKINGS (MakeMyTrip & Goibibo API Integration for Admin & Duty Manager) */}
+      <div className="neomorphic-card" style={{ padding: '20px 24px', borderLeft: '4px solid #EF4444' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Globe size={22} color="#DC2626" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  MakeMyTrip & Goibibo API Live Bookings
+                </h3>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '12px', backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '0.72rem', fontWeight: 700 }}>
+                  <Radio size={12} className="animate-pulse" /> IngoMMT API v2.4 Active
+                </span>
+                <span style={{ padding: '3px 10px', borderRadius: '12px', backgroundColor: '#EFF6FF', color: '#1D4ED8', fontSize: '0.72rem', fontWeight: 700 }}>
+                  {currentUserRole === 'admin' ? 'Admin Full Access' : 'Duty Manager Fast Check-in'}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '4px 0 0 0' }}>
+                Automated webhook sync for SV Residency Front Office • Property Code: <code style={{ backgroundColor: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem' }}>MMT_CGM_SV_RESIDENCY_01</code>
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setView('crm/ota-channels')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '9px 18px',
+                backgroundColor: '#0F2942',
+                color: '#FFFFFF',
+                borderRadius: '24px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            >
+              Open OTA Channel Manager <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {otaBookings.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {otaBookings.slice(0, 3).map((b) => {
+              const isMMT = b.bookingSource === 'MakeMyTrip';
+              return (
+                <div
+                  key={b.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        backgroundColor: isMMT ? '#FEE2E2' : '#FFEDD5',
+                        color: isMMT ? '#DC2626' : '#EA580C',
+                        border: `1px solid ${isMMT ? '#FECACA' : '#FED7AA'}`
+                      }}
+                    >
+                      {b.bookingSource || 'IngoMMT'}
+                    </span>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '0.875rem' }}>
+                        {b.customerName}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                        Dates: {b.checkInDate} to {b.checkOutDate} • Stay: ₹{b.financials.total.toLocaleString()} • Status: <strong style={{ color: b.status === 'Active' ? '#16A34A' : '#0284C7' }}>{b.status}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {b.status !== 'Active' && (
+                      <button
+                        onClick={() => handleQuickCheckIn(b)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '6px 12px',
+                          backgroundColor: '#10B981',
+                          color: '#FFFFFF',
+                          borderRadius: '8px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <CheckCircle2 size={13} /> Quick Check-in
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleWhatsAppGuest(b)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '6px 12px',
+                        backgroundColor: '#25D366',
+                        color: '#FFFFFF',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <MessageCircle size={13} /> WhatsApp
+                    </button>
+                    <button
+                      onClick={() => setSelectedBooking(b)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#FFFFFF',
+                        color: '#475569',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: '16px 20px',
+              backgroundColor: '#F8FAFC',
+              borderRadius: '12px',
+              border: '1px dashed #CBD5E1',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '0.85rem' }}>
+                IngoMMT API Stream Connected & Listening
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
+                MakeMyTrip & Goibibo reservations are ingested automatically into SV Residency CRM via API endpoint.
+              </div>
+            </div>
+            <button
+              onClick={() => setView('crm/ota-channels')}
+              style={{
+                padding: '7px 16px',
+                backgroundColor: '#DC2626',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Fetch Live IngoMMT Bookings
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ROW 3: DETAILED OPERATIONS LOGS TABLES */}

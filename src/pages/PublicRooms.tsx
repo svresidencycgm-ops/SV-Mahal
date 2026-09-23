@@ -4,7 +4,7 @@ import { bookingService } from '../services/bookingService';
 import { Users, Bed, Check, Snowflake, Phone, MessageCircle, ShieldCheck, Camera, Sparkles } from 'lucide-react';
 import type { Room } from '../types';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
-import { OtaPartnersBanner } from '../components/OtaPartnersBanner';
+
 
 export const PublicRooms: React.FC = () => {
   const { rooms, bookings, setView, customerUser, addToast } = useApp();
@@ -577,11 +577,6 @@ export const PublicRooms: React.FC = () => {
             </div>
           )}
         </section>
-
-        {/* MakeMyTrip & Goibibo Verified Partner Showcase */}
-        <div style={{ marginTop: '40px' }}>
-          <OtaPartnersBanner />
-        </div>
 
         {/* Instant Assistance & Help Desk Banner */}
         <section
