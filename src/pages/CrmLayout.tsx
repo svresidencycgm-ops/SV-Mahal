@@ -15,7 +15,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   const { 
     currentView, setView, currentUserRole, setUserRole, 
     notifications, markNotificationRead, clearNotifications, 
-    globalSearch, setSelectedBooking,
+    globalSearch, setSelectedBooking, bookings,
     currentLanguage, setLanguage, translate
   } = useApp();
 
@@ -84,7 +84,6 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     if (item.type === 'Booking' || item.type === 'Invoice') {
       // Find the booking and select it
       // Let's rely on BookingDetailsModal opening automatically by setting context state
-      const { bookings } = useApp();
       const bObj = bookings.find(b => b.id === item.id);
       if (bObj) {
         setSelectedBooking(bObj);

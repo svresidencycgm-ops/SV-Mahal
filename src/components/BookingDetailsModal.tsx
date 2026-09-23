@@ -5,7 +5,7 @@ import { printInvoice } from '../utils/invoicePrinter';
 import { invoiceService } from '../services/invoiceService';
 import { 
   X, Calendar, User, DollarSign, CreditCard, Trash2, Printer, 
-  Download, Ban, Phone, Mail, MapPin, Edit, Save 
+  Download, Ban, Phone, Mail, MapPin, Edit, Save, Camera 
 } from 'lucide-react';
 import type { Booking } from '../types';
 
@@ -48,7 +48,6 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
 
   // Printing Copy Selector
   const [isPrintSelectorOpen, setIsPrintSelectorOpen] = useState(false);
-  const [printCopiesOption, setPrintCopiesOption] = useState<'customer' | 'admin' | 'both'>('both');
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -170,335 +169,6 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
       `Thank you,\nSV Residency & Mahal`
     );
     return `https://api.whatsapp.com/send?phone=${phone.startsWith('91') ? phone : '91' + phone}&text=${text}`;
-  };
-
-  const renderInvoiceCopy = (copyLabel: 'CUSTOMER COPY' | 'ADMINISTRATION COPY') => {
-    if (!selectedBooking) return null;
-    const baseVal = selectedBooking.financials.baseAmount ?? selectedBooking.financials.subtotal;
-    const cgstVal = selectedBooking.financials.cgst ?? 0;
-    const sgstVal = selectedBooking.financials.sgst ?? 0;
-    const roundOffVal = selectedBooking.financials.roundOff ?? 0;
-
-    return (
-      <div className="print-invoice-page" style={{ fontFamily: 'var(--font-sans)', color: '#000000', backgroundColor: '#FFFFFF', padding: '15mm', boxSizing: 'border-box' }}>
-        
-        {/* --- PAGE 1: BILLING DETAILS --- */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {/* Copy Label Header */}
-          <div style={{ textAlign: 'right', borderBottom: '2px solid #0F2942', paddingBottom: '4px', marginBottom: '15px' }}>
-            <span style={{ fontSize: '10pt', fontWeight: 800, letterSpacing: '0.1em', color: '#0F2942' }}>{copyLabel}</span>
-          </div>
-
-          {/* Business Details Header with Official Logo */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div
-                style={{
-                  width: '58px',
-                  height: '58px',
-                  borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
-                  border: '2px solid #C9A227',
-                  boxShadow: '0 0 10px rgba(201, 162, 39, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  flexShrink: 0
-                }}
-              >
-                <img 
-                  src="/logo.png" 
-                  alt="SV Logo" 
-                  style={{ width: '90%', height: '90%', objectFit: 'contain' }} 
-                />
-              </div>
-              <div>
-                <h1 style={{ fontSize: '17pt', fontWeight: 800, color: '#0F2942', margin: 0, fontFamily: 'var(--font-sans)', letterSpacing: '0.02em' }}>
-                  SV MAHAL & RESIDENCY
-                </h1>
-                <p style={{ fontSize: '8.5pt', color: '#475569', margin: '2px 0 0 0' }}>
-                  No.859/B, SV Thirumana Mahal Opposite, Bangalore Main Road, Chengam - 606701
-                </p>
-                <p style={{ fontSize: '8.5pt', color: '#475569', margin: 0 }}>
-                  Ph: 95008 21550, 90437 80215 | GSTIN: 33GTSPD9038L1Z1
-                </p>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <h2 style={{ fontSize: '16pt', fontWeight: 800, color: '#C9A227', margin: 0 }}>INVOICE</h2>
-              <p style={{ fontSize: '8.5pt', color: '#475569', margin: '2px 0 0 0' }}>
-                Invoice No: <strong>{invoiceNumber}</strong>
-              </p>
-              <p style={{ fontSize: '8.5pt', color: '#475569', margin: 0 }}>
-                Date: {new Date(selectedBooking.createdAt).toLocaleDateString('en-IN')}
-              </p>
-            </div>
-          </div>
-
-          {/* Billed To / Stay Details Table Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px', fontSize: '9pt' }}>
-            <div style={{ border: '1px solid #CBD5E1', borderRadius: '6px', padding: '10px' }}>
-              <div style={{ fontWeight: 800, color: '#0F2942', borderBottom: '1px solid #E2E8F0', paddingBottom: '4px', marginBottom: '6px', textTransform: 'uppercase' }}>BILLED TO:</div>
-              <div><strong>Name:</strong> {selectedBooking.customerName.toUpperCase()}</div>
-              <div><strong>Phone:</strong> {selectedBooking.customerPhone}</div>
-              {selectedBooking.customerEmail && <div><strong>Email:</strong> {selectedBooking.customerEmail}</div>}
-              <div><strong>Address:</strong> {selectedBooking.customerAddress.toUpperCase()}</div>
-              {selectedBooking.companyName && (
-                <div style={{ marginTop: '6px', borderTop: '1px dashed #E2E8F0', paddingTop: '4px' }}>
-                  <strong>Company:</strong> {selectedBooking.companyName.toUpperCase()}<br />
-                  <strong>GSTIN:</strong> {selectedBooking.companyGst || 'N/A'}
-                </div>
-              )}
-            </div>
-            
-            <div style={{ border: '1px solid #CBD5E1', borderRadius: '6px', padding: '10px' }}>
-              <div style={{ fontWeight: 800, color: '#0F2942', borderBottom: '1px solid #E2E8F0', paddingBottom: '4px', marginBottom: '6px', textTransform: 'uppercase' }}>STAY / RESERVATION:</div>
-              <div><strong>Service:</strong> {selectedBooking.serviceType === 'room' ? 'Hotel Residency Room' : 'Banquet Mahal Event'}</div>
-              {selectedBooking.serviceType === 'room' ? (
-                <>
-                  <div><strong>Assigned Rooms:</strong> {selectedBooking.roomIds?.map(id => rooms.find(r => r.id === id)?.number).join(', ') || 'N/A'}</div>
-                  <div><strong>Check-In Time:</strong> {selectedBooking.actualCheckInTime || selectedBooking.checkInDate}</div>
-                  <div><strong>Check-Out Time:</strong> {selectedBooking.actualCheckOutTime || selectedBooking.checkOutDate}</div>
-                </>
-              ) : (
-                <>
-                  <div><strong>Package Name:</strong> {selectedBooking.packageName || 'Standard Package'}</div>
-                  <div><strong>Event Type:</strong> {selectedBooking.eventDetails?.eventType || 'Celebration'}</div>
-                  <div><strong>Event Date:</strong> {selectedBooking.checkInDate}</div>
-                </>
-              )}
-              <div><strong>Headcount:</strong> {selectedBooking.guestCount} Guests</div>
-            </div>
-          </div>
-
-          {/* Itemized Cost Breakdown Table */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', marginBottom: '20px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#F1F5F9', border: '1px solid #CBD5E1', color: '#0F2942', fontWeight: 800 }}>
-                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #CBD5E1' }}>Particular Description</th>
-                <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>HSN/SAC</th>
-                <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>GST Rate</th>
-                <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>Amount (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #CBD5E1' }}>
-                  {selectedBooking.serviceType === 'room' ? (
-                    <strong>Residency Stays - {(selectedBooking.roomIds && selectedBooking.roomIds.length > 0) ? selectedBooking.roomIds.map(id => `ROOM ${id.replace('room-', '').toUpperCase()}`).join(', ') : 'Lodging Unit'}</strong>
-                  ) : (
-                    <strong>SV Mahal Banquet Space Rental ({selectedBooking.packageName} Package)</strong>
-                  )}
-                </td>
-                <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>{selectedBooking.serviceType === 'room' ? '996311' : '996312'}</td>
-                <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>
-                  {selectedBooking.billingType === 'Normal' ? '0%' : (selectedBooking.serviceType === 'room' ? '5%' : '18%')}
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>₹{baseVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-              </tr>
-
-              {/* Custom Mahal Charges Details */}
-              {selectedBooking.serviceType === 'mahal' && selectedBooking.mahalCharges && (
-                <>
-                  {(selectedBooking.mahalCharges.electricity || 0) > 0 && (
-                    <tr>
-                      <td style={{ padding: '6px 8px', border: '1px solid #CBD5E1', paddingLeft: '20px' }}>
-                        Electricity Meter Charges 
-                        <span style={{ fontSize: '7pt', color: '#64748B', display: 'block', marginTop: '2px' }}>
-                          (Initial: {selectedBooking.ebInitialUnits || 0}, Final: {selectedBooking.ebFinalUnits || 0}, Rate: ₹{selectedBooking.ebRate || 0}/unit)
-                        </span>
-                      </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>996312</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>{selectedBooking.billingType === 'Normal' ? '0%' : '18%'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>+ ₹{selectedBooking.mahalCharges.electricity.toLocaleString()}</td>
-                    </tr>
-                  )}
-                  {(selectedBooking.mahalCharges.rooms || 0) > 0 && (
-                    <tr>
-                      <td style={{ padding: '6px 8px', border: '1px solid #CBD5E1', paddingLeft: '20px' }}>Additional Mahal Rooms Stay</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>996311</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>{selectedBooking.billingType === 'Normal' ? '0%' : '18%'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>+ ₹{selectedBooking.mahalCharges.rooms.toLocaleString()}</td>
-                    </tr>
-                  )}
-                  {(selectedBooking.mahalCharges.generator || 0) > 0 && (
-                    <tr>
-                      <td style={{ padding: '6px 8px', border: '1px solid #CBD5E1', paddingLeft: '20px' }}>Generator Fuel/Usage Fee</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>996312</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>{selectedBooking.billingType === 'Normal' ? '0%' : '18%'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>+ ₹{selectedBooking.mahalCharges.generator.toLocaleString()}</td>
-                    </tr>
-                  )}
-                  {(selectedBooking.mahalCharges.damages || 0) > 0 && (
-                    <tr>
-                      <td style={{ padding: '6px 8px', border: '1px solid #CBD5E1', paddingLeft: '20px', color: '#DC2626' }}>
-                        Damages / Penalty Levied
-                        {selectedBooking.damageReportText && (
-                          <span style={{ fontSize: '7pt', color: '#DC2626', display: 'block', marginTop: '2px', fontStyle: 'italic' }}>
-                            Note: {selectedBooking.damageReportText}
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>996312</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>0%</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', color: '#DC2626' }}>+ ₹{selectedBooking.mahalCharges.damages.toLocaleString()}</td>
-                    </tr>
-                  )}
-                  {(selectedBooking.mahalCharges.other || 0) > 0 && (
-                    <tr>
-                      <td style={{ padding: '6px 8px', border: '1px solid #CBD5E1', paddingLeft: '20px' }}>Other Miscellaneous Dues</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>996312</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #CBD5E1' }}>{selectedBooking.billingType === 'Normal' ? '0%' : '18%'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>+ ₹{selectedBooking.mahalCharges.other.toLocaleString()}</td>
-                    </tr>
-                  )}
-                </>
-              )}
-
-              {/* Subtotal & taxes */}
-              <tr style={{ borderTop: '2px solid #CBD5E1' }}>
-                <td colSpan={2} style={{ border: 'none' }}></td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700 }}>Subtotal:</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>₹{selectedBooking.financials.subtotal.toLocaleString()}</td>
-              </tr>
-              {selectedBooking.financials.discount > 0 && (
-                <tr>
-                  <td colSpan={2} style={{ border: 'none' }}></td>
-                  <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700, color: '#DC2626' }}>Discount:</td>
-                  <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', color: '#DC2626' }}>- ₹{selectedBooking.financials.discount.toLocaleString()}</td>
-                </tr>
-              )}
-              {selectedBooking.billingType === 'GST' && (
-                <>
-                  <tr>
-                    <td colSpan={2} style={{ border: 'none' }}></td>
-                    <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700 }}>CGST:</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>₹{cgstVal.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2} style={{ border: 'none' }}></td>
-                    <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700 }}>SGST:</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1' }}>₹{sgstVal.toLocaleString()}</td>
-                  </tr>
-                </>
-              )}
-              <tr>
-                <td colSpan={2} style={{ border: 'none' }}></td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 800, backgroundColor: '#F1F5F9' }}>Grand Total:</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 800, backgroundColor: '#F1F5F9' }}>₹{selectedBooking.financials.total.toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td colSpan={2} style={{ border: 'none' }}></td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700, color: '#16A34A' }}>Paid to Date:</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 700, color: '#16A34A' }}>₹{selectedBooking.financials.advancePaid.toLocaleString()}</td>
-              </tr>
-              <tr style={{ borderTop: '2px double #000' }}>
-                <td colSpan={2} style={{ border: 'none' }}></td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 800, color: '#B45309', backgroundColor: '#FFFBEB' }}>Balance Due:</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #CBD5E1', fontWeight: 800, color: '#B45309', backgroundColor: '#FFFBEB' }}>₹{selectedBooking.financials.balanceDue.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Mahal Specific Inclusions Pics (EB readings, damage photos) */}
-          {selectedBooking.serviceType === 'mahal' && (
-            <div style={{ borderTop: '1px dashed #CBD5E1', paddingTop: '15px', marginTop: 'auto' }}>
-              <div style={{ fontWeight: 800, color: '#0F2942', fontSize: '8.5pt', marginBottom: '8px', textTransform: 'uppercase' }}>MAHAL FIELD VERIFICATION LOGS:</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                {selectedBooking.ebMeterCheckInPic && (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '7.5pt', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>INITIAL EB READING</div>
-                    <img src={selectedBooking.ebMeterCheckInPic} alt="Initial EB Meter" style={{ width: '100%', maxHeight: '110px', objectFit: 'contain', border: '1px solid #CBD5E1', borderRadius: '4px' }} />
-                  </div>
-                )}
-                {selectedBooking.ebMeterCheckOutPic && (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '7.5pt', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>FINAL EB READING</div>
-                    <img src={selectedBooking.ebMeterCheckOutPic} alt="Final EB Meter" style={{ width: '100%', maxHeight: '110px', objectFit: 'contain', border: '1px solid #CBD5E1', borderRadius: '4px' }} />
-                  </div>
-                )}
-                {selectedBooking.damagePic && (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '7.5pt', color: '#DC2626', fontWeight: 700, marginBottom: '4px' }}>DAMAGE RECORD PHOTO</div>
-                    <img src={selectedBooking.damagePic} alt="Damage Report" style={{ width: '100%', maxHeight: '110px', objectFit: 'contain', border: '1px solid #FCA5A5', borderRadius: '4px' }} />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* --- PAGE 2: GUEST ID ATTACHMENT --- */}
-        <div className="print-break-before" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-start', paddingTop: '15mm' }}>
-          <div style={{ borderBottom: '2px solid #0F2942', paddingBottom: '4px', marginBottom: '20px' }}>
-            <span style={{ fontSize: '10pt', fontWeight: 800, letterSpacing: '0.1em', color: '#0F2942' }}>{copyLabel} — GUEST ID & PROFILE ATTACHMENT</span>
-          </div>
-
-          <div style={{ border: '1px solid #CBD5E1', borderRadius: '8px', padding: '15px', backgroundColor: '#F8FAFC', fontSize: '9.5pt', marginBottom: '25px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '10pt', color: '#0F2942', marginBottom: '8px' }}>PRIMARY GUEST DETAILS</div>
-              <div><strong>Name:</strong> {selectedBooking.customerName.toUpperCase()}</div>
-              <div><strong>Phone:</strong> {selectedBooking.customerPhone}</div>
-              <div><strong>Address:</strong> {selectedBooking.customerAddress.toUpperCase()}</div>
-            </div>
-            {selectedBooking.companyName && (
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '10pt', color: '#0F2942', marginBottom: '8px' }}>CORPORATE CREDENTIALS</div>
-                <div><strong>Company:</strong> {selectedBooking.companyName.toUpperCase()}</div>
-                <div><strong>GSTIN:</strong> {selectedBooking.companyGst || 'N/A'}</div>
-                <div><strong>Company Contact:</strong> {selectedBooking.companyContact || 'N/A'}</div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <h3 style={{ fontSize: '11pt', color: '#0F2942', fontWeight: 800, marginBottom: '15px', textTransform: 'uppercase' }}>UPLOADED AADHAAR / GOVERNMENT IDENTITY PROOF</h3>
-            {selectedBooking.identityPic ? (
-              <img
-                src={selectedBooking.identityPic}
-                alt="Aadhaar ID Card"
-                style={{ maxWidth: '85%', maxHeight: '420px', objectFit: 'contain', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '5px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}
-              />
-            ) : (
-              <div style={{ border: '2px dashed #CBD5E1', borderRadius: '8px', padding: '40px', color: '#94A3B8', fontSize: '10pt', fontStyle: 'italic' }}>
-                No identity document uploaded to stay ledger.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* --- PAGE 3: TERMS & SIGNATURES --- */}
-        <div className="print-break-before" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', paddingTop: '15mm' }}>
-          <div>
-            <div style={{ borderBottom: '2px solid #0F2942', paddingBottom: '4px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '10pt', fontWeight: 800, letterSpacing: '0.1em', color: '#0F2942' }}>{copyLabel} — TERMS & CONDITIONS</span>
-            </div>
-
-            <div style={{ fontSize: '9pt', color: '#334155', lineHeight: 1.6 }}>
-              <p style={{ marginBottom: '10px' }}><strong>1. Jurisdiction:</strong> Any dispute, controversy or claim arising out of or relating to this stay/hall booking, including any questions regarding its existence, validity or termination, shall be subject to the exclusive jurisdiction of the courts located in Chengam, Tamil Nadu.</p>
-              <p style={{ marginBottom: '10px' }}><strong>2. Security Deposit & Damage Policies:</strong> Guests are liable for any damages caused to rooms, furniture, hall amenities, decoration materials, or catering systems. The admin reserves the right to levy penalty charges dynamically during check-out based on audit. Damages must be settled immediately in full before check-out.</p>
-              <p style={{ marginBottom: '10px' }}><strong>3. Billing & Taxes:</strong> GST invoices are auto-calculated inclusive of applicable SGST and CGST split rates based on type (5% for lodging, 18% for banquet events). Normal billing applies 0% GST. Round-off offsets are applied to keep totals clean.</p>
-              <p style={{ marginBottom: '10px' }}><strong>4. Cancellation & Refunds:</strong> Advances paid for booking room stay or banquet space are non-refundable unless cancellation is requested at least 7 days prior to check-in/event date.</p>
-              <p style={{ marginBottom: '10px' }}><strong>5. Stay Limits & Extension:</strong> Checking out past the designated check-out time without prior front-desk approval incurs additional day rates. Extension is subject to room/hall availability check.</p>
-            </div>
-          </div>
-
-          {/* Signature Boxes at the bottom */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '40px', borderTop: '1px solid #CBD5E1' }}>
-            <div style={{ textAlign: 'center', width: '200px' }}>
-              <div style={{ height: '60px', borderBottom: '1px dashed #CBD5E1', marginBottom: '8px' }}></div>
-              <span style={{ fontSize: '9pt', fontWeight: 700, color: '#334155' }}>Customer / Guest Signature</span>
-            </div>
-            
-            <div style={{ textAlign: 'center', width: '200px' }}>
-              <div style={{ height: '60px', borderBottom: '1px dashed #CBD5E1', marginBottom: '8px' }}></div>
-              <span style={{ fontSize: '9pt', fontWeight: 700, color: '#0F2942' }}>Admin / Manager Signature</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const handleProceedCheckIn = () => {
@@ -1626,6 +1296,31 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
                 >
                   <Printer size={14} /> Print
                 </button>
+                <button
+                  onClick={() => {
+                    const link = selectedBooking.status === 'Inquiry'
+                      ? getWhatsAppEstimateLink()
+                      : (selectedBooking.financials.balanceDue > 0 ? getWhatsAppReminderLink() : getWhatsAppInvoiceLink());
+                    window.open(link, '_blank');
+                  }}
+                  title="Share details via WhatsApp"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '10px 14px',
+                    backgroundColor: '#25D366',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Phone size={14} /> WhatsApp
+                </button>
 
                 {selectedBooking.status !== 'Cancelled' && (
                   <button
@@ -1815,6 +1510,96 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
           Thank you for choosing SV.MAHAL & SV.RESIDENCY.
         </div>
       </div>
+
+      {/* Check-in finalization prompt for SV Mahal */}
+      {isCheckInPromptOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            className="animate-scale-in"
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '24px',
+              width: '100%',
+              maxWidth: '500px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              color: '#0F172A'
+            }}
+          >
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0F172A', fontWeight: 800 }}>
+                SV Mahal Event Check-in
+              </h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+                Capture official check-in time and upload initial EB Meter photo to start electricity logging.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.725rem', color: '#475569', fontWeight: 700, marginBottom: '4px' }}>
+                  ACTUAL CHECK-IN TIME
+                </label>
+                <input
+                  type="text"
+                  value={checkInInTime}
+                  onChange={(e) => setCheckInInTime(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', padding: '12px', borderRadius: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#92400E', fontWeight: 700, marginBottom: '6px' }}>
+                  MANDATORY: INITIAL EB METER READING PHOTO
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => handleFileChange(e, setChkInEbPic, setChkInEbTime)}
+                  style={{ fontSize: '0.8rem', width: '100%', marginBottom: '8px' }}
+                />
+                {chkInEbPic && (
+                  <div>
+                    <img src={chkInEbPic} alt="EB Initial" style={{ width: '100px', height: '75px', objectFit: 'contain', border: '1px solid #CBD5E1', borderRadius: '4px', display: 'block' }} />
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '2px', display: 'block' }}>Captured: {chkInEbTime}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <button
+                onClick={handleProceedCheckIn}
+                style={{ flexGrow: 1, padding: '12px', backgroundColor: '#10B981', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                Confirm Check-in
+              </button>
+              <button
+                onClick={() => setIsCheckInPromptOpen(false)}
+                style={{ padding: '12px 20px', border: '1px solid #CBD5E1', backgroundColor: '#FFFFFF', color: '#475569', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Checkout finalization prompt */}
       {isCheckoutPromptOpen && (

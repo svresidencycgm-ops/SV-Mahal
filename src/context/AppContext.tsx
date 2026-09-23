@@ -802,7 +802,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!roomToDelete) return;
 
     // Check if room has active bookings
-    const isActive = bookings.some(b => b.status === 'Active' && b.roomIds?.includes(id));
+    const isActive = bookings.some(b => (b.status === 'Confirmed' || b.status === 'Checked-in') && b.roomIds?.includes(id));
     if (isActive) {
       addToast('Cannot Delete', `Room ${roomToDelete.number} is currently active in a booking.`, 'danger');
       return;

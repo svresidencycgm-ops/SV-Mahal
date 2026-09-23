@@ -28,12 +28,12 @@ export const MahalBookingCalendarModal: React.FC<{
   const [ebInitialPic, setEbInitialPic] = useState('');
   const [ebInitialUnits, setEbInitialUnits] = useState('');
 
-  if (!isOpen) return null;
-
   // Calendar logic
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
+  if (!isOpen) return null;
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
@@ -273,6 +273,10 @@ export const MahalBookingCalendarModal: React.FC<{
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Phone Number</label>
                   <input type="text" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Email Address (Optional)</label>
+                  <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Address</label>

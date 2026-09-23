@@ -96,6 +96,7 @@ export interface Booking {
   companyGst?: string;
   companyContact?: string; // Company contact details
   membersPic?: string; // Group photo of guests
+  ebInitialPic?: string;
   ebMeterCheckInPic?: string;
   ebMeterCheckInTime?: string;
   ebMeterCheckOutPic?: string;
