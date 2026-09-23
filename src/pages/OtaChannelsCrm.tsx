@@ -14,7 +14,8 @@ import {
   UserCheck,
   MessageCircle,
   X,
-  Database
+  Database,
+  Eye
 } from 'lucide-react';
 import type { Booking } from '../types';
 
@@ -129,6 +130,13 @@ export const OtaChannelsCrm: React.FC = () => {
       `Hello ${b.guestName}, welcome to SV Residency Chengam! We have confirmed your ${b.source} reservation (Ref: ${b.otaRef}). Your room is sanitized and ready. Front desk contact: 95008 21550 / 90437 80215.`
     );
     window.open(`https://wa.me/${phoneWithCountry}?text=${msg}`, '_blank');
+  };
+
+  const handleViewBookingDetails = (b: any) => {
+    const existing = bookings.find(item => item.id === b.id || (b.otaRef && item.otaReference === b.otaRef));
+    if (existing) {
+      setSelectedBooking(existing);
+    }
   };
 
   // Handle Manual Form Submission
@@ -832,6 +840,21 @@ export const OtaChannelsCrm: React.FC = () => {
                             <UserCheck size={12} color="#10B981" /> Check In
                           </button>
                         )}
+                        <button
+                          onClick={() => handleViewBookingDetails(b)}
+                          title="View Full Booking Details & Invoice"
+                          style={{
+                            padding: '6px',
+                            borderRadius: '6px',
+                            border: '1px solid #BAE6FD',
+                            backgroundColor: '#F0F9FF',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Eye size={14} color="#0284C7" />
+                        </button>
                         <button
                           onClick={() => handleWhatsAppGuest(b)}
                           title="WhatsApp Welcome & Room Details"
