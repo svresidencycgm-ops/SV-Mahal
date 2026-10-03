@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { Booking, Payment } from '../types';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
+import { uploadToCloudinary } from '../services/cloudinary';
 
 export const BookingFlow: React.FC = () => {
   const { rooms, bookings, payments, mahalConfig, addBooking, setView, currentUserRole, customerUser } = useApp();
@@ -48,6 +49,7 @@ export const BookingFlow: React.FC = () => {
   const [custDocNum, setCustDocNum] = useState('');
   const [custSpecial, setCustSpecial] = useState('');
   const [identityPic, setIdentityPic] = useState('');
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [companyGst, setCompanyGst] = useState('');
 
@@ -587,27 +589,55 @@ export const BookingFlow: React.FC = () => {
               </div>
 
               <div style={{ padding: '20px', backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', borderRadius: '8px' }}>
-                <label className="modern-label" style={{ marginBottom: '12px' }}>UPLOAD IDENTITY CARD PIC (MANDATORY) *</label>
+                <label className="modern-label" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>UPLOAD IDENTITY CARD PIC (MANDATORY) *</span>
+                  <span style={{ fontSize: '0.72rem', color: '#6320EE', fontWeight: 700 }}>Stored on Cloudinary CDN</span>
+                </label>
                 <input
                   type="file"
                   accept="image/*"
-                  required
+                  required={!identityPic}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      setIsUploadingDoc(true);
                       const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setIdentityPic(reader.result as string);
+                      reader.onloadend = async () => {
+                        const base64 = reader.result as string;
+                        setIdentityPic(base64);
+                        try {
+                          const res = await uploadToCloudinary(base64, 'sv_residency_customer_documents');
+                          if (res.isCloudinary && res.url) {
+                            setIdentityPic(res.url);
+                          }
+                        } catch (err) {
+                          console.warn('Customer document Cloudinary upload deferred:', err);
+                        } finally {
+                          setIsUploadingDoc(false);
+                        }
                       };
                       reader.readAsDataURL(file);
                     }
                   }}
                   style={{ width: '100%' }}
                 />
-                {identityPic && (
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <img src={identityPic} alt="Identity Pic" style={{ height: '80px', borderRadius: '6px', border: '2px solid #E2E8F0', objectFit: 'cover' }} />
-                    <span style={{ fontSize: '0.8rem', color: '#16A34A', fontWeight: 600 }}>Successfully uploaded</span>
+                {isUploadingDoc && (
+                  <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#6320EE', fontSize: '0.8rem', fontWeight: 600 }}>
+                    <span style={{ width: '12px', height: '12px', border: '2px solid #E9D5FF', borderTopColor: '#6320EE', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
+                    Uploading document securely to Cloudinary CDN...
+                  </div>
+                )}
+                {identityPic && !isUploadingDoc && (
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#F0FDF4', padding: '10px 14px', borderRadius: '8px', border: '1px solid #BBF7D0' }}>
+                    <img src={identityPic} alt="Identity Pic" style={{ height: '70px', width: '100px', borderRadius: '6px', border: '1.5px solid #16A34A', objectFit: 'cover' }} />
+                    <div>
+                      <span style={{ fontSize: '0.85rem', color: '#15803D', fontWeight: 700, display: 'block' }}>
+                        ✓ Identity Document Stored
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                        {identityPic.startsWith('http') ? 'Cloudinary CDN Verified' : 'Local Staged'}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

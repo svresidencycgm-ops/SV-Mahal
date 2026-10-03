@@ -9,6 +9,8 @@ import {
 import { OnsiteBookingCrm } from './OnsiteBookingCrm';
 import { MahalOnsiteBookingCrm } from './MahalOnsiteBookingCrm';
 import { uploadToCloudinary } from '../services/cloudinary';
+import { subscribeToOperationalEvents } from '../utils/operationalEvents';
+import { playBellSound } from '../utils/soundEffects';
 interface CrmLayoutProps {
   children: React.ReactNode;
 }
@@ -83,6 +85,24 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Real-time operational audio notification listener for Admin & Manager panels
+  useEffect(() => {
+    if (currentUserRole !== 'admin' && currentUserRole !== 'manager') return;
+
+    const unsubscribe = subscribeToOperationalEvents((event) => {
+      // Ring small bell chime on Admin and Manager panel!
+      playBellSound();
+
+      if (event.type === 'NEW_BOOKING') {
+        addToast('🛎️ New Booking Received!', event.message, 'success');
+      } else if (event.type === 'USER_REGISTERED') {
+        addToast('👤 New User Registered', event.message, 'info');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentUserRole, addToast]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');

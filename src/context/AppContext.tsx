@@ -5,6 +5,7 @@ import { bookingService } from '../services/bookingService';
 import { invoiceService } from '../services/invoiceService';
 import { apiService } from '../services/api';
 import { playBellSound } from '../utils/soundEffects';
+import { broadcastOperationalEvent } from '../utils/operationalEvents';
 import type {
   Booking,
   Room,
@@ -403,6 +404,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
     playBellSound();
+    broadcastOperationalEvent({
+      type: 'USER_REGISTERED',
+      title: 'New Customer Registered',
+      message: `${newCust.name} (${newCust.phone}) registered into system.`,
+      data: { id: newCust.id, name: newCust.name, phone: newCust.phone }
+    });
     return newCust;
   };
 
@@ -501,6 +508,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     addLog(`Created booking ${newId}`, 'Booking', newId);
     playBellSound();
+    broadcastOperationalEvent({
+      type: 'NEW_BOOKING',
+      title: 'New Booking Created',
+      message: `Booking ${newId} (${newBooking.customerName}) has been created successfully.`,
+      data: { id: newId, customerName: newBooking.customerName, serviceType: newBooking.serviceType }
+    });
     triggerNotification(
       'New Booking Created',
       `Booking ${newId} (${newBooking.customerName}) has been created successfully.`,
@@ -763,6 +776,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
     playBellSound();
+    broadcastOperationalEvent({
+      type: 'USER_REGISTERED',
+      title: 'New Customer Registered',
+      message: `Profile ${newCust.name} (${newCust.phone}) added.`,
+      data: { id: newCust.id, name: newCust.name, phone: newCust.phone }
+    });
     addToast('Customer Created', `Customer profile ${newCust.name} added.`, 'success');
     return newCust;
   };
