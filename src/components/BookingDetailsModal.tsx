@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
 import { printInvoice } from '../utils/invoicePrinter';
@@ -6,7 +6,7 @@ import { invoiceService } from '../services/invoiceService';
 import { 
   X, Calendar, User, DollarSign, CreditCard, Trash2, Printer, 
   Download, Ban, Phone, Mail, MapPin, Edit, Save, Camera,
-  Send, Share2 
+  Send, Share2, UploadCloud, PenTool, CheckCircle 
 } from 'lucide-react';
 import type { Booking } from '../types';
 
@@ -89,13 +89,112 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
   // Custom charges for Checkout prompt
   const [chkEbInitialUnits, setChkEbInitialUnits] = useState(0);
   const [chkEbFinalUnits, setChkEbFinalUnits] = useState(0);
-  const [chkEbRate, setChkEbRate] = useState(10);
+  const [chkEbRate, setChkEbRate] = useState(15);
   const chkElectricity = Math.max(0, (chkEbFinalUnits - chkEbInitialUnits) * chkEbRate);
 
   const [chkRooms, setChkRooms] = useState(0);
   const [chkGenerator, setChkGenerator] = useState(0);
   const [chkDamages, setChkDamages] = useState(0);
   const [chkOther, setChkOther] = useState(0);
+
+  // Final payment collection states upon checkout
+  const [settleFinalPayNow, setSettleFinalPayNow] = useState(true);
+  const [finalPayMethod, setFinalPayMethod] = useState<'Cash' | 'UPI' | 'Card' | 'Bank Transfer'>('Cash');
+  const [finalPayRef, setFinalPayRef] = useState('');
+
+  // Customer digital signature states & canvas
+  const [custSignature, setCustSignature] = useState('');
+  const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const primaryIdInputRef = useRef<HTMLInputElement | null>(null);
+
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!sigCanvasRef.current) return { x: 0, y: 0 };
+    const rect = sigCanvasRef.current.getBoundingClientRect();
+    if ('touches' in e && e.touches.length > 0) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    } else if ('clientX' in e) {
+      return {
+        x: (e as React.MouseEvent).clientX - rect.left,
+        y: (e as React.MouseEvent).clientY - rect.top
+      };
+    }
+    return { x: 0, y: 0 };
+  };
+
+  const startSigDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setIsDrawing(true);
+    const { x, y } = getCoordinates(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const drawSig = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !sigCanvasRef.current) return;
+    const ctx = sigCanvasRef.current.getContext('2d');
+    if (!ctx) return;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#0F2942';
+    const { x, y } = getCoordinates(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopSigDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    if (sigCanvasRef.current) {
+      setCustSignature(sigCanvasRef.current.toDataURL('image/png'));
+    }
+  };
+
+  const clearCustSignature = () => {
+    if (sigCanvasRef.current) {
+      const ctx = sigCanvasRef.current.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, sigCanvasRef.current.width, sigCanvasRef.current.height);
+    }
+    setCustSignature('');
+  };
+
+  const handlePrimaryIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedBooking) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      const watermarked = await addTimestampWatermark(base64);
+      let finalUrl = watermarked;
+      try {
+        const res = await uploadToCloudinary(watermarked, 'sv_residency_guest_ids');
+        if (res.isCloudinary && res.url) {
+          finalUrl = res.url;
+        }
+      } catch (err) {
+        console.warn('Cloudinary upload deferred, retained local secure copy:', err);
+      }
+      const updated: Booking = {
+        ...selectedBooking,
+        identityPic: finalUrl,
+        identityPics: [finalUrl]
+      };
+      const r = updateBooking(updated);
+      if (r.success) {
+        setSelectedBooking(updated);
+        addToast('Identity Updated', 'Primary Identity Proof stored in Cloudinary CDN.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
 
 
   // New payment form state
@@ -299,7 +398,9 @@ Front Desk: 95008 21550 | 90437 80215`;
       status: 'Checked-in' as const,
       actualCheckInTime: checkInInTime,
       ebMeterCheckInPic: chkInEbPic,
-      ebMeterCheckInTime: chkInEbTime
+      ebInitialPic: chkInEbPic,
+      ebMeterCheckInTime: chkInEbTime,
+      ebInitialUnits: Number(chkEbInitialUnits) || 0
     };
   
     const res = updateBooking(updatedBooking);
@@ -357,6 +458,27 @@ Front Desk: 95008 21550 | 90437 80215`;
       );
     }
 
+    // Auto-record final payment settlement if selected
+    if (settleFinalPayNow && finalFinancials.balanceDue > 0) {
+      const settledAmount = finalFinancials.balanceDue;
+      addPayment({
+        bookingId: selectedBooking.id,
+        customerName: selectedBooking.customerName,
+        amount: settledAmount,
+        method: finalPayMethod,
+        date: checkoutTime.split(' ')[0],
+        referenceNumber: finalPayRef || `FIN-${Date.now().toString().slice(-6)}`,
+        recordedBy: 'Front Desk Manager',
+        notes: `Final settlement upon checkout (EB Units: ${chkEbFinalUnits - chkEbInitialUnits} @ ₹${chkEbRate})`
+      });
+
+      finalFinancials = {
+        ...finalFinancials,
+        advancePaid: finalFinancials.advancePaid + settledAmount,
+        balanceDue: 0
+      };
+    }
+
     const updatedBooking: Booking = {
       ...selectedBooking,
       status: 'Completed' as const,
@@ -368,6 +490,7 @@ Front Desk: 95008 21550 | 90437 80215`;
       ebInitialUnits: chkEbInitialUnits,
       ebFinalUnits: chkEbFinalUnits,
       ebRate: chkEbRate,
+      ebTotalAmount: Number(chkElectricity),
       damageAmount: Number(chkDamages),
       mahalCharges: selectedBooking.serviceType === 'mahal' ? {
         electricity: Number(chkElectricity),
@@ -381,6 +504,9 @@ Front Desk: 95008 21550 | 90437 80215`;
       damagePic: chkDamagePic,
       damagePicTime: chkDamagePicTime,
       damageReportText: chkDamageReport,
+      customerSignature: custSignature || selectedBooking.customerSignature,
+      customerSignedAt: custSignature ? new Date().toISOString() : selectedBooking.customerSignedAt,
+      paymentStatus: (finalFinancials.balanceDue <= 0 ? 'Paid' : 'Partially Paid') as any,
       financials: finalFinancials
     };
 
@@ -511,9 +637,48 @@ Front Desk: 95008 21550 | 90437 80215`;
     }
   };
 
+  // Live recalculation of final checkout financials for Mahal & Residency
+  const liveCheckoutFinancials = useMemo(() => {
+    if (!selectedBooking) return null;
+    if (selectedBooking.serviceType === 'mahal') {
+      const pkgPrice = selectedBooking.packageName === 'Basic' ? 100000 : (selectedBooking.packageName === 'Standard' ? 150000 : 220000);
+      return invoiceService.calculateMahalFinancials(
+        pkgPrice,
+        selectedBooking.eventDetails?.decorator || false,
+        selectedBooking.eventDetails?.catering || false,
+        selectedBooking.guestCount,
+        Number(checkoutDiscount) || 0,
+        selectedBooking.financials?.advancePaid || 0,
+        checkoutBillingType,
+        {
+          electricity: Number(chkElectricity) || 0,
+          rooms: Number(chkRooms) || 0,
+          generator: Number(chkGenerator) || 0,
+          damages: Number(chkDamages) || 0,
+          other: Number(chkOther) || 0
+        }
+      );
+    } else {
+      const checkInDatePart = checkoutInTime.split(' ')[0] || selectedBooking.checkInDate;
+      const checkOutDatePart = checkoutTime.split(' ')[0] || selectedBooking.checkOutDate;
+      const originalNights = Math.max(1, Math.ceil((new Date(selectedBooking.checkOutDate).getTime() - new Date(selectedBooking.checkInDate).getTime()) / (1000 * 60 * 60 * 24)));
+      const rate = selectedBooking.financials?.subtotal ? (selectedBooking.financials.subtotal / ((selectedBooking.roomCount || 1) * originalNights)) : 1500;
+      return invoiceService.calculateRoomFinancials(
+        checkInDatePart,
+        checkOutDatePart,
+        rate,
+        selectedBooking.roomCount || 1,
+        Number(checkoutDiscount) || 0,
+        selectedBooking.financials?.advancePaid || 0,
+        checkoutBillingType
+      );
+    }
+  }, [selectedBooking, checkoutDiscount, checkoutBillingType, chkElectricity, chkRooms, chkGenerator, chkDamages, chkOther, checkoutInTime, checkoutTime]);
+
   const handleBrowserPrint = () => {
     setIsPrintSelectorOpen(true);
   };
+
 
   return (
     <div
@@ -940,6 +1105,9 @@ Front Desk: 95008 21550 | 90437 80215`;
                       setCheckoutDiscount(selectedBooking.financials.discount);
                       setCheckoutBillingType(selectedBooking.billingType || 'GST');
                       setChkEbInitialUnits(selectedBooking.ebInitialUnits || 0);
+                      setChkEbFinalUnits(selectedBooking.ebFinalUnits || selectedBooking.ebInitialUnits || 0);
+                      setChkEbRate(selectedBooking.ebRate || 15);
+                      setCustSignature(selectedBooking.customerSignature || '');
                       
                       setChkRooms(selectedBooking.mahalCharges?.rooms || 0);
                       setChkGenerator(selectedBooking.mahalCharges?.generator || 0);
@@ -1070,46 +1238,104 @@ Front Desk: 95008 21550 | 90437 80215`;
                 )}
               </div>
 
-              {/* Timestamped Media Verification Gallery */}
-              {(selectedBooking.identityPic || selectedBooking.membersPic || selectedBooking.ebInitialPic || selectedBooking.ebMeterCheckOutPic || selectedBooking.damagePic) && (
-                <div>
-                  <h3 style={{ borderBottom: '1px solid #E2E8F0', paddingBottom: '6px', fontSize: '0.95rem', color: '#0F172A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                    <Camera size={16} color="#C9A227" /> Timestamped Media Verification
+              {/* Timestamped Media Verification Gallery & Primary Identity */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px', marginBottom: '12px' }}>
+                  <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Camera size={16} color="#C9A227" /> Media & Primary Identity Verification
                   </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
-                    {selectedBooking.identityPic && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Primary Identity</span>
-                        <img src={selectedBooking.identityPic} alt="Identity" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
-                      </div>
-                    )}
-                    {selectedBooking.membersPic && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Group / Members</span>
-                        <img src={selectedBooking.membersPic} alt="Members" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
-                      </div>
-                    )}
-                    {selectedBooking.ebInitialPic && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Initial EB ({selectedBooking.ebInitialUnits} U)</span>
-                        <img src={selectedBooking.ebInitialPic} alt="Initial EB" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
-                      </div>
-                    )}
-                    {selectedBooking.ebMeterCheckOutPic && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Final EB ({selectedBooking.ebFinalUnits} U)</span>
-                        <img src={selectedBooking.ebMeterCheckOutPic} alt="Final EB" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
-                      </div>
-                    )}
-                    {selectedBooking.damagePic && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DC2626' }}>Damage Report Pic</span>
-                        <img src={selectedBooking.damagePic} alt="Damage" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #FCA5A5' }} />
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => primaryIdInputRef.current?.click()}
+                    style={{
+                      padding: '4px 10px',
+                      backgroundColor: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      color: '#0F2942',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontWeight: 600
+                    }}
+                  >
+                    <UploadCloud size={13} color="#C9A227" /> Upload Primary ID (Cloudinary)
+                  </button>
+                  <input
+                    type="file"
+                    ref={primaryIdInputRef}
+                    accept="image/*"
+                    onChange={handlePrimaryIdUpload}
+                    style={{ display: 'none' }}
+                  />
                 </div>
-              )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px' }}>
+                  {selectedBooking.identityPic ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle size={12} color="#16A34A" /> Primary Identity
+                      </span>
+                      <img src={selectedBooking.identityPic} alt="Identity" style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => primaryIdInputRef.current?.click()}
+                      style={{
+                        height: '95px',
+                        border: '1.5px dashed #CBD5E1',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        backgroundColor: '#F8FAFC',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <UploadCloud size={20} color="#94A3B8" />
+                      <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Attach Primary ID</span>
+                    </div>
+                  )}
+
+                  {selectedBooking.membersPic && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Group / Members</span>
+                      <img src={selectedBooking.membersPic} alt="Members" style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
+                    </div>
+                  )}
+                  {selectedBooking.ebInitialPic && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Initial EB ({selectedBooking.ebInitialUnits || 0} U)</span>
+                      <img src={selectedBooking.ebInitialPic} alt="Initial EB" style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
+                    </div>
+                  )}
+                  {selectedBooking.ebMeterCheckOutPic && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>Final EB ({selectedBooking.ebFinalUnits || 0} U)</span>
+                      <img src={selectedBooking.ebMeterCheckOutPic} alt="Final EB" style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #CBD5E1' }} />
+                    </div>
+                  )}
+                  {selectedBooking.damagePic && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DC2626' }}>Damage Report Pic</span>
+                      <img src={selectedBooking.damagePic} alt="Damage" style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #FCA5A5' }} />
+                    </div>
+                  )}
+                  {selectedBooking.customerSignature && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0F2942', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <PenTool size={12} color="#C9A227" /> Customer Sign
+                      </span>
+                      <img src={selectedBooking.customerSignature} alt="Customer Signature" style={{ width: '100%', height: '95px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #CBD5E1', backgroundColor: '#F8FAFC' }} />
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Financial Summary */}
               <div>
@@ -1915,6 +2141,20 @@ Front Desk: 95008 21550 | 90437 80215`;
                     <span style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '2px', display: 'block' }}>Captured: {chkInEbTime}</span>
                   </div>
                 )}
+                
+                <div style={{ marginTop: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '0.725rem', color: '#92400E', fontWeight: 700, marginBottom: '4px' }}>
+                    INITIAL EB METER READING (kWh UNITS) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Enter starting meter units (e.g. 14250)"
+                    value={chkEbInitialUnits || ''}
+                    onChange={(e) => setChkEbInitialUnits(Number(e.target.value))}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #FDE68A', fontSize: '0.85rem', fontWeight: 700, outline: 'none' }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -2126,14 +2366,142 @@ Front Desk: 95008 21550 | 90437 80215`;
                 </div>
               )}
 
+              {/* Live Final Settlement & Payment Decision */}
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F2942', letterSpacing: '0.05em' }}>
+                    FINAL PAY & SETTLEMENT SUMMARY
+                  </span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', backgroundColor: (liveCheckoutFinancials?.balanceDue || 0) > 0 ? '#FEF2F2' : '#F0FDF4', color: (liveCheckoutFinancials?.balanceDue || 0) > 0 ? '#DC2626' : '#16A34A' }}>
+                    {(liveCheckoutFinancials?.balanceDue || 0) > 0 ? 'Balance Pending' : 'Fully Cleared'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: '#475569', borderBottom: '1px dashed #CBD5E1', paddingBottom: '8px', marginBottom: '8px' }}>
+                  <div>Gross Subtotal: <strong style={{ color: '#0F172A' }}>₹{liveCheckoutFinancials?.subtotal.toLocaleString()}</strong></div>
+                  <div>Tax Amount: <strong style={{ color: '#0F172A' }}>₹{liveCheckoutFinancials?.tax.toLocaleString()}</strong></div>
+                  <div>Total Payable: <strong style={{ color: '#0F172A' }}>₹{liveCheckoutFinancials?.total.toLocaleString()}</strong></div>
+                  <div>Advance Paid: <strong style={{ color: '#16A34A' }}>- ₹{liveCheckoutFinancials?.advancePaid.toLocaleString()}</strong></div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: '#FEF9C3', borderRadius: '8px', border: '1.5px solid #FDE047' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#854D0E' }}>FINAL PAY TO SETTLE:</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#854D0E' }}>₹{(liveCheckoutFinancials?.balanceDue || 0).toLocaleString()}</span>
+                </div>
+
+                {(liveCheckoutFinancials?.balanceDue || 0) > 0 && (
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #CBD5E1' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', marginBottom: '8px' }}>
+                      <input
+                        type="checkbox"
+                        checked={settleFinalPayNow}
+                        onChange={(e) => setSettleFinalPayNow(e.target.checked)}
+                        style={{ accentColor: '#16A34A' }}
+                      />
+                      <span>Collect & Settle Final Payment Now (₹{(liveCheckoutFinancials?.balanceDue || 0).toLocaleString()})</span>
+                    </label>
+
+                    {settleFinalPayNow && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '8px', backgroundColor: '#FFFFFF', borderRadius: '6px', border: '1px solid #CBD5E1' }}>
+                        <div>
+                          <label style={{ fontSize: '0.7rem', color: '#64748B', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Payment Method</label>
+                          <select
+                            value={finalPayMethod}
+                            onChange={(e) => setFinalPayMethod(e.target.value as any)}
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                          >
+                            <option value="Cash">Cash (Counter)</option>
+                            <option value="UPI">UPI / QR Code</option>
+                            <option value="Card">Credit / Debit Card</option>
+                            <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem', color: '#64748B', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Ref / Receipt #</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Cash Memo / UPI Ref"
+                            value={finalPayRef}
+                            onChange={(e) => setFinalPayRef(e.target.value)}
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Customer Digital Signature Pad */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '10px', padding: '14px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PenTool size={15} color="#C9A227" />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F2942' }}>
+                      CUSTOMER ACKNOWLEDGMENT & SIGNATURE
+                    </span>
+                  </div>
+                  {custSignature && (
+                    <button
+                      type="button"
+                      onClick={clearCustSignature}
+                      style={{ fontSize: '0.7rem', color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Clear & Redraw
+                    </button>
+                  )}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748B', marginBottom: '8px' }}>
+                  Customer signs below acknowledging EB meter readings, facility inspection, and final bill settlement.
+                </div>
+
+                <div style={{ border: '1.5px dashed #94A3B8', borderRadius: '6px', backgroundColor: '#F8FAFC', position: 'relative', overflow: 'hidden', touchAction: 'none' }}>
+                  <canvas
+                    ref={sigCanvasRef}
+                    width={480}
+                    height={110}
+                    onMouseDown={startSigDrawing}
+                    onMouseMove={drawSig}
+                    onMouseUp={stopSigDrawing}
+                    onMouseLeave={stopSigDrawing}
+                    onTouchStart={startSigDrawing}
+                    onTouchMove={drawSig}
+                    onTouchEnd={stopSigDrawing}
+                    style={{ width: '100%', height: '110px', display: 'block', cursor: 'crosshair' }}
+                  />
+                  {!custSignature && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: '#94A3B8', fontSize: '0.75rem', fontStyle: 'italic' }}>
+                      ✍️ Sign here with finger, stylus, or mouse (Sign on Screen)
+                    </div>
+                  )}
+                </div>
+
+                {custSignature && (
+                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#16A34A', fontWeight: 600 }}>
+                    <CheckCircle size={13} color="#16A34A" /> Signature Recorded Digitally (Will appear on Page 2 Annexure A)
+                  </div>
+                )}
+              </div>
+
             </div>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
               <button
                 onClick={handleProceedCheckout}
-                style={{ flexGrow: 1, padding: '12px', backgroundColor: '#16A34A', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
+                disabled={selectedBooking.serviceType === 'mahal' && !chkOutEbPic}
+                style={{
+                  flexGrow: 1,
+                  padding: '12px',
+                  backgroundColor: (selectedBooking.serviceType === 'mahal' && !chkOutEbPic) ? '#94A3B8' : '#16A34A',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: (selectedBooking.serviceType === 'mahal' && !chkOutEbPic) ? 'not-allowed' : 'pointer'
+                }}
               >
-                Proceed & Print Bill
+                {selectedBooking.serviceType === 'mahal' && !chkOutEbPic ? '⚠️ Capture EB Pic to Checkout' : 'Proceed & Print 2-Page Bill'}
               </button>
               <button
                 onClick={() => setIsCheckoutPromptOpen(false)}

@@ -327,6 +327,248 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
   doc.setTextColor(100, 116, 139);
   doc.text('Thank you for choosing SV MAHAL & RESIDENCY.', 105, footerY + 32, { align: 'center' });
 
+  // ==========================================
+  // PAGE 2: ANNEXURE A - GUEST REGISTRATION & PRIMARY IDENTITY RECORD
+  // ==========================================
+  doc.addPage();
+
+  // Page 2 Header
+  doc.setFont(fontTitle, 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(15, 23, 42);
+  doc.text('SV MAHAL & RESIDENCY', 15, 20);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(201, 162, 39); // Gold
+  doc.text('ANNEXURE A: GUEST REGISTRATION & PRIMARY IDENTITY VERIFICATION', 15, 26);
+
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text('No.859/B, Bangalore Main Road, Chengam - 606701, Tamil Nadu | Ph: 95008 21550 / 90437 80215', 15, 31);
+
+  // Meta box top right
+  doc.setFillColor(241, 245, 249);
+  doc.rect(130, 15, 65, 18, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(130, 15, 65, 18);
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(15, 41, 66);
+  doc.text('BOOKING ID:', 133, 20);
+  doc.text(booking.id, 192, 20, { align: 'right' });
+  doc.text('RECORD DATE:', 133, 25);
+  doc.text(dateStr, 192, 25, { align: 'right' });
+  doc.text('SERVICE:', 133, 30);
+  doc.text(booking.serviceType === 'mahal' ? 'SV Mahal Banquet' : 'Lodging Stay', 192, 30, { align: 'right' });
+
+  // 1. Guest Particulars Box (Left)
+  const gridY = 38;
+  doc.setFillColor(248, 250, 252);
+  doc.rect(15, gridY, 86, 44, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(15, gridY, 86, 44);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 41, 66);
+  doc.text('PRIMARY GUEST CREDENTIALS', 18, gridY + 6);
+  doc.line(18, gridY + 8, 98, gridY + 8);
+
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Full Name:', 18, gridY + 13);
+  doc.text('Mobile Phone:', 18, gridY + 18);
+  doc.text('Email Address:', 18, gridY + 23);
+  doc.text('Permanent Address:', 18, gridY + 28);
+  doc.text('Identity Proof Type:', 18, gridY + 36);
+  doc.text('Identity Document No:', 18, gridY + 41);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text((booking.customerName || 'Guest').toUpperCase(), 48, gridY + 13);
+  doc.text(booking.customerPhone || 'N/A', 48, gridY + 18);
+  doc.text(booking.customerEmail || 'N/A', 48, gridY + 23);
+  doc.setFontSize(7);
+  doc.text((booking.customerAddress || 'Chengam, Tamil Nadu').substring(0, 32), 48, gridY + 28);
+  doc.setFontSize(7.5);
+  doc.setTextColor(2, 132, 199); // Cyan
+  doc.text(booking.idType || 'Aadhaar Card', 48, gridY + 36);
+  doc.setTextColor(15, 23, 42);
+  doc.text(booking.idNumber || 'Verified', 48, gridY + 41);
+
+  // 2. Stay Schedule & Event Particulars Box (Right)
+  doc.setFillColor(248, 250, 252);
+  doc.rect(109, gridY, 86, 44, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(109, gridY, 86, 44);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 41, 66);
+  doc.text('SCHEDULED & ACTUAL STAY PARTICULARS', 112, gridY + 6);
+  doc.line(112, gridY + 8, 192, gridY + 8);
+
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Category:', 112, gridY + 13);
+  doc.text('Event / Package:', 112, gridY + 18);
+  doc.text('Scheduled Check-in:', 112, gridY + 23);
+  doc.text('Actual Check-in Time:', 112, gridY + 28);
+  doc.text('Scheduled Check-out:', 112, gridY + 33);
+  doc.text('Actual Check-out Time:', 112, gridY + 38);
+  if (booking.serviceType === 'mahal') {
+    doc.text('EB Meter Readings:', 112, gridY + 43);
+  }
+
+  doc.setFont(fontBody, 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(booking.serviceType === 'mahal' ? 'SV Mahal Banquet' : 'Lodging Stay', 148, gridY + 13);
+  doc.text(booking.packageName || 'Standard', 148, gridY + 18);
+  doc.text(booking.checkInDate, 148, gridY + 23);
+  doc.setTextColor(22, 163, 74); // Green
+  doc.text(booking.actualCheckInTime || booking.checkInDate + ' 12:00', 148, gridY + 28);
+  doc.setTextColor(15, 23, 42);
+  doc.text(booking.checkOutDate, 148, gridY + 33);
+  doc.setTextColor(2, 132, 199); // Blue
+  doc.text(booking.actualCheckOutTime || booking.checkOutDate + ' 12:00', 148, gridY + 38);
+  if (booking.serviceType === 'mahal') {
+    doc.setTextColor(180, 83, 9);
+    doc.text(`${booking.ebInitialUnits || 0} to ${booking.ebFinalUnits || 0} (${Math.max(0, (booking.ebFinalUnits || 0) - (booking.ebInitialUnits || 0))} U)`, 148, gridY + 43);
+  }
+
+  // 3. Primary Identity Document Frame Box
+  const docBoxY = 88;
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, docBoxY, 180, 75);
+  doc.setDrawColor(15, 41, 66);
+  doc.setLineWidth(0.4);
+  doc.rect(15, docBoxY, 180, 75);
+  doc.setLineWidth(0.2);
+
+  // Top banner of ID box
+  doc.setFillColor(15, 41, 66);
+  doc.rect(15, docBoxY, 180, 7, 'F');
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text('ATTACHED GOVERNMENT PRIMARY IDENTITY CARD PROOF', 18, docBoxY + 5);
+  doc.text(`TYPE: ${(booking.idType || 'AADHAAR CARD').toUpperCase()} • VERIFIED CLOUDINARY CDN RECORD`, 192, docBoxY + 5, { align: 'right' });
+
+  // Interior ID verification details / embed area
+  doc.setFillColor(248, 250, 252);
+  doc.rect(20, docBoxY + 11, 170, 56, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(20, docBoxY + 11, 170, 56);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 41, 66);
+  doc.text('OFFICIAL GOVERNMENT PHOTO IDENTITY PROOF', 105, docBoxY + 22, { align: 'center' });
+
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Physical government-issued identity proof verified and scanned by front desk operations.', 105, docBoxY + 28, { align: 'center' });
+  doc.text('Stored encrypted under Tamil Nadu Hotel & Public Gathering Security Guidelines.', 105, docBoxY + 33, { align: 'center' });
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(40, docBoxY + 38, 130, 20, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(40, docBoxY + 38, 130, 20);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text('DOCUMENT TYPE:', 45, docBoxY + 45);
+  doc.text('DOCUMENT NUMBER:', 45, docBoxY + 51);
+  doc.text('HOLDER NAME:', 45, docBoxY + 56);
+
+  doc.setTextColor(15, 41, 66);
+  doc.text(booking.idType || 'Aadhaar Card', 90, docBoxY + 45);
+  doc.text(booking.idNumber || 'Verified & Present', 90, docBoxY + 51);
+  doc.text((booking.customerName || 'Guest').toUpperCase(), 90, docBoxY + 56);
+
+  doc.setFont(fontBody, 'italic');
+  doc.setFontSize(6.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text('Identity proof verified by SV Residency Reception Front Desk.', 105, docBoxY + 72, { align: 'center' });
+
+  // 4. Declaration box
+  const declY = 168;
+  doc.setFillColor(248, 250, 252);
+  doc.rect(15, declY, 180, 22, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(15, declY, 180, 22);
+
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(15, 41, 66);
+  doc.text('GUEST DECLARATION & IDENTITY ACKNOWLEDGMENT:', 18, declY + 5);
+
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(51, 65, 85);
+  const declarationText = `I, ${(booking.customerName || 'the Customer').toUpperCase()}, solemnly declare that the credentials and identity document presented above are true, authentic, and legally valid. I confirm that all check-in and check-out timings, room/hall facilities, and electricity meter readings have been verified in my presence, and I accept the final financial settlement.`;
+  const splitDeclaration = doc.splitTextToSize(declarationText, 172);
+  doc.text(splitDeclaration, 18, declY + 10);
+
+  // 5. Customer Signature & Counter-Signature blocks
+  const sigY = 196;
+  // Customer Sig Box
+  doc.rect(15, sigY, 86, 42);
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(15, sigY, 86, 42);
+
+  doc.line(25, sigY + 22, 91, sigY + 22);
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 41, 66);
+  doc.text('SIGNATURE OF CUSTOMER / PRIMARY GUEST', 53, sigY + 27, { align: 'center' });
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Name: ${(booking.customerName || '').toUpperCase()}`, 53, sigY + 32, { align: 'center' });
+  doc.text(`Phone: ${booking.customerPhone || ''} | Chengam`, 53, sigY + 36, { align: 'center' });
+  doc.text(`Date: ${dateStr}`, 53, sigY + 40, { align: 'center' });
+
+  // Management Counter-Signatory Box
+  doc.rect(109, sigY, 86, 42);
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(109, sigY, 86, 42);
+
+  // Stamp circle
+  doc.setDrawColor(201, 162, 39);
+  doc.circle(152, sigY + 12, 10);
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(5);
+  doc.setTextColor(201, 162, 39);
+  doc.text('SV RESIDENCY', 152, sigY + 10, { align: 'center' });
+  doc.text('OFFICIAL SEAL', 152, sigY + 13, { align: 'center' });
+  doc.text('CHENGAM', 152, sigY + 16, { align: 'center' });
+
+  doc.setDrawColor(203, 213, 225);
+  doc.line(119, sigY + 22, 185, sigY + 22);
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 41, 66);
+  doc.text('AUTHORIZED FRONT DESK / MANAGER', 152, sigY + 27, { align: 'center' });
+  doc.setFont(fontBody, 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(71, 85, 105);
+  doc.text('SV Mahal & SV Residency Operations', 152, sigY + 32, { align: 'center' });
+  doc.text('Chengam, Tiruvannamalai Dt., Tamil Nadu', 152, sigY + 36, { align: 'center' });
+  doc.text(`Date: ${dateStr}`, 152, sigY + 40, { align: 'center' });
+
+  // Bottom footer on page 2
+  doc.setFont(fontTitle, 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  doc.text(`Annexure A to Invoice ${invoiceNum} • Immutable Guest Identity Verification Record`, 105, 248, { align: 'center' });
+
   // Save the PDF file
   doc.save(`Invoice_${booking.id}.pdf`);
 };

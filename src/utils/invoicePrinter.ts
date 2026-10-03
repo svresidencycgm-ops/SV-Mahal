@@ -254,6 +254,71 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
         <strong>Amount in Words:</strong> ${numberToIndianWords(booking.financials.total)}
       </div>
 
+      <!-- MAHAL ELECTRICITY (EB) CONSUMPTION & METER VERIFICATION SECTION -->
+      ${!isRoom ? `
+        <div class="eb-audit-section">
+          <div class="eb-audit-title">
+            <span>⚡ ELECTRICITY BOARD (EB) METER READING & CONSUMPTION CALCULATION</span>
+            <span style="font-weight: 700; color: #0F2942;">Tariff Rate: ₹${booking.ebRate || 15}/Unit (kWh)</span>
+          </div>
+
+          <table class="eb-audit-table">
+            <thead>
+              <tr>
+                <th>INITIAL READING (CHECK-IN)</th>
+                <th>FINAL READING (CHECK-OUT)</th>
+                <th>UNITS CONSUMED</th>
+                <th>TARIFF RATE</th>
+                <th style="text-align: right;">TOTAL ELECTRICITY CHARGE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>${booking.ebInitialUnits || 0} kWh</strong>
+                  <div style="font-size: 6.8pt; color: #64748B;">Captured: ${booking.ebMeterCheckInTime || booking.actualCheckInTime || booking.checkInDate}</div>
+                </td>
+                <td>
+                  <strong>${booking.ebFinalUnits || 0} kWh</strong>
+                  <div style="font-size: 6.8pt; color: #64748B;">Captured: ${booking.ebMeterCheckOutTime || booking.actualCheckOutTime || booking.checkOutDate}</div>
+                </td>
+                <td style="font-weight: 800; color: #0F2942;">
+                  ${Math.max(0, (booking.ebFinalUnits || 0) - (booking.ebInitialUnits || 0))} Units
+                </td>
+                <td>₹${booking.ebRate || 15} / Unit</td>
+                <td style="text-align: right; font-weight: 800; color: #0284C7; font-size: 8.5pt;">
+                  ₹${(booking.mahalCharges?.electricity || booking.ebTotalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          ${(booking.ebMeterCheckInPic || booking.ebInitialPic || booking.ebMeterCheckOutPic) ? `
+            <div class="eb-photos-grid">
+              <div class="eb-photo-card">
+                <div class="eb-photo-label">1. INITIAL EB METER PHOTO (AT CHECK-IN)</div>
+                ${(booking.ebMeterCheckInPic || booking.ebInitialPic) ? `
+                  <img src="${booking.ebMeterCheckInPic || booking.ebInitialPic}" alt="Initial EB Meter Photo" class="eb-photo-img" />
+                ` : `
+                  <div class="eb-photo-empty">Verified at Counter (${booking.ebInitialUnits || 0} Units)</div>
+                `}
+                <div class="eb-photo-sub">Captured: ${booking.ebMeterCheckInTime || 'Check-in'} • Initial: <strong>${booking.ebInitialUnits || 0} kWh</strong></div>
+              </div>
+
+              <div class="eb-photo-card">
+                <div class="eb-photo-label">2. FINAL EB METER PHOTO (AT CHECK-OUT)</div>
+                ${booking.ebMeterCheckOutPic ? `
+                  <img src="${booking.ebMeterCheckOutPic}" alt="Final EB Meter Photo" class="eb-photo-img" />
+                ` : `
+                  <div class="eb-photo-empty">Verified at Counter (${booking.ebFinalUnits || 0} Units)</div>
+                `}
+                <div class="eb-photo-sub">Captured: ${booking.ebMeterCheckOutPic ? (booking.ebMeterCheckOutTime || 'Check-out') : 'Check-out'} • Final: <strong>${booking.ebFinalUnits || 0} kWh</strong></div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
       <!-- BANK SETTLEMENT & UPI SECTION -->
       <div class="settle-grid">
         <div class="settle-box">
@@ -304,10 +369,159 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
   `;
 }
 
+function renderIdentityPageHtml(booking: Booking, copyLabel: string): string {
+  const isRoom = booking.serviceType === 'room';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const invoiceNum = `INV-${booking.id.substring(booking.id.indexOf('-') + 1)}`;
+  const primaryIdPic = booking.identityPic || (booking.identityPics && booking.identityPics[0]);
+
+  return `
+    <div class="invoice-page identity-page">
+      <!-- TOP COPY BANNER -->
+      <div class="copy-bar">
+        <span>${copyLabel} — ANNEXURE A: GUEST REGISTRATION & PRIMARY IDENTITY RECORD</span>
+      </div>
+
+      <!-- HEADER WITH OFFICIAL LOGO -->
+      <div class="invoice-header">
+        <div class="brand-left">
+          <div class="logo-medallion">
+            <img src="/logo.png" alt="SV Logo" />
+          </div>
+          <div>
+            <h1 class="brand-title">SV MAHAL & RESIDENCY</h1>
+            <div class="brand-subtitle">Guest Identity Verification & Stay Acknowledgment Record</div>
+            <p class="brand-address">
+              No.859/B, Bangalore Main Road, Chengam - 606701, Tamil Nadu<br/>
+              Front Desk: <strong>95008 21550</strong>, <strong>90437 80215</strong> | GSTIN: 33GTSPD9038L1Z1
+            </p>
+          </div>
+        </div>
+
+        <div class="invoice-meta">
+          <h2 class="meta-title" style="font-size: 11pt;">GUEST ID RECORD</h2>
+          <table class="meta-table">
+            <tr><td>Booking ID:</td><td><strong>${booking.id}</strong></td></tr>
+            <tr><td>Invoice Ref:</td><td><strong>${invoiceNum}</strong></td></tr>
+            <tr><td>Printed On:</td><td>${dateStr} (${timeStr})</td></tr>
+            <tr><td>Category:</td><td><strong>${isRoom ? 'Lodging Stay' : 'SV Mahal Banquet'}</strong></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- GUEST DETAILS & CHECK-IN / CHECK-OUT SCHEDULE -->
+      <div class="details-grid">
+        <div class="detail-box">
+          <div class="box-title">PRIMARY GUEST CREDENTIALS</div>
+          <table class="id-table">
+            <tr><td style="width: 38%; color: #64748B;">Full Legal Name:</td><td><strong style="font-size: 9.5pt; color: #0F2942;">${(booking.customerName || 'Guest').toUpperCase()}</strong></td></tr>
+            <tr><td style="color: #64748B;">Mobile Phone:</td><td><strong>${booking.customerPhone || 'N/A'}</strong></td></tr>
+            <tr><td style="color: #64748B;">Email Address:</td><td>${booking.customerEmail || 'N/A'}</td></tr>
+            <tr><td style="color: #64748B;">Residential Address:</td><td>${booking.customerAddress || 'Chengam, Tamil Nadu'}</td></tr>
+            <tr><td style="color: #64748B;">ID Proof Type:</td><td><strong style="color: #0284C7;">${booking.idType || 'Aadhaar Card'}</strong></td></tr>
+            <tr><td style="color: #64748B;">ID Document No:</td><td><strong style="color: #0F2942;">${booking.idNumber || 'Verified & Present'}</strong></td></tr>
+          </table>
+        </div>
+
+        <div class="detail-box">
+          <div class="box-title">SCHEDULED & ACTUAL CHECK-IN / CHECK-OUT PARTICULARS</div>
+          <table class="id-table">
+            <tr><td style="width: 44%; color: #64748B;">Service Type:</td><td><strong>${isRoom ? 'SV Residency Lodging Stay' : 'SV Thirumana Mahal Banquet'}</strong></td></tr>
+            <tr><td style="color: #64748B;">Package / Units:</td><td><strong>${booking.packageName || (isRoom ? 'Standard Rooms' : 'Muhurtham Package')}</strong></td></tr>
+            <tr><td style="color: #64748B;">Total Guest Count:</td><td><strong>${booking.guestCount || 1} Attendees</strong></td></tr>
+            <tr><td style="color: #64748B;">Check-in Scheduled:</td><td><strong>${booking.checkInDate}</strong></td></tr>
+            <tr><td style="color: #64748B;">Actual Check-in Time:</td><td><strong style="color: #16A34A; background: #DCFCE7; padding: 1px 6px; border-radius: 4px;">● ${booking.actualCheckInTime || booking.checkInDate + ' 12:00'}</strong></td></tr>
+            <tr><td style="color: #64748B;">Check-out Scheduled:</td><td><strong>${booking.checkOutDate}</strong></td></tr>
+            <tr><td style="color: #64748B;">Actual Check-out Time:</td><td><strong style="color: #0284C7; background: #E0F2FE; padding: 1px 6px; border-radius: 4px;">● ${booking.actualCheckOutTime || booking.checkOutDate + ' 12:00'}</strong></td></tr>
+            ${!isRoom ? `
+              <tr><td style="color: #64748B;">EB Consumption:</td><td><strong>${booking.ebInitialUnits || 0} to ${booking.ebFinalUnits || 0} (${Math.max(0, (booking.ebFinalUnits || 0) - (booking.ebInitialUnits || 0))} Units)</strong></td></tr>
+            ` : ''}
+          </table>
+        </div>
+      </div>
+
+      <!-- PRIMARY IDENTITY DOCUMENT PHOTO FRAME -->
+      <div class="id-proof-wrapper">
+        <div class="id-proof-header">
+          <strong>GOVERNMENT PRIMARY IDENTITY CARD ATTACHMENT</strong>
+          <span>Document Type: <strong>${booking.idType || 'Aadhaar Card'}</strong> • Secured via Cloudinary CDN</span>
+        </div>
+
+        <div class="id-proof-box">
+          ${primaryIdPic ? `
+            <img src="${primaryIdPic}" alt="Primary Government Identity Document" class="id-document-img" />
+          ` : `
+            <div class="id-fallback-box">
+              <div style="font-weight: 800; font-size: 11pt; color: #0F2942; margin-bottom: 4px;">OFFICIAL GOVERNMENT IDENTITY RECORD</div>
+              <div style="font-size: 8pt; color: #64748B; max-width: 420px; margin: 0 auto 8px auto;">
+                Physical original identity proof (${booking.idType || 'Aadhaar Card'}) verified and validated by front desk reception desk at check-in.
+              </div>
+              <div style="font-size: 8pt; color: #0284C7; font-weight: 700;">
+                Document Verified: ${booking.idType || 'Aadhaar Card'} | ID Number: ${booking.idNumber || 'Verified'}
+              </div>
+            </div>
+          `}
+        </div>
+        <div class="id-proof-footer">
+          Guest ID verification is recorded under Tamil Nadu Innkeepers & Public Safety Regulations.
+        </div>
+      </div>
+
+      <!-- DECLARATION & FORMAL SIGNATURE BOX -->
+      <div class="declaration-block">
+        <div class="box-title" style="margin-bottom: 3px;">GUEST DECLARATION & IDENTITY ACKNOWLEDGMENT</div>
+        <p style="margin: 0; font-size: 7.2pt; color: #334155; line-height: 1.35;">
+          I, <strong>${(booking.customerName || 'the Customer').toUpperCase()}</strong>, hereby solemnly confirm that the identification details and proof document submitted above are authentic, unexpired, and legally registered to me. I acknowledge that the check-in and check-out dates and timings, hall facilities, utility meter readings (where applicable), and final financial accounts were inspected and finalized with my full agreement.
+        </p>
+      </div>
+
+      <div class="signature-section-grid">
+        <div class="sig-panel">
+          <div class="sig-drawable-area">
+            ${booking.customerSignature ? `
+              <img src="${booking.customerSignature}" alt="Customer Digital Signature" class="customer-sig-image" />
+            ` : `
+              <div class="sig-physical-line"></div>
+            `}
+          </div>
+          <div class="sig-title">SIGNATURE OF CUSTOMER / PRIMARY GUEST</div>
+          <div class="sig-details">Name: <strong>${(booking.customerName || '').toUpperCase()}</strong></div>
+          <div class="sig-details">Mobile: ${booking.customerPhone || ''} | Place: Chengam</div>
+          <div class="sig-details">Date: <strong>${dateStr}</strong></div>
+        </div>
+
+        <div class="sig-panel">
+          <div class="sig-drawable-area">
+            <div class="stamp-seal-box">
+              SV RESIDENCY & MAHAL<br/>
+              OFFICIAL VERIFICATION<br/>
+              CHENGAM - 606701
+            </div>
+            <div class="sig-physical-line"></div>
+          </div>
+          <div class="sig-title">AUTHORIZED FRONT DESK / MANAGER</div>
+          <div class="sig-details">SV Mahal & SV Residency Operations</div>
+          <div class="sig-details">Chengam, Tiruvannamalai Dt., Tamil Nadu</div>
+          <div class="sig-details">Date: <strong>${dateStr}</strong></div>
+        </div>
+      </div>
+
+      <div class="bottom-salute" style="margin-top: 10px;">
+        This document serves as Annexure A to Invoice ${invoiceNum} and remains an immutable part of the guest verification ledger.
+      </div>
+    </div>
+  `;
+}
+
 export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 'both' = 'both'): void {
+  const customerPages = `${renderSinglePageHtml(booking, 'CUSTOMER COPY')}<div class="page-break"></div>${renderIdentityPageHtml(booking, 'CUSTOMER COPY')}`;
+  const adminPages = `${renderSinglePageHtml(booking, 'ADMINISTRATION COPY')}<div class="page-break"></div>${renderIdentityPageHtml(booking, 'ADMINISTRATION COPY')}`;
+  
   const pagesHtml = copyType === 'both'
-    ? `${renderSinglePageHtml(booking, 'CUSTOMER COPY')}<div class="page-break"></div>${renderSinglePageHtml(booking, 'ADMINISTRATION COPY')}`
-    : renderSinglePageHtml(booking, copyType === 'customer' ? 'CUSTOMER COPY' : 'ADMINISTRATION COPY');
+    ? `${customerPages}<div class="page-break"></div>${adminPages}`
+    : (copyType === 'customer' ? customerPages : adminPages);
 
   const fullHtml = `
     <!DOCTYPE html>
@@ -639,6 +853,216 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
           color: #94A3B8;
           font-style: italic;
           margin-top: 8px;
+        }
+
+        /* EB AUDIT SECTION (MAHAL INVOICE) */
+        .eb-audit-section {
+          border: 1px solid #CBD5E1;
+          border-radius: 6px;
+          padding: 8px 10px;
+          margin-bottom: 10px;
+          background: #F8FAFC;
+        }
+        .eb-audit-title {
+          display: flex;
+          justify-content: space-between;
+          font-weight: 800;
+          font-size: 7.2pt;
+          color: #0F2942;
+          border-bottom: 1px solid #E2E8F0;
+          padding-bottom: 3px;
+          margin-bottom: 6px;
+        }
+        .eb-audit-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 7.2pt;
+          margin-bottom: 6px;
+        }
+        .eb-audit-table th {
+          background: #E2E8F0;
+          color: #0F2942;
+          padding: 4px 6px;
+          text-align: left;
+          font-size: 6.8pt;
+          font-weight: 700;
+          border: 1px solid #CBD5E1;
+        }
+        .eb-audit-table td {
+          padding: 4px 6px;
+          border: 1px solid #E2E8F0;
+          background: #FFFFFF;
+        }
+        .eb-photos-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 6px;
+        }
+        .eb-photo-card {
+          border: 1px solid #CBD5E1;
+          border-radius: 4px;
+          padding: 6px;
+          background: #FFFFFF;
+          text-align: center;
+        }
+        .eb-photo-label {
+          font-size: 6.8pt;
+          font-weight: 800;
+          color: #475569;
+          margin-bottom: 4px;
+        }
+        .eb-photo-img {
+          width: 100%;
+          max-height: 85px;
+          object-fit: contain;
+          border-radius: 4px;
+          border: 1px solid #E2E8F0;
+          background: #0F172A;
+          display: block;
+        }
+        .eb-photo-empty {
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #F1F5F9;
+          color: #64748B;
+          font-size: 7pt;
+          border-radius: 4px;
+          border: 1px dashed #CBD5E1;
+        }
+        .eb-photo-sub {
+          font-size: 6.5pt;
+          color: #64748B;
+          margin-top: 3px;
+        }
+
+        /* ANNEXURE A: IDENTITY VERIFICATION PAGE */
+        .identity-page {
+          background: #FFFFFF;
+        }
+        .id-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 7.2pt;
+        }
+        .id-table td {
+          padding: 2.5px 0;
+          vertical-align: top;
+        }
+        .id-proof-wrapper {
+          border: 1.5px solid #0F2942;
+          border-radius: 6px;
+          padding: 10px;
+          margin-bottom: 10px;
+          background: #FAFAFA;
+        }
+        .id-proof-header {
+          display: flex;
+          justify-content: space-between;
+          font-size: 7.5pt;
+          font-weight: 800;
+          color: #0F2942;
+          border-bottom: 1px solid #CBD5E1;
+          padding-bottom: 4px;
+          margin-bottom: 8px;
+        }
+        .id-proof-box {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 140px;
+          max-height: 180px;
+          background: #F1F5F9;
+          border-radius: 4px;
+          overflow: hidden;
+          border: 1px dashed #CBD5E1;
+          padding: 6px;
+        }
+        .id-document-img {
+          max-width: 100%;
+          max-height: 168px;
+          object-fit: contain;
+          border-radius: 4px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .id-fallback-box {
+          text-align: center;
+          padding: 18px;
+        }
+        .id-proof-footer {
+          font-size: 6.5pt;
+          color: #64748B;
+          margin-top: 6px;
+          text-align: center;
+          font-style: italic;
+        }
+        .declaration-block {
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
+          border-radius: 6px;
+          padding: 8px 10px;
+          margin-bottom: 10px;
+        }
+        .signature-section-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-top: 8px;
+        }
+        .sig-panel {
+          border: 1px solid #CBD5E1;
+          border-radius: 6px;
+          padding: 8px;
+          text-align: center;
+          background: #FFFFFF;
+        }
+        .sig-drawable-area {
+          height: 52px;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          margin-bottom: 6px;
+          position: relative;
+        }
+        .customer-sig-image {
+          max-height: 48px;
+          max-width: 170px;
+          object-fit: contain;
+        }
+        .sig-physical-line {
+          width: 80%;
+          border-bottom: 1.5px solid #0F2942;
+          margin: 0 auto 4px auto;
+        }
+        .stamp-seal-box {
+          border: 2px solid #C9A227;
+          border-radius: 50%;
+          width: 58px;
+          height: 58px;
+          margin: 0 auto -16px auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          font-size: 5pt;
+          color: #C9A227;
+          font-weight: 800;
+          line-height: 1.1;
+          opacity: 0.65;
+          transform: rotate(-5deg);
+        }
+        .sig-title {
+          font-size: 7.2pt;
+          font-weight: 800;
+          color: #0F2942;
+          margin-bottom: 2px;
+        }
+        .sig-details {
+          font-size: 6.8pt;
+          color: #64748B;
+          margin-bottom: 1px;
         }
       </style>
     </head>

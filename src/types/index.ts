@@ -122,6 +122,8 @@ export interface Booking {
   damagePic?: string;
   damagePicTime?: string;
   damageReportText?: string;
+  customerSignature?: string; // Digital signature data URL or image
+  customerSignedAt?: string;
 }
 
 export interface Payment {
