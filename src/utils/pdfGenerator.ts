@@ -49,12 +49,6 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
     month: '2-digit',
     year: 'numeric'
   });
-  const timeStr = createdDate.toLocaleTimeString('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  const invoiceIdentifier = `${dateStr}, ${timeStr} Invoice - ${booking.id}`;
 
   // Business Details (From template)
   const businessName = 'SV MAHAL & RESIDENCY';
@@ -91,32 +85,26 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
   doc.setTextColor(15, 41, 66); // Dark Navy
   doc.text(invoiceTypeTitle, 195, 18, { align: 'right' });
 
-  // Timestamp and Invoice ID aligned directly under SERVICE INVOICE
-  doc.setFont(fontBody, 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105); // Muted slate
-  doc.text(invoiceIdentifier, 195, 23, { align: 'right' });
-
   // Invoice # and Date Table
   doc.setFillColor(241, 245, 249);
-  doc.rect(130, 27, 65, 16, 'F');
+  doc.rect(130, 25, 65, 16, 'F');
   doc.setDrawColor(203, 213, 225);
-  doc.line(130, 27, 195, 27);
-  doc.line(130, 35, 195, 35);
-  doc.line(130, 43, 195, 43);
-  doc.line(130, 27, 130, 43);
-  doc.line(162, 27, 162, 43);
-  doc.line(195, 27, 195, 43);
+  doc.line(130, 25, 195, 25);
+  doc.line(130, 33, 195, 33);
+  doc.line(130, 41, 195, 41);
+  doc.line(130, 25, 130, 41);
+  doc.line(162, 25, 162, 41);
+  doc.line(195, 25, 195, 41);
 
   doc.setFont(fontBody, 'bold');
   doc.setFontSize(8);
   doc.setTextColor(15, 23, 42);
-  doc.text('INVOICE #', 146, 32, { align: 'center' });
-  doc.text('DATE', 178, 32, { align: 'center' });
+  doc.text('INVOICE #', 146, 30, { align: 'center' });
+  doc.text('DATE', 178, 30, { align: 'center' });
   doc.setFont(fontBody, 'normal');
   doc.setFontSize(8.5);
-  doc.text(invoiceNum, 146, 40, { align: 'center' });
-  doc.text(`${dateStr}`, 178, 40, { align: 'center' });
+  doc.text(invoiceNum, 146, 38, { align: 'center' });
+  doc.text(`${dateStr}`, 178, 38, { align: 'center' });
 
   // BILL TO Banner
   doc.setFillColor(203, 213, 225);

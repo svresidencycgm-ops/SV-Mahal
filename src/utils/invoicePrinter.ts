@@ -37,7 +37,6 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
     minute: '2-digit',
     hour12: false
   });
-  const invoiceIdentifier = `${dateStr}, ${timeStr} Invoice - ${booking.id}`;
 
   const baseVal = booking.financials.baseAmount ?? booking.financials.subtotal;
   const isGst = booking.billingType === 'GST';
@@ -76,7 +75,6 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
 
         <div class="invoice-meta">
           <h2 class="meta-title">${isGst ? 'TAX INVOICE' : 'SERVICE INVOICE'}</h2>
-          <div class="meta-tagline">${invoiceIdentifier}</div>
           <table class="meta-table">
             <tr><td>Invoice No:</td><td><strong>${invoiceNum}</strong></td></tr>
             <tr><td>Date:</td><td>${dateStr} (${timeStr})</td></tr>
@@ -433,16 +431,8 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
           font-size: 14pt;
           font-weight: 800;
           color: #0F2942;
-          margin: 0;
+          margin: 0 0 4px 0;
           letter-spacing: 0.05em;
-        }
-        .meta-tagline {
-          font-size: 8.5pt;
-          font-weight: 700;
-          color: #475569;
-          margin: 2px 0 6px 0;
-          letter-spacing: 0.02em;
-          text-align: right;
         }
         .meta-table {
           margin-left: auto;
