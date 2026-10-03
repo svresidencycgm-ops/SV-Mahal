@@ -4,10 +4,11 @@ import {
   Menu, Bell, Search, LogOut, LayoutDashboard, 
   Inbox, Users, Bed, Building, DollarSign, Settings, 
   History, BarChart3, Check, ShieldCheck, Globe,
-  MessageSquare, Heart, Droplets
+  MessageSquare, Heart, Droplets, User, Camera
 } from 'lucide-react';
 import { OnsiteBookingCrm } from './OnsiteBookingCrm';
 import { MahalOnsiteBookingCrm } from './MahalOnsiteBookingCrm';
+import { uploadToCloudinary } from '../services/cloudinary';
 interface CrmLayoutProps {
   children: React.ReactNode;
 }
@@ -17,8 +18,41 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     currentView, setView, currentUserRole, setUserRole, 
     notifications, markNotificationRead, clearNotifications, 
     globalSearch, setSelectedBooking, bookings,
-    currentLanguage, setLanguage, translate
+    currentLanguage, setLanguage, translate, addToast
   } = useApp();
+
+  const [userAvatar, setUserAvatar] = useState<string>(() => {
+    return localStorage.getItem('sv_user_avatar') || '';
+  });
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      setUserAvatar(base64);
+      localStorage.setItem('sv_user_avatar', base64);
+      addToast('Profile Updated', 'Profile photo updated successfully.', 'success');
+      try {
+        const res = await uploadToCloudinary(base64, 'sv_residency_profiles');
+        if (res.isCloudinary && res.url) {
+          setUserAvatar(res.url);
+          localStorage.setItem('sv_user_avatar', res.url);
+        }
+      } catch (err) {
+        console.warn('Profile image Cloudinary upload deferred:', err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveProfilePic = () => {
+    setUserAvatar('');
+    localStorage.removeItem('sv_user_avatar');
+    addToast('Profile Updated', 'Profile photo removed. Showing default icon.', 'info');
+  };
 
   const [isOfflineModalOpen, setIsOfflineModalOpen] = useState(false);
   const [offlineServiceType, setOfflineServiceType] = useState<'room' | 'mahal'>('room');
@@ -649,14 +683,30 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
-                  <img
-                    src={currentUserRole === 'admin'
-                      ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-                      : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
-                    }
-                    alt="User"
-                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6320EE' }}
-                  />
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6320EE' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        backgroundColor: '#EDE9FE',
+                        color: '#6320EE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid #6320EE'
+                      }}
+                      title="Default Admin / Manager Icon"
+                    >
+                      <User size={20} />
+                    </div>
+                  )}
                   <div style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10B981', border: '2px solid #FFFFFF' }} />
                 </div>
 
@@ -676,17 +726,94 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     position: 'absolute',
                     top: '50px',
                     right: 0,
-                    width: '200px',
+                    width: '230px',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid #E2E8F0',
                     borderRadius: '16px',
                     boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
                     zIndex: 200,
-                    padding: '8px 0'
+                    padding: '10px 0'
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div style={{ padding: '8px 14px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
+                  {/* Profile Header & Upload Action */}
+                  <div style={{ padding: '4px 14px 12px 14px', borderBottom: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, backgroundColor: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6320EE', border: '1.5px solid #6320EE' }}>
+                        {userAvatar ? (
+                          <img src={userAvatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={18} />
+                        )}
+                      </div>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1E293B', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                          {currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager'}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B' }}>
+                          {currentUserRole === 'admin' ? 'Superadmin' : 'Duty Manager'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => profileFileInputRef.current?.click()}
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        backgroundColor: '#F3E8FF',
+                        color: '#6320EE',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'background 0.2s',
+                        marginBottom: userAvatar ? '6px' : '0'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E9D5FF')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
+                    >
+                      <Camera size={14} /> {userAvatar ? 'Update Photo (Cloudinary)' : 'Upload Photo (Cloudinary)'}
+                    </button>
+
+                    {userAvatar && (
+                      <button
+                        onClick={handleRemoveProfilePic}
+                        style={{
+                          width: '100%',
+                          padding: '5px 10px',
+                          backgroundColor: 'transparent',
+                          color: '#EF4444',
+                          border: '1px solid #FEE2E2',
+                          borderRadius: '8px',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        Reset to Dummy Icon
+                      </button>
+                    )}
+
+                    <input
+                      type="file"
+                      ref={profileFileInputRef}
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleProfilePicChange}
+                    />
+                  </div>
+
+                  <div style={{ padding: '8px 14px 4px 14px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, letterSpacing: '0.05em' }}>
                     SWITCH ROLE
                   </div>
                   <button

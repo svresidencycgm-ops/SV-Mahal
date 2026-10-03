@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Bookmark, Calendar as CalendarIcon, LogIn, LogOut, MoreVertical, 
-  Clock, Star, CheckCircle, XCircle, Bed, Building
+  Clock, Star, CheckCircle, XCircle, Bed, Building, User
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -13,21 +13,30 @@ export const DashboardOverview: React.FC = () => {
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Core KPI Calculations
-  const newBookingsCount = bookings.filter(b => b.status === 'Confirmed' || b.status === 'Inquiry').length || bookings.length;
-  const scheduleRoomCount = bookings.filter(b => b.checkInDate >= todayStr && b.status !== 'Cancelled').length || rooms.length;
-  const checkInsCount = bookings.filter(b => b.status === 'Checked-in' || (b.checkInDate === todayStr && b.status !== 'Cancelled')).length || 12;
-  const checkOutsCount = bookings.filter(b => b.status === 'Completed' || b.checkOutDate === todayStr).length || 8;
+  // Core KPI Calculations strictly based on real data (no dummy/fake numbers)
+  const newBookingsCount = bookings.filter(b => b.status === 'Confirmed' || b.status === 'Inquiry').length;
+  const scheduleRoomCount = bookings.filter(b => b.checkInDate >= todayStr && b.status !== 'Cancelled').length;
+  const checkInsCount = bookings.filter(b => b.status === 'Checked-in' || (b.checkInDate === todayStr && b.status !== 'Cancelled')).length;
+  const checkOutsCount = bookings.filter(b => b.status === 'Completed' || b.checkOutDate === todayStr).length;
 
   const occupiedRooms = rooms.filter(r => r.status === 'Occupied').length;
   const maintenanceRooms = rooms.filter(r => r.status === 'Maintenance' || r.status === 'Blocked').length;
   const availableRooms = Math.max(0, rooms.length - occupiedRooms - maintenanceRooms);
 
-  // Status breakdown for Booked Room Today
-  const pendingCount = bookings.filter(b => b.status === 'Inquiry' || (b.status === 'Confirmed' && b.financials.balanceDue > 0)).length || 4;
-  const doneCount = bookings.filter(b => b.status === 'Checked-in' || b.status === 'Confirmed').length || 18;
-  const finishCount = bookings.filter(b => b.status === 'Completed').length || 24;
-  const totalStatus = pendingCount + doneCount + finishCount || 1;
+  // Status breakdown for Booked Room strictly based on real bookings
+  const pendingCount = bookings.filter(b => b.status === 'Inquiry' || (b.status === 'Confirmed' && (b.financials?.balanceDue ?? 0) > 0)).length;
+  const doneCount = bookings.filter(b => b.status === 'Checked-in' || (b.status === 'Confirmed' && (b.financials?.balanceDue ?? 0) === 0)).length;
+  const finishCount = bookings.filter(b => b.status === 'Completed').length;
+  const totalStatus = (pendingCount + doneCount + finishCount) || 1;
+
+  // Real operational completion percentages
+  const totalOperational = checkInsCount + checkOutsCount;
+  const checkInRate = totalOperational > 0 
+    ? Math.round((checkInsCount / totalOperational) * 100) 
+    : (rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0);
+  const checkOutRate = totalOperational > 0 
+    ? Math.round((checkOutsCount / totalOperational) * 100) 
+    : 0;
 
   // Mini Interactive Calendar State
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -48,35 +57,39 @@ export const DashboardOverview: React.FC = () => {
   const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
   const firstDayOfWeek = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
 
-  // Customer Reviews state (interactive approval/dismiss)
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      name: 'Ali Muzair',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120',
-      date: 'Posted on 28/04/2026, 12:42 AM',
-      rating: 5,
-      comment: 'I have been there many times. Rooms, Food and Service are excellent. We did lots of Excursions and all the places are reachable from the Hotel. Very helpful and polite staff.',
-      status: 'approved'
-    },
-    {
-      id: 2,
-      name: 'Keanu Repes',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120',
-      date: 'Posted on 28/04/2026, 10:15 AM',
-      rating: 5,
-      comment: 'SV Mahal Banquet hall arrangement for our family function was grand and seamless. A/C cooling, EB meter transparency, and spacious parking made everything perfect!',
-      status: 'approved'
+  // Customer Reviews state: strictly real reviews from storage/operations (no fake prefilled data)
+  const [reviews, setReviews] = useState<Array<{
+    id: string | number;
+    name: string;
+    avatar?: string;
+    date: string;
+    rating: number;
+    comment: string;
+    status: 'approved' | 'pending';
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem('sv_guest_reviews');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  const handleApproveReview = (id: number) => {
-    setReviews(prev => prev.map(r => r.id === id ? { ...r, status: 'approved' } : r));
+  const handleApproveReview = (id: string | number) => {
+    setReviews(prev => {
+      const updated = prev.map(r => r.id === id ? { ...r, status: 'approved' as const } : r);
+      localStorage.setItem('sv_guest_reviews', JSON.stringify(updated));
+      return updated;
+    });
     addToast('Review Verified', 'Customer review approved and marked public.', 'success');
   };
 
-  const handleDismissReview = (id: number) => {
-    setReviews(prev => prev.filter(r => r.id !== id));
+  const handleDismissReview = (id: string | number) => {
+    setReviews(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      localStorage.setItem('sv_guest_reviews', JSON.stringify(updated));
+      return updated;
+    });
     addToast('Review Dismissed', 'Review removed from showcase queue.', 'info');
   };
 
@@ -401,12 +414,12 @@ export const DashboardOverview: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#2563EB' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>549</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{checkInsCount}</span>
                 <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Check In</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#FF6B6B' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>327</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{checkOutsCount}</span>
                 <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Check Out</span>
               </div>
               <button style={{ border: 'none', background: 'none', color: '#94A3B8', cursor: 'pointer', padding: '2px' }}>
@@ -606,10 +619,10 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Widget 2: Dual 70% & 30% Completion Gauges (Matching Mockup) */}
+        {/* Widget 2: Dual Check In & Check Out Completion Gauges (Real Data) */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
           
-          {/* Gauge 1: 70% Check In (Purple) */}
+          {/* Gauge 1: Check In Rate (Purple) */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '90px', height: '90px' }}>
               <svg width="90" height="90" viewBox="0 0 100 100">
@@ -622,13 +635,14 @@ export const DashboardOverview: React.FC = () => {
                   stroke="#6320EE"
                   strokeWidth="12"
                   strokeDasharray={2 * Math.PI * 38}
-                  strokeDashoffset={2 * Math.PI * 38 * (1 - 0.70)}
+                  strokeDashoffset={2 * Math.PI * 38 * (1 - (checkInRate / 100))}
                   strokeLinecap="round"
                   transform="rotate(-90 50 50)"
+                  style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                 />
               </svg>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B' }}>
-                70%
+                {checkInRate}%
               </div>
             </div>
             <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginTop: '10px' }}>
@@ -636,7 +650,7 @@ export const DashboardOverview: React.FC = () => {
             </span>
           </div>
 
-          {/* Gauge 2: 30% Check Out (Amber) */}
+          {/* Gauge 2: Check Out Rate (Amber) */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '90px', height: '90px' }}>
               <svg width="90" height="90" viewBox="0 0 100 100">
@@ -649,13 +663,14 @@ export const DashboardOverview: React.FC = () => {
                   stroke="#FBBF24"
                   strokeWidth="12"
                   strokeDasharray={2 * Math.PI * 38}
-                  strokeDashoffset={2 * Math.PI * 38 * (1 - 0.30)}
+                  strokeDashoffset={2 * Math.PI * 38 * (1 - (checkOutRate / 100))}
                   strokeLinecap="round"
                   transform="rotate(-90 50 50)"
+                  style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                 />
               </svg>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B' }}>
-                30%
+                {checkOutRate}%
               </div>
             </div>
             <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginTop: '10px' }}>
@@ -665,7 +680,7 @@ export const DashboardOverview: React.FC = () => {
 
         </div>
 
-        {/* Widget 3: Latest Customer Review (Matching Mockup) */}
+        {/* Widget 3: Latest Customer Review (Real Data / Verified Queue) */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '22px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', flexDirection: 'column' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -677,51 +692,80 @@ export const DashboardOverview: React.FC = () => {
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flexGrow: 1 }}>
-            {reviews.map(rev => (
-              <div key={rev.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', borderBottom: '1px solid #F8FAFC', paddingBottom: '12px' }}>
-                <img
-                  src={rev.avatar}
-                  alt={rev.name}
-                  style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
-                />
-                <div style={{ flexGrow: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B' }}>{rev.name}</span>
-                    {/* Stars */}
-                    <div style={{ display: 'flex', gap: '2px' }}>
-                      {Array.from({ length: 5 }).map((_, si) => (
-                        <Star key={si} size={12} fill="#FBBF24" color="#FBBF24" />
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '1px' }}>
-                    {rev.date}
-                  </div>
-                  <p style={{ fontSize: '0.72rem', color: '#64748B', lineHeight: 1.35, margin: '6px 0 0 0' }}>
-                    {rev.comment}
-                  </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flexGrow: 1, justifyContent: reviews.length === 0 ? 'center' : 'flex-start' }}>
+            {reviews.length === 0 ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                padding: '28px 16px', 
+                textAlign: 'center',
+                backgroundColor: '#F8FAFC',
+                borderRadius: '14px',
+                border: '1px dashed #CBD5E1',
+                flexGrow: 1
+              }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#EDE9FE', color: '#6320EE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <Star size={20} />
                 </div>
-
-                {/* Approve / Reject Action Buttons (matching Mockup) */}
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '6px' }}>
-                  <button
-                    onClick={() => handleApproveReview(rev.id)}
-                    title="Approve Review"
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                    <CheckCircle size={20} color="#10B981" />
-                  </button>
-                  <button
-                    onClick={() => handleDismissReview(rev.id)}
-                    title="Dismiss"
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                    <XCircle size={20} color="#EF4444" />
-                  </button>
-                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>No Reviews Logged Yet</span>
+                <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: '4px 0 0 0', maxWidth: '240px', lineHeight: 1.4 }}>
+                  Verified guest feedback will appear here as guests complete checkout and submit feedback.
+                </p>
               </div>
-            ))}
+            ) : (
+              reviews.map(rev => (
+                <div key={rev.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', borderBottom: '1px solid #F8FAFC', paddingBottom: '12px' }}>
+                  {rev.avatar ? (
+                    <img
+                      src={rev.avatar}
+                      alt={rev.name}
+                      style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#EDE9FE', color: '#6320EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>
+                      {rev.name ? rev.name.charAt(0).toUpperCase() : <User size={16} />}
+                    </div>
+                  )}
+                  <div style={{ flexGrow: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B' }}>{rev.name}</span>
+                      {/* Stars */}
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        {Array.from({ length: rev.rating || 5 }).map((_, si) => (
+                          <Star key={si} size={12} fill="#FBBF24" color="#FBBF24" />
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '1px' }}>
+                      {rev.date}
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', lineHeight: 1.35, margin: '6px 0 0 0' }}>
+                      {rev.comment}
+                    </p>
+                  </div>
+
+                  {/* Approve / Reject Action Buttons */}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '6px' }}>
+                    <button
+                      onClick={() => handleApproveReview(rev.id)}
+                      title="Approve Review"
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      <CheckCircle size={20} color="#10B981" />
+                    </button>
+                    <button
+                      onClick={() => handleDismissReview(rev.id)}
+                      title="Dismiss"
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      <XCircle size={20} color="#EF4444" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
         </div>
