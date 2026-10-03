@@ -87,7 +87,7 @@ export const PublicProfile: React.FC = () => {
         if (res.isCloudinary && res.url) {
           setProfileAvatar(res.url);
           localStorage.setItem(`sv_cust_avatar_${customerUser.phone}`, res.url);
-          addToast('Photo Uploaded', 'Profile image stored on Cloudinary CDN.', 'success');
+          addToast('Photo Uploaded', 'Profile image updated successfully.', 'success');
         }
       } catch (err) {
         console.warn('Avatar Cloudinary upload deferred:', err);
@@ -113,7 +113,7 @@ export const PublicProfile: React.FC = () => {
         if (res.isCloudinary && res.url) {
           setCustomerDocUrl(res.url);
           localStorage.setItem(`sv_cust_doc_${customerUser.phone}`, res.url);
-          addToast('Document Stored', 'Customer ID proof verified & uploaded to Cloudinary.', 'success');
+          addToast('Document Stored', 'Customer ID proof verified and saved securely.', 'success');
         }
       } catch (err) {
         console.warn('Doc Cloudinary upload deferred:', err);
@@ -617,7 +617,7 @@ export const PublicProfile: React.FC = () => {
                 Customer Document Vault
               </h3>
               <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '4px 0 0 0' }}>
-                Encrypted identity documents uploaded and hosted on high-availability Cloudinary CDN.
+                Encrypted identity documents uploaded and stored securely in the cloud.
               </p>
             </div>
 
@@ -639,7 +639,7 @@ export const PublicProfile: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(99, 32, 238, 0.25)'
               }}
             >
-              <UploadCloud size={16} /> {customerDocUrl ? 'Update ID Proof (Cloudinary)' : 'Upload ID Proof (Cloudinary)'}
+              <UploadCloud size={16} /> {customerDocUrl ? 'Update ID Proof' : 'Upload ID Proof'}
             </button>
 
             <input
@@ -653,7 +653,7 @@ export const PublicProfile: React.FC = () => {
 
           {isUploadingDoc && (
             <div style={{ padding: '20px', textAlign: 'center', backgroundColor: '#F3E8FF', borderRadius: '12px', border: '1px dashed #D8B4FE', marginBottom: '20px', color: '#6320EE', fontWeight: 700, fontSize: '0.85rem' }}>
-              Encrypting & Uploading document to Cloudinary CDN...
+              Encrypting & Uploading document securely...
             </div>
           )}
 
@@ -671,7 +671,7 @@ export const PublicProfile: React.FC = () => {
                     </span>
                   </div>
                   <span style={{ fontSize: '0.72rem', color: '#64748B', display: 'block', wordBreak: 'break-all' }}>
-                    Source: {customerDocUrl.startsWith('http') ? 'Cloudinary CDN Secure Asset' : 'Local Staged Image'}
+                    Status: {customerDocUrl.startsWith('http') ? 'Secure Cloud Stored' : 'Locally Staged'}
                   </span>
                 </div>
               </div>

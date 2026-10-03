@@ -39,7 +39,7 @@ export const SettingsCrm: React.FC = () => {
       connected: configured,
       message: configured ? `Connected to Cloud: ${cloudName.trim()}` : 'Credentials Saved'
     });
-    addToast('Cloudinary Updated', 'Cloudinary multimedia settings saved.', 'success');
+    addToast('Cloud Settings Saved', 'Cloud multimedia settings saved.', 'success');
   };
 
   const handleTestCloudinary = async () => {
@@ -53,13 +53,13 @@ export const SettingsCrm: React.FC = () => {
       const res = await uploadToCloudinary(dummyBlob, 'sv_residency_test');
       if (res.isCloudinary) {
         setCloudStatus({ connected: true, message: `Verified Live: ${res.url.substring(0, 45)}...` });
-        addToast('Cloudinary Test', 'Test image uploaded successfully to Cloudinary!', 'success');
+        addToast('Cloud Storage Test', 'Test image uploaded successfully to cloud!', 'success');
       } else {
         setCloudStatus({ connected: false, message: res.error || 'Failed to connect. Check cloud name & preset.' });
-        addToast('Cloudinary Test', res.error || 'Cloudinary verification failed.', 'danger');
+        addToast('Cloud Storage Test', res.error || 'Cloud storage verification failed.', 'danger');
       }
     } catch (e: any) {
-      setCloudStatus({ connected: false, message: e.message || 'Error communicating with Cloudinary' });
+      setCloudStatus({ connected: false, message: e.message || 'Error communicating with cloud storage' });
     } finally {
       setIsTestingCloud(false);
     }
@@ -195,7 +195,7 @@ export const SettingsCrm: React.FC = () => {
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '24px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '16px', gridColumn: 'span 1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '10px' }}>
             <h3 style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Cloud size={18} color="#6320EE" /> Cloudinary Media Storage
+              <Cloud size={18} color="#6320EE" /> Cloud Multimedia Storage
             </h3>
             <span style={{ 
               fontSize: '0.65rem', 
@@ -210,7 +210,7 @@ export const SettingsCrm: React.FC = () => {
           </div>
           
           <p style={{ fontSize: '0.8rem', color: '#64748B', lineHeight: 1.4, margin: 0 }}>
-            Stores EB meter photos (check-in/check-out), event damage logs, and guest identity documents on Cloudinary CDN.
+            Stores EB meter photos (check-in/check-out), event damage logs, and guest identity documents securely in the cloud.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

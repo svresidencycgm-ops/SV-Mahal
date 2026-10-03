@@ -77,7 +77,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
         const res = await uploadToCloudinary(watermarked, mediaFolder);
         if (res.isCloudinary && res.url) {
           setterPic(res.url);
-          addToast('Cloudinary Upload', 'EB meter media stored in Cloudinary CDN.', 'success');
+          addToast('Photo Uploaded', 'EB meter photo stored securely.', 'success');
         }
       } catch (uploadErr) {
         console.warn('Cloudinary upload deferred, retained local secure copy:', uploadErr);
@@ -189,7 +189,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
       const r = updateBooking(updated);
       if (r.success) {
         setSelectedBooking(updated);
-        addToast('Identity Updated', 'Primary Identity Proof stored in Cloudinary CDN.', 'success');
+        addToast('Identity Updated', 'Primary Identity Proof stored securely.', 'success');
       }
     };
     reader.readAsDataURL(file);
@@ -1260,7 +1260,7 @@ Front Desk: 95008 21550 | 90437 80215`;
                       fontWeight: 600
                     }}
                   >
-                    <UploadCloud size={13} color="#C9A227" /> Upload Primary ID (Cloudinary)
+                    <UploadCloud size={13} color="#C9A227" /> Upload Primary ID
                   </button>
                   <input
                     type="file"

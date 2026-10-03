@@ -456,7 +456,7 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   doc.text('ATTACHED GOVERNMENT PRIMARY IDENTITY CARD PROOF', 18, docBoxY + 5);
-  doc.text(`TYPE: ${(booking.idType || 'AADHAAR CARD').toUpperCase()} • VERIFIED CLOUDINARY CDN RECORD`, 192, docBoxY + 5, { align: 'right' });
+  doc.text(`TYPE: ${(booking.idType || 'AADHAAR CARD').toUpperCase()} • VERIFIED GOVERNMENT RECORD`, 192, docBoxY + 5, { align: 'right' });
 
   // Interior ID verification details / embed area
   doc.setFillColor(248, 250, 252);

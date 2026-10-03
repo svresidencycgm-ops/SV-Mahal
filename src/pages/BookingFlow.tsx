@@ -591,7 +591,7 @@ export const BookingFlow: React.FC = () => {
               <div style={{ padding: '20px', backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', borderRadius: '8px' }}>
                 <label className="modern-label" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>UPLOAD IDENTITY CARD PIC (MANDATORY) *</span>
-                  <span style={{ fontSize: '0.72rem', color: '#6320EE', fontWeight: 700 }}>Stored on Cloudinary CDN</span>
+                  <span style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 700 }}>Secure Cloud Storage</span>
                 </label>
                 <input
                   type="file"
@@ -624,7 +624,7 @@ export const BookingFlow: React.FC = () => {
                 {isUploadingDoc && (
                   <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#6320EE', fontSize: '0.8rem', fontWeight: 600 }}>
                     <span style={{ width: '12px', height: '12px', border: '2px solid #E9D5FF', borderTopColor: '#6320EE', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
-                    Uploading document securely to Cloudinary CDN...
+                    Uploading document securely...
                   </div>
                 )}
                 {identityPic && !isUploadingDoc && (
@@ -635,7 +635,7 @@ export const BookingFlow: React.FC = () => {
                         ✓ Identity Document Stored
                       </span>
                       <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                        {identityPic.startsWith('http') ? 'Cloudinary CDN Verified' : 'Local Staged'}
+                        {identityPic.startsWith('http') ? 'Cloud Verified' : 'Local Staged'}
                       </span>
                     </div>
                   </div>

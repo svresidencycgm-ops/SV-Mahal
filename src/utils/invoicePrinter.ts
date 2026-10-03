@@ -258,112 +258,109 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
       ${!isRoom ? `
         <div class="eb-audit-section">
           <div class="eb-audit-title">
-            <span>⚡ ELECTRICITY BOARD (EB) METER READING & CONSUMPTION CALCULATION</span>
+            <span>⚡ ELECTRICITY BOARD (EB) METER READING & CONSUMPTION LEDGER</span>
             <span style="font-weight: 700; color: #0F2942;">Tariff Rate: ₹${booking.ebRate || 15}/Unit (kWh)</span>
           </div>
 
-          <table class="eb-audit-table">
-            <thead>
-              <tr>
-                <th>INITIAL READING (CHECK-IN)</th>
-                <th>FINAL READING (CHECK-OUT)</th>
-                <th>UNITS CONSUMED</th>
-                <th>TARIFF RATE</th>
-                <th style="text-align: right;">TOTAL ELECTRICITY CHARGE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <strong>${booking.ebInitialUnits || 0} kWh</strong>
-                  <div style="font-size: 6.8pt; color: #64748B;">Captured: ${booking.ebMeterCheckInTime || booking.actualCheckInTime || booking.checkInDate}</div>
-                </td>
-                <td>
-                  <strong>${booking.ebFinalUnits || 0} kWh</strong>
-                  <div style="font-size: 6.8pt; color: #64748B;">Captured: ${booking.ebMeterCheckOutTime || booking.actualCheckOutTime || booking.checkOutDate}</div>
-                </td>
-                <td style="font-weight: 800; color: #0F2942;">
-                  ${Math.max(0, (booking.ebFinalUnits || 0) - (booking.ebInitialUnits || 0))} Units
-                </td>
-                <td>₹${booking.ebRate || 15} / Unit</td>
-                <td style="text-align: right; font-weight: 800; color: #0284C7; font-size: 8.5pt;">
-                  ₹${(booking.mahalCharges?.electricity || booking.ebTotalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          ${(booking.ebMeterCheckInPic || booking.ebInitialPic || booking.ebMeterCheckOutPic) ? `
-            <div class="eb-photos-grid">
-              <div class="eb-photo-card">
-                <div class="eb-photo-label">1. INITIAL EB METER PHOTO (AT CHECK-IN)</div>
-                ${(booking.ebMeterCheckInPic || booking.ebInitialPic) ? `
-                  <img src="${booking.ebMeterCheckInPic || booking.ebInitialPic}" alt="Initial EB Meter Photo" class="eb-photo-img" />
-                ` : `
-                  <div class="eb-photo-empty">Verified at Counter (${booking.ebInitialUnits || 0} Units)</div>
-                `}
-                <div class="eb-photo-sub">Captured: ${booking.ebMeterCheckInTime || 'Check-in'} • Initial: <strong>${booking.ebInitialUnits || 0} kWh</strong></div>
-              </div>
-
-              <div class="eb-photo-card">
-                <div class="eb-photo-label">2. FINAL EB METER PHOTO (AT CHECK-OUT)</div>
-                ${booking.ebMeterCheckOutPic ? `
-                  <img src="${booking.ebMeterCheckOutPic}" alt="Final EB Meter Photo" class="eb-photo-img" />
-                ` : `
-                  <div class="eb-photo-empty">Verified at Counter (${booking.ebFinalUnits || 0} Units)</div>
-                `}
-                <div class="eb-photo-sub">Captured: ${booking.ebMeterCheckOutPic ? (booking.ebMeterCheckOutTime || 'Check-out') : 'Check-out'} • Final: <strong>${booking.ebFinalUnits || 0} kWh</strong></div>
-              </div>
+          <div class="eb-audit-layout">
+            <div class="eb-calc-side">
+              <table class="eb-audit-table">
+                <thead>
+                  <tr>
+                    <th>CHECK-IN (INITIAL)</th>
+                    <th>CHECK-OUT (FINAL)</th>
+                    <th>CONSUMED</th>
+                    <th>RATE</th>
+                    <th style="text-align: right;">ELECTRICITY CHARGE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong>${booking.ebInitialUnits || 0} kWh</strong>
+                      <div class="eb-sub-time">${booking.ebMeterCheckInTime || booking.actualCheckInTime || booking.checkInDate}</div>
+                    </td>
+                    <td>
+                      <strong>${booking.ebFinalUnits || 0} kWh</strong>
+                      <div class="eb-sub-time">${booking.ebMeterCheckOutTime || booking.actualCheckOutTime || booking.checkOutDate}</div>
+                    </td>
+                    <td style="font-weight: 800; color: #0F2942;">
+                      ${Math.max(0, (booking.ebFinalUnits || 0) - (booking.ebInitialUnits || 0))} Units
+                    </td>
+                    <td>₹${booking.ebRate || 15}/U</td>
+                    <td style="text-align: right; font-weight: 800; color: #0284C7; font-size: 8pt;">
+                      ₹${(booking.mahalCharges?.electricity || booking.ebTotalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          ` : ''}
+
+            ${(booking.ebMeterCheckInPic || booking.ebInitialPic || booking.ebMeterCheckOutPic) ? `
+              <div class="eb-photos-side">
+                <div class="eb-thumb-card">
+                  <div class="eb-thumb-label">INITIAL METER</div>
+                  ${(booking.ebMeterCheckInPic || booking.ebInitialPic) ? `
+                    <img src="${booking.ebMeterCheckInPic || booking.ebInitialPic}" alt="Initial EB Meter" class="eb-thumb-img" />
+                  ` : `
+                    <div class="eb-thumb-empty">${booking.ebInitialUnits || 0} U</div>
+                  `}
+                  <div class="eb-thumb-sub">${booking.ebInitialUnits || 0} kWh</div>
+                </div>
+
+                <div class="eb-thumb-card">
+                  <div class="eb-thumb-label">FINAL METER</div>
+                  ${booking.ebMeterCheckOutPic ? `
+                    <img src="${booking.ebMeterCheckOutPic}" alt="Final EB Meter" class="eb-thumb-img" />
+                  ` : `
+                    <div class="eb-thumb-empty">${booking.ebFinalUnits || 0} U</div>
+                  `}
+                  <div class="eb-thumb-sub">${booking.ebFinalUnits || 0} kWh</div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
         </div>
       ` : ''}
 
-      <!-- BANK SETTLEMENT & UPI SECTION -->
-      <div class="settle-grid">
-        <div class="settle-box">
-          <div class="settle-title">BANK RTGS / NEFT SETTLEMENT</div>
-          <div>Bank Name: <strong>State Bank of India</strong></div>
-          <div>Account Name: <strong>SV MAHAL & RESIDENCY</strong></div>
-          <div>A/C Number: <strong>40912233445</strong> | IFSC: <strong>SBIN0000823</strong></div>
-          <div>Branch: <strong>Chengam (0823)</strong></div>
+      <!-- BANK SETTLEMENT & DIGITAL UPI STRIP -->
+      <div class="settle-strip">
+        <div class="settle-item">
+          <strong>BANK RTGS / NEFT:</strong> State Bank of India • A/C: <strong>40912233445</strong> • IFSC: <strong>SBIN0000823</strong> (Chengam Branch)
         </div>
-
-        <div class="settle-box">
-          <div class="settle-title">INSTANT DIGITAL UPI SETTLEMENT</div>
-          <div>UPI ID: <strong>9500821550@okbizaxis</strong></div>
-          <div>GPay / PhonePe: <strong>95008 21550</strong></div>
-          <div>Settlement Verification: <strong>Instant POS Ref Check</strong></div>
+        <div class="settle-item">
+          <strong>DIGITAL UPI / QR:</strong> <strong>9500821550@okbizaxis</strong> • GPay / PhonePe: <strong>95008 21550</strong>
         </div>
       </div>
 
-      <!-- TERMS & SIGNATURE FOOTER -->
-      <div class="terms-signatures">
-        <div class="terms-col">
-          <div class="box-title">TERMS & CONDITIONS</div>
-          <ol>
-            <li>Check-out past standard billing time incurs standard day charges.</li>
-            <li>All disputes are subject to the exclusive jurisdiction of Chengam courts.</li>
-            <li>Damages to hotel or hall property must be settled immediately at counter.</li>
-            <li>This is a computer-generated tax invoice issued by SV Residency PMS.</li>
-          </ol>
+      <!-- TERMS, SIGNATURES & BOTTOM SALUTE -->
+      <div class="terms-signatures-block">
+        <div class="terms-signatures-row">
+          <div class="terms-col">
+            <div class="box-title">TERMS & CONDITIONS</div>
+            <ol>
+              <li>Disputes are subject to Chengam Jurisdiction.</li>
+              <li>Check-out past billing limits incurs standard day tariff.</li>
+              <li>Damages to property must be settled at counter before exit.</li>
+            </ol>
+          </div>
+
+          <div class="signatures-col">
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <span>Guest Signature</span>
+            </div>
+            <div class="sig-box">
+              <div class="stamp-seal">SV RESIDENCY<br/>OFFICIAL</div>
+              <div class="sig-line"></div>
+              <span>Authorized Signatory</span>
+            </div>
+          </div>
         </div>
 
-        <div class="signatures-col">
-          <div class="sig-box">
-            <div class="sig-line"></div>
-            <span>Guest Signature</span>
-          </div>
-          <div class="sig-box">
-            <div class="stamp-seal">SV RESIDENCY<br/>OFFICIAL SEAL</div>
-            <div class="sig-line"></div>
-            <span>Authorized Signatory</span>
-          </div>
+        <div class="bottom-salute">
+          Thank you for choosing SV. MAHAL & SV. RESIDENCY, Chengam! We wish you a peaceful stay and celebration.
         </div>
-      </div>
-
-      <div class="bottom-salute">
-        Thank you for choosing SV. MAHAL & SV. RESIDENCY, Chengam! We wish you a peaceful stay and celebration.
       </div>
     </div>
   `;
@@ -446,7 +443,7 @@ function renderIdentityPageHtml(booking: Booking, copyLabel: string): string {
       <div class="id-proof-wrapper">
         <div class="id-proof-header">
           <strong>GOVERNMENT PRIMARY IDENTITY CARD ATTACHMENT</strong>
-          <span>Document Type: <strong>${booking.idType || 'Aadhaar Card'}</strong> • Secured via Cloudinary CDN</span>
+          <span>Document Type: <strong>${booking.idType || 'Aadhaar Card'}</strong> • Verified Government Identity Record</span>
         </div>
 
         <div class="id-proof-box">
@@ -516,11 +513,11 @@ function renderIdentityPageHtml(booking: Booking, copyLabel: string): string {
 }
 
 export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 'both' = 'both'): void {
-  const customerPages = `${renderSinglePageHtml(booking, 'CUSTOMER COPY')}<div class="page-break"></div>${renderIdentityPageHtml(booking, 'CUSTOMER COPY')}`;
-  const adminPages = `${renderSinglePageHtml(booking, 'ADMINISTRATION COPY')}<div class="page-break"></div>${renderIdentityPageHtml(booking, 'ADMINISTRATION COPY')}`;
+  const customerPages = `${renderSinglePageHtml(booking, 'CUSTOMER COPY')}${renderIdentityPageHtml(booking, 'CUSTOMER COPY')}`;
+  const adminPages = `${renderSinglePageHtml(booking, 'ADMINISTRATION COPY')}${renderIdentityPageHtml(booking, 'ADMINISTRATION COPY')}`;
   
   const pagesHtml = copyType === 'both'
-    ? `${customerPages}<div class="page-break"></div>${adminPages}`
+    ? `${customerPages}${adminPages}`
     : (copyType === 'customer' ? customerPages : adminPages);
 
   const fullHtml = `
@@ -546,6 +543,22 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .invoice-page {
+            width: 210mm !important;
+            height: 296mm !important;
+            max-height: 296mm !important;
+            margin: 0 !important;
+            padding: 5mm 10mm !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
+          }
+          .invoice-page:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
         }
         * {
           box-sizing: border-box;
@@ -562,18 +575,25 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
           line-height: 1.35;
         }
         .invoice-page {
-          width: 100%;
-          max-width: 210mm;
-          min-height: 297mm;
+          width: 210mm;
+          height: 296mm;
+          max-height: 296mm;
           margin: 0 auto;
-          padding: 8mm 12mm 10mm 12mm;
+          padding: 5mm 10mm;
           box-sizing: border-box;
           background: #FFFFFF;
-        }
-        .page-break {
+          overflow: hidden;
           page-break-after: always;
           break-after: page;
-          height: 0;
+          page-break-inside: avoid;
+          break-inside: avoid;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+        }
+        .invoice-page:last-child {
+          page-break-after: avoid;
+          break-after: avoid;
         }
         .copy-bar {
           text-align: right;
@@ -817,125 +837,191 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
           align-items: flex-end;
           gap: 12px;
         }
+        /* TERMS & SIGNATURES BLOCK */
+        .terms-signatures-block {
+          border-top: 1px solid #E2E8F0;
+          padding-top: 3px;
+          margin-top: 2px;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .terms-signatures-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        .terms-col {
+          flex: 1.2;
+          font-size: 6.2pt;
+          color: #475569;
+        }
+        .terms-col ol {
+          margin: 2px 0 0 0;
+          padding-left: 12px;
+        }
+        .terms-col li {
+          margin-bottom: 1.5px;
+        }
+        .signatures-col {
+          flex: 1;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 10px;
+        }
         .sig-box {
           text-align: center;
           flex: 1;
         }
         .sig-line {
-          height: 38px;
+          height: 30px;
           border-bottom: 1px dashed #94A3B8;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
         .sig-box span {
-          font-size: 7.2pt;
+          font-size: 6.5pt;
           font-weight: 700;
           color: #334155;
         }
         .stamp-seal {
           border: 1px solid #C9A227;
           border-radius: 50%;
-          width: 50px;
-          height: 50px;
-          margin: 0 auto -20px auto;
+          width: 42px;
+          height: 42px;
+          margin: 0 auto -16px auto;
           display: flex;
           align-items: center;
           justify-content: center;
           text-align: center;
-          font-size: 5.5pt;
+          font-size: 5pt;
           color: #C9A227;
           font-weight: 800;
-          line-height: 1.1;
-          opacity: 0.6;
+          line-height: 1.05;
+          opacity: 0.65;
         }
         .bottom-salute {
           text-align: center;
-          font-size: 7pt;
-          color: #94A3B8;
+          font-size: 6.8pt;
+          color: #64748B;
           font-style: italic;
-          margin-top: 8px;
+          margin-top: 3px;
+          border-top: 1px dashed #E2E8F0;
+          padding-top: 2px;
         }
 
         /* EB AUDIT SECTION (MAHAL INVOICE) */
         .eb-audit-section {
           border: 1px solid #CBD5E1;
-          border-radius: 6px;
-          padding: 8px 10px;
-          margin-bottom: 10px;
+          border-radius: 5px;
+          padding: 4px 8px;
+          margin-bottom: 4px;
           background: #F8FAFC;
         }
         .eb-audit-title {
           display: flex;
           justify-content: space-between;
           font-weight: 800;
-          font-size: 7.2pt;
+          font-size: 6.8pt;
           color: #0F2942;
           border-bottom: 1px solid #E2E8F0;
-          padding-bottom: 3px;
-          margin-bottom: 6px;
+          padding-bottom: 2px;
+          margin-bottom: 3px;
+        }
+        .eb-audit-layout {
+          display: flex;
+          gap: 8px;
+          align-items: stretch;
+        }
+        .eb-calc-side {
+          flex: 1;
         }
         .eb-audit-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 7.2pt;
-          margin-bottom: 6px;
+          font-size: 6.6pt;
         }
         .eb-audit-table th {
           background: #E2E8F0;
           color: #0F2942;
-          padding: 4px 6px;
+          padding: 2.5px 5px;
           text-align: left;
-          font-size: 6.8pt;
+          font-size: 6.2pt;
           font-weight: 700;
           border: 1px solid #CBD5E1;
         }
         .eb-audit-table td {
-          padding: 4px 6px;
+          padding: 2.5px 5px;
           border: 1px solid #E2E8F0;
           background: #FFFFFF;
         }
-        .eb-photos-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          margin-top: 6px;
+        .eb-sub-time {
+          font-size: 5.8pt;
+          color: #64748B;
         }
-        .eb-photo-card {
+        .eb-photos-side {
+          display: flex;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+        .eb-thumb-card {
+          width: 74px;
           border: 1px solid #CBD5E1;
           border-radius: 4px;
-          padding: 6px;
+          padding: 3px;
           background: #FFFFFF;
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
-        .eb-photo-label {
-          font-size: 6.8pt;
+        .eb-thumb-label {
+          font-size: 5.6pt;
           font-weight: 800;
           color: #475569;
-          margin-bottom: 4px;
+          white-space: nowrap;
+          margin-bottom: 2px;
         }
-        .eb-photo-img {
+        .eb-thumb-img {
           width: 100%;
-          max-height: 85px;
-          object-fit: contain;
-          border-radius: 4px;
-          border: 1px solid #E2E8F0;
+          height: 36px;
+          object-fit: cover;
+          border-radius: 3px;
+          border: 1px solid #CBD5E1;
           background: #0F172A;
           display: block;
         }
-        .eb-photo-empty {
-          height: 60px;
+        .eb-thumb-empty {
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: #F1F5F9;
           color: #64748B;
-          font-size: 7pt;
-          border-radius: 4px;
+          font-size: 6pt;
+          border-radius: 3px;
           border: 1px dashed #CBD5E1;
         }
-        .eb-photo-sub {
+        .eb-thumb-sub {
+          font-size: 5.6pt;
+          color: #1E293B;
+          font-weight: 700;
+          margin-top: 1px;
+        }
+
+        /* SETTLEMENT STRIP */
+        .settle-strip {
+          display: flex;
+          justify-content: space-between;
+          background: #F8FAFC;
+          border: 1px solid #CBD5E1;
+          border-radius: 4px;
+          padding: 3px 6px;
+          margin-bottom: 4px;
           font-size: 6.5pt;
-          color: #64748B;
-          margin-top: 3px;
+          color: #334155;
+        }
+        .settle-item strong {
+          color: #0F2942;
         }
 
         /* ANNEXURE A: IDENTITY VERIFICATION PAGE */

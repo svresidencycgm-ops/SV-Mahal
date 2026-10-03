@@ -709,7 +709,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E9D5FF')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
                     >
-                      <Camera size={14} /> {userAvatar ? 'Update Photo (Cloudinary)' : 'Upload Photo (Cloudinary)'}
+                      <Camera size={14} /> {userAvatar ? 'Update Photo' : 'Upload Photo'}
                     </button>
 
                     {userAvatar && (
