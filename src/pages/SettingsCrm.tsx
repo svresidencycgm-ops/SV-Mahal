@@ -10,6 +10,7 @@ export const SettingsCrm: React.FC = () => {
   // Cloudinary Settings State
   const [cloudName, setCloudName] = useState('');
   const [uploadPreset, setUploadPreset] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [isTestingCloud, setIsTestingCloud] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
@@ -20,6 +21,7 @@ export const SettingsCrm: React.FC = () => {
     const cfg = getCloudinaryConfig();
     setCloudName(cfg.cloudName || '');
     setUploadPreset(cfg.uploadPreset || '');
+    setApiKey(cfg.apiKey || '');
     if (isCloudinaryConfigured()) {
       setCloudStatus({ connected: true, message: `Connected to Cloud: ${cfg.cloudName}` });
     }
@@ -29,12 +31,13 @@ export const SettingsCrm: React.FC = () => {
     saveCloudinaryConfig({
       cloudName: cloudName.trim(),
       uploadPreset: uploadPreset.trim(),
+      apiKey: apiKey.trim(),
       folder: 'sv_residency_multimedia'
     });
-    const configured = Boolean(cloudName.trim() && uploadPreset.trim() && cloudName.trim() !== 'sv-residency');
+    const configured = Boolean(cloudName.trim() && cloudName.trim() !== 'sv-residency');
     setCloudStatus({
       connected: configured,
-      message: configured ? `Connected to Cloud: ${cloudName.trim()}` : 'Credentials Saved (Unsigned mode)'
+      message: configured ? `Connected to Cloud: ${cloudName.trim()}` : 'Credentials Saved'
     });
     addToast('Cloudinary Updated', 'Cloudinary multimedia settings saved.', 'success');
   };
@@ -226,7 +229,20 @@ export const SettingsCrm: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                Upload Preset (Unsigned)
+                API Key
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 356683122558141"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                Upload Preset (Optional)
               </label>
               <input
                 type="text"

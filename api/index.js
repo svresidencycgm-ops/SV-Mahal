@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   getAllAppData,
   saveBooking,
@@ -169,11 +170,37 @@ export default async function handler(req, res) {
     if (pathname.startsWith('/upload')) {
       if (req.method === 'POST') {
         const { file, folder = 'sv_residency_multimedia', upload_preset } = req.body || {};
-        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
-        const preset = upload_preset || process.env.CLOUDINARY_UPLOAD_PRESET || process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-        if (!cloudName || !preset) {
-          // If not configured, echo back file or acknowledge
+        let apiKey = process.env.CLOUDINARY_API_KEY || '356683122558141';
+        let apiSecret = process.env.CLOUDINARY_API_SECRET || 'usq5wMmWpECoyz_3pzaPWARAtxo';
+        let cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'bvnf8caw';
+
+        if (process.env.CLOUDINARY_URL) {
+          const match = process.env.CLOUDINARY_URL.match(/cloudinary:\/\/([^:]+):([^@]+)@(.+)/);
+          if (match) {
+            apiKey = match[1];
+            apiSecret = match[2];
+            cloudName = match[3];
+          }
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        if (upload_preset) {
+          formData.append('upload_preset', upload_preset);
+          formData.append('folder', folder);
+        } else if (apiKey && apiSecret) {
+          // Generate SHA-1 signature for secure server-side upload
+          const timestamp = Math.floor(Date.now() / 1000);
+          const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+          const signature = crypto.createHash('sha1').update(toSign).digest('hex');
+
+          formData.append('api_key', apiKey);
+          formData.append('timestamp', timestamp.toString());
+          formData.append('signature', signature);
+          formData.append('folder', folder);
+        } else {
           return res.status(200).json({ 
             success: true, 
             url: file, 
@@ -182,11 +209,6 @@ export default async function handler(req, res) {
           });
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', preset);
-        formData.append('folder', folder);
-
         const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
           method: 'POST',
           body: formData
@@ -194,8 +216,9 @@ export default async function handler(req, res) {
 
         const cloudJson = await cloudRes.json();
         if (cloudRes.ok) {
-          return res.status(200).json({ success: true, url: cloudJson.secure_url, isCloudinary: true, data: cloudJson });
+          return res.status(200).json({ success: true, url: cloudJson.secure_url || cloudJson.url, isCloudinary: true, data: cloudJson });
         } else {
+          console.error('Cloudinary API error:', cloudJson);
           return res.status(200).json({ success: false, url: file, isCloudinary: false, error: cloudJson?.error?.message });
         }
       }
