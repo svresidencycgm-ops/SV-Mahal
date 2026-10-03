@@ -32,10 +32,11 @@ export const PublicMahal: React.FC = () => {
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+  const [guestAddress, setGuestAddress] = useState('');
+  const [guestIdNumber, setGuestIdNumber] = useState('');
   const [otpStep, setOtpStep] = useState<'details' | 'otp' | 'verified'>('details');
   const [localOtp, setLocalOtp] = useState<string[]>(['', '', '', '']);
   const [sentOtp, setSentOtp] = useState('');
-  const [isAutofilling, setIsAutofilling] = useState(false);
 
   // Local checkout payment details
   const [payMethod, setPayMethod] = useState<'Cash' | 'UPI'>('UPI');
@@ -382,7 +383,7 @@ export const PublicMahal: React.FC = () => {
     setShowBookingPopup(true);
   };
 
-  // Mock OTP handlers inside booking popup
+  // OTP verification handlers inside booking popup
   const handleSendLocalOtp = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!guestName.trim() || guestPhone.length < 10 || !guestEmail.trim()) {
@@ -394,29 +395,15 @@ export const PublicMahal: React.FC = () => {
     setOtpStep('otp');
 
     setTimeout(() => {
-      addToast('🔑 Mock SMS Gateway', `OTP Sent to ${guestPhone}: ${code}`, 'warning');
+      addToast('Verification Code', `OTP Sent to ${guestPhone}: ${code}`, 'warning');
     }, 400);
-
-    setIsAutofilling(true);
-    setTimeout(() => {
-      code.split('').forEach((char, idx) => {
-        setTimeout(() => {
-          setLocalOtp(prev => {
-            const next = [...prev];
-            next[idx] = char;
-            return next;
-          });
-        }, idx * 250);
-      });
-      setIsAutofilling(false);
-    }, 1500);
   };
 
   const handleVerifyLocalOtp = (e: React.MouseEvent) => {
     e.preventDefault();
     const entered = localOtp.join('');
     if (entered !== sentOtp) {
-      alert('Invalid OTP. Please check the code in the mock gateway toast.');
+      alert('Invalid OTP. Please enter the 4-digit code sent to your mobile.');
       return;
     }
     loginCustomer(guestName, guestPhone, guestEmail);
@@ -443,14 +430,14 @@ export const PublicMahal: React.FC = () => {
       customerName: guestName,
       customerPhone: guestPhone,
       customerEmail: guestEmail,
-      customerAddress: 'Verified online customer check-out',
+      customerAddress: guestAddress || 'Chengam, Tamil Nadu',
       serviceType: 'mahal',
       serviceId: 'mahal-sv',
       checkInDate: bookingDate,
       checkOutDate: bookingDate,
       guestCount: Number(estimatedGuests),
       idType: 'Aadhaar Card',
-      idNumber: 'VERIFIED-OTP',
+      idNumber: guestIdNumber || 'Awaiting Physical Presentation',
       specialRequirements: `Mugurtham/Divine Booking Inquiry via Calendar Checkout.\n[Payment Ref: ${refNum || 'Cash Counter'}]`,
       packageName: packageName,
       eventDetails: {
@@ -1757,23 +1744,39 @@ export const PublicMahal: React.FC = () => {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                         <input
                           type="text"
-                          placeholder="Full Name"
+                          placeholder="Full Name *"
                           value={guestName}
                           onChange={(e) => setGuestName(e.target.value)}
                           style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
                         />
                         <input
                           type="email"
-                          placeholder="Email Address"
+                          placeholder="Email Address *"
                           value={guestEmail}
                           onChange={(e) => setGuestEmail(e.target.value)}
+                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                        />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <input
+                          type="text"
+                          placeholder="City / Address"
+                          value={guestAddress}
+                          onChange={(e) => setGuestAddress(e.target.value)}
+                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Aadhaar / ID Number"
+                          value={guestIdNumber}
+                          onChange={(e) => setGuestIdNumber(e.target.value)}
                           style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
                         />
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                           type="tel"
-                          placeholder="10-digit mobile"
+                          placeholder="10-digit mobile number *"
                           value={guestPhone}
                           onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').substring(0, 10))}
                           style={{ flexGrow: 1, padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
@@ -1813,9 +1816,6 @@ export const PublicMahal: React.FC = () => {
                           />
                         ))}
                       </div>
-                      {isAutofilling && (
-                        <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 600 }}>⚡ Autocompleting code...</span>
-                      )}
                       <button
                         type="button"
                         onClick={handleVerifyLocalOtp}

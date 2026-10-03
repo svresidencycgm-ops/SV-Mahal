@@ -19,7 +19,6 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
   // OTP inputs
   const [otpCode, setOtpCode] = useState<string[]>(['', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
-  const [isAutofilling, setIsAutofilling] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -30,7 +29,6 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
       setEmail('');
       setOtpCode(['', '', '', '']);
       setGeneratedOtp('');
-      setIsAutofilling(false);
     }
   }, [isOpen]);
 
@@ -48,37 +46,21 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
     setGeneratedOtp(code);
     setStep('otp');
 
-    // Display simulation toast
+    // Display verification notification
     setTimeout(() => {
       addToast(
-        '🔑 Mock SMS Gateway',
+        'Verification Code',
         `OTP Code sent to ${phone}: ${code}`,
         'warning'
       );
     }, 400);
-
-    // Simulate OTP autofill after 1.5 seconds
-    setIsAutofilling(true);
-    setTimeout(() => {
-      // Type digits one by one
-      code.split('').forEach((char, idx) => {
-        setTimeout(() => {
-          setOtpCode(prev => {
-            const next = [...prev];
-            next[idx] = char;
-            return next;
-          });
-        }, idx * 250); // 250ms typing delay per digit
-      });
-      setIsAutofilling(false);
-    }, 1500);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     const entered = otpCode.join('');
     if (entered !== generatedOtp) {
-      alert('Invalid OTP. Please try again or check the mock SMS toast.');
+      alert('Invalid OTP. Please enter the 4-digit code sent to your mobile.');
       return;
     }
 
@@ -168,8 +150,8 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
           </h3>
           <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#64748B', margin: '0 0 24px 0' }}>
             {step === 'details'
-              ? 'Enter contact parameters to generate a mock OTP passcode.'
-              : 'Verifying stay profile records.'}
+              ? 'Enter your contact details to receive a 4-digit verification code.'
+              : 'Enter the 4-digit verification code sent to your phone.'}
           </p>
 
           {step === 'details' ? (
@@ -184,7 +166,7 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
                   <input
                     type="text"
                     required
-                    placeholder="John Doe"
+                    placeholder="Enter your name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     style={{ border: 'none', background: 'none', outline: 'none', width: '100%', fontSize: '0.85rem' }}
@@ -201,7 +183,7 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
                   <input
                     type="email"
                     required
-                    placeholder="johndoe@domain.com"
+                    placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={{ border: 'none', background: 'none', outline: 'none', width: '100%', fontSize: '0.85rem' }}
@@ -285,12 +267,6 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
                   />
                 ))}
               </div>
-
-              {isAutofilling && (
-                <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#0284C7', fontWeight: 600 }} className="animate-pulse">
-                  ⚡ Simulating SMS Autofill...
-                </div>
-              )}
 
               <button
                 type="submit"

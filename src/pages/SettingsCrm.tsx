@@ -135,10 +135,10 @@ export const SettingsCrm: React.FC = () => {
         {/* Reset Database */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '24px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '16px', gridColumn: 'span 1' }}>
           <h3 style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: 700, fontFamily: 'var(--font-sans)', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <RefreshCw size={16} color="#DC2626" /> Reset Demo Data
+            <RefreshCw size={16} color="#DC2626" /> Clear Operational Records
           </h3>
           <p style={{ fontSize: '0.8rem', color: '#64748B', lineHeight: 1.4 }}>
-            Deletes all custom bookings, payments, and expense audits, resetting the system variables to the original populated demo seed.
+            Clears all bookings, payments, customers, and expense entries, keeping rooms inventory and hall settings ready for real user operations.
           </p>
           
           {currentUserRole === 'admin' ? (
@@ -159,7 +159,7 @@ export const SettingsCrm: React.FC = () => {
                 gap: '8px'
               }}
             >
-              <RefreshCw size={16} /> Reset Database to Demo Seed
+              <RefreshCw size={16} /> Clear All Operational Data
             </button>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: '#FEE2E2', borderRadius: '6px', border: '1px solid #FCA5A5', fontSize: '0.75rem', color: '#DC2626', fontWeight: 600 }}>

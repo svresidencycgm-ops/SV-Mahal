@@ -59,14 +59,6 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
   const [refNum, setRefNum] = useState('');
   const [razorpayPaymentId, setRazorpayPaymentId] = useState('');
 
-  const simulatePayment = () => {
-    if (payMethod === 'UPI') {
-      const mockRazorpayId = `pay_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      setRazorpayPaymentId(mockRazorpayId);
-      alert(`Razorpay Payment Simulated.\nTransaction ID: ${mockRazorpayId}`);
-    }
-  };
-
   // Search customer handler
   useEffect(() => {
     if (phoneQuery.length >= 4) {
@@ -846,21 +838,21 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
               {payMethod === 'UPI' && (
                 <div style={{ backgroundColor: '#F8FAFC', border: '1px dashed #3B82F6', borderRadius: '8px', padding: '16px' }}>
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#1D4ED8', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Razorpay UPI Payment
+                    UPI / Razorpay Settlement
                   </h4>
-                  {razorpayPaymentId ? (
-                    <div style={{ color: '#16A34A', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#16A34A', color: 'white', textAlign: 'center', lineHeight: '16px' }}>✓</span>
-                      Payment Verified: {razorpayPaymentId}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <button type="button" onClick={simulatePayment} style={{ backgroundColor: '#3B82F6', color: '#FFFFFF', border: 'none', borderRadius: '4px', padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-                        Simulate Payment & Verify
-                      </button>
-                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>Awaiting verification...</span>
-                    </div>
-                  )}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>RAZORPAY PAYMENT ID / UPI UTR REF</label>
+                    <input
+                      type="text"
+                      placeholder="Enter verified Razorpay ID or UTR number"
+                      value={razorpayPaymentId}
+                      onChange={(e) => {
+                        setRazorpayPaymentId(e.target.value);
+                        if (!refNum) setRefNum(e.target.value);
+                      }}
+                      style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }}
+                    />
+                  </div>
                 </div>
               )}
 

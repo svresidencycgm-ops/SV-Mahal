@@ -1,4 +1,4 @@
-import { SEED_ROOMS, SEED_MAHAL, SEED_CUSTOMERS, SEED_BOOKINGS, SEED_PAYMENTS, SEED_EXPENSES, SEED_LOGS, SEED_NOTIFICATIONS } from '../data/seedData';
+import { SEED_ROOMS, SEED_MAHAL } from '../data/seedData';
 import type { Room, MahalConfig, Booking, Customer, Payment, Expense, AuditLog, Notification } from '../types';
 
 const KEYS = {

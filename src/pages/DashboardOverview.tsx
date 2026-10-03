@@ -45,12 +45,12 @@ export const DashboardOverview: React.FC = () => {
   });
 
   const otaBookings = bookings.filter(
-    b => b.bookingSource === 'MakeMyTrip' || b.bookingSource === 'Goibibo' || b.channel === 'makemytrip' || b.channel === 'goibibo'
+    b => b.bookingSource === 'MakeMyTrip' || b.bookingSource === 'Goibibo'
   );
 
   const handleQuickCheckIn = (b: any) => {
-    updateBooking({ ...b, status: 'Active' });
-    addToast(`Guest ${b.customerName} checked in. Room allocated.`, 'success');
+    updateBooking({ ...b, status: 'Checked-in' });
+    addToast('Guest Check-in', `Guest ${b.customerName} checked in. Room allocated.`, 'success');
   };
 
   const handleWhatsAppGuest = (b: any) => {
@@ -465,13 +465,13 @@ export const DashboardOverview: React.FC = () => {
                         {b.customerName}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                        Dates: {b.checkInDate} to {b.checkOutDate} • Stay: ₹{b.financials.total.toLocaleString()} • Status: <strong style={{ color: b.status === 'Active' ? '#16A34A' : '#0284C7' }}>{b.status}</strong>
+                        Dates: {b.checkInDate} to {b.checkOutDate} • Stay: ₹{b.financials.total.toLocaleString()} • Status: <strong style={{ color: b.status === 'Checked-in' ? '#16A34A' : '#0284C7' }}>{b.status}</strong>
                       </div>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {b.status !== 'Active' && (
+                    {b.status !== 'Checked-in' && (
                       <button
                         onClick={() => handleQuickCheckIn(b)}
                         style={{

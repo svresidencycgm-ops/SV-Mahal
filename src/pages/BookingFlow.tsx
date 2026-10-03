@@ -227,8 +227,7 @@ export const BookingFlow: React.FC = () => {
       // Trigger live QR Modal
       setIsUpiModalOpen(true);
     } else {
-      // Non-UPI simulation, generate local TXN ref
-      const ref = `TXN-${Date.now()}`;
+      const ref = paymentRefNumber.trim() || `${paymentMethod.toUpperCase()}-DESK-${Date.now().toString().slice(-4)}`;
       setPaymentRefNumber(ref);
       submitBooking(ref);
     }
@@ -752,6 +751,21 @@ export const BookingFlow: React.FC = () => {
                       </p>
                     )}
                   </div>
+
+                  {paymentMethod !== 'UPI' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>
+                        TRANSACTION / RECEIPT REFERENCE NUMBER (OPTIONAL)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentRefNumber}
+                        onChange={(e) => setPaymentRefNumber(e.target.value)}
+                        placeholder={paymentMethod === 'Cash' ? 'Cash Counter Receipt No.' : 'Card Auth Code / Bank UTR'}
+                        className="modern-input"
+                      />
+                    </div>
+                  )}
 
                   <button
                     onClick={handlePaymentSubmit}

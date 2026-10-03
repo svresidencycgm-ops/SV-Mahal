@@ -948,8 +948,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCustomerUser(null);
     loadAllData();
     setSelectedBooking(null);
-    addLog('Reset all database data to default seed', 'Backup', 'RESET');
-    addToast('Database Reset', 'All data reset to original demo seed.', 'info');
+    addLog('Cleared all operational records', 'Backup', 'RESET');
+    addToast('Database Reset', 'All operational records cleared and ready for real entries.', 'info');
   };
 
   const loginCustomer = (name: string, phone: string, email: string) => {

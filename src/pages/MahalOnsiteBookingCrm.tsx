@@ -181,13 +181,6 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
     billingType
   );
 
-  const simulatePayment = () => {
-    if (payMethod === 'UPI') {
-      const mockRazorpayId = `pay_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      setRazorpayPaymentId(mockRazorpayId);
-      alert(`Razorpay Payment Simulated.\nTransaction ID: ${mockRazorpayId}`);
-    }
-  };
 
   const handleCompleteBooking = () => {
     if (!selectedDate || !customerName || !customerPhone) {
@@ -490,20 +483,18 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
               {payMethod === 'UPI' && (
                 <div style={{ backgroundColor: '#F8FAFC', border: '1px dashed #3B82F6', borderRadius: '8px', padding: '16px' }}>
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#1D4ED8', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Razorpay UPI Payment
+                    UPI / Razorpay Settlement
                   </h4>
-                  {razorpayPaymentId ? (
-                    <div style={{ color: '#16A34A', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle size={16} /> Payment Verified: {razorpayPaymentId}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <button type="button" onClick={simulatePayment} style={{ backgroundColor: '#3B82F6', color: '#FFFFFF', border: 'none', borderRadius: '4px', padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-                        Simulate Payment & Verify
-                      </button>
-                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>Awaiting verification...</span>
-                    </div>
-                  )}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>RAZORPAY PAYMENT ID / UPI UTR REF</label>
+                    <input
+                      type="text"
+                      placeholder="Enter verified Razorpay ID or UTR number"
+                      value={razorpayPaymentId}
+                      onChange={(e) => setRazorpayPaymentId(e.target.value)}
+                      style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }}
+                    />
+                  </div>
                 </div>
               )}
 
