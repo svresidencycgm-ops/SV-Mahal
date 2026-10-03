@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Menu, Bell, Search, LogOut, LayoutDashboard, 
+  Menu, Search, LogOut, LayoutDashboard, 
   Inbox, Users, Bed, Building, DollarSign, Settings, 
   History, BarChart3, Check, ShieldCheck, Globe,
   MessageSquare, Heart, Droplets, User, Camera
@@ -16,7 +16,6 @@ interface CrmLayoutProps {
 export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   const { 
     currentView, setView, currentUserRole, setUserRole, 
-    notifications, markNotificationRead, clearNotifications, 
     globalSearch, setSelectedBooking, bookings,
     currentLanguage, setLanguage, translate, addToast
   } = useApp();
@@ -71,7 +70,6 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   }, [currentView, setView]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -126,8 +124,6 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     }
     setView(item.hash);
   };
-
-  const unreadNotifs = notifications.filter(n => !n.read);
 
   // We build navItems dynamically based on role
   const getNavItems = () => {
@@ -549,92 +545,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
               <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
             </button>
 
-            {/* NOTIFICATIONS BELL PILL (Mockup) */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setIsNotifOpen(!isNotifOpen)}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  color: '#6320EE',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
-              >
-                <Bell size={17} />
-                {unreadNotifs.length > 0 ? (
-                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', minWidth: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: '0.62rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>
-                    {unreadNotifs.length}
-                  </span>
-                ) : (
-                  <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-                )}
-              </button>
 
-              {isNotifOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '48px',
-                    right: '-10px',
-                    width: '320px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '16px',
-                    boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
-                    zIndex: 200,
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #F1F5F9', backgroundColor: '#F8FAFC' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>Notifications</span>
-                    <button type="button" onClick={clearNotifications} style={{ border: 'none', background: 'none', color: '#6320EE', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
-                      Clear All
-                    </button>
-                  </div>
-                  <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8', fontSize: '0.8rem' }}>
-                        No new notifications.
-                      </div>
-                    ) : (
-                      notifications.map(n => (
-                        <div
-                          key={n.id}
-                          onClick={() => {
-                            markNotificationRead(n.id);
-                            setIsNotifOpen(false);
-                          }}
-                          style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid #F1F5F9',
-                            backgroundColor: n.read ? '#FFFFFF' : '#F4F7FE',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: n.read ? 600 : 700, color: '#1E293B' }}>{n.title}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#94A3B8' }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', lineHeight: 1.3 }}>{n.message}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* HEART / FAVORITES PILL (Mockup) */}
             <button

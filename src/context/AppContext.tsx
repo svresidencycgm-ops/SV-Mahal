@@ -4,6 +4,7 @@ import { storageService } from '../services/storage';
 import { bookingService } from '../services/bookingService';
 import { invoiceService } from '../services/invoiceService';
 import { apiService } from '../services/api';
+import { playBellSound } from '../utils/soundEffects';
 import type {
   Booking,
   Room,
@@ -401,6 +402,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     storageService.saveCustomers(updatedCustomers);
     apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
+    playBellSound();
     return newCust;
   };
 
@@ -498,6 +500,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     addLog(`Created booking ${newId}`, 'Booking', newId);
+    playBellSound();
     triggerNotification(
       'New Booking Created',
       `Booking ${newId} (${newBooking.customerName}) has been created successfully.`,
@@ -759,6 +762,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     storageService.saveCustomers(updatedCustomers);
     apiService.saveCustomer(newCust);
     addLog(`Created customer ${newCust.name}`, 'Customer', newCust.id);
+    playBellSound();
     addToast('Customer Created', `Customer profile ${newCust.name} added.`, 'success');
     return newCust;
   };
@@ -956,6 +960,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const user = { name, phone, email };
     setCustomerUser(user);
     localStorage.setItem('customer_user', JSON.stringify(user));
+    checkAndCreateCustomer(name, phone, email, '');
+    playBellSound();
     addToast('Verified & Logged In', `Welcome back, ${name}!`, 'success');
     addLog(`Customer logged in: ${phone}`, 'Auth', phone);
   };
