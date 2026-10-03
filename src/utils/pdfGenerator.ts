@@ -43,7 +43,18 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
   });
 
   const invoiceNum = `INV-${booking.id.substring(booking.id.indexOf('-') + 1)}`;
-  const dateStr = new Date(booking.createdAt).toLocaleDateString('en-IN');
+  const createdDate = new Date(booking.createdAt || Date.now());
+  const dateStr = createdDate.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  const timeStr = createdDate.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  const invoiceIdentifier = `${dateStr}, ${timeStr} Invoice - ${booking.id}`;
 
   // Business Details (From template)
   const businessName = 'SV MAHAL & RESIDENCY';
@@ -73,32 +84,39 @@ export const generateInvoicePdf = (booking: Booking, payments: Payment[]): void 
   doc.setFont(fontBody, 'bold');
   doc.text(businessGstin, 15, 41);
 
-  // Big INVOICE badge (Right side)
+  // SERVICE INVOICE / TAX INVOICE badge (Right side)
+  const invoiceTypeTitle = booking.billingType === 'GST' ? 'TAX INVOICE' : 'SERVICE INVOICE';
   doc.setFont(fontBody, 'bold');
-  doc.setFontSize(28);
-  doc.setTextColor(147, 197, 253); // Light Blue
-  doc.text('INVOICE', 195, 22, { align: 'right' });
+  doc.setFontSize(16);
+  doc.setTextColor(15, 41, 66); // Dark Navy
+  doc.text(invoiceTypeTitle, 195, 18, { align: 'right' });
+
+  // Timestamp and Invoice ID aligned directly under SERVICE INVOICE
+  doc.setFont(fontBody, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105); // Muted slate
+  doc.text(invoiceIdentifier, 195, 23, { align: 'right' });
 
   // Invoice # and Date Table
   doc.setFillColor(241, 245, 249);
-  doc.rect(130, 26, 65, 16, 'F');
+  doc.rect(130, 27, 65, 16, 'F');
   doc.setDrawColor(203, 213, 225);
-  doc.line(130, 26, 195, 26);
-  doc.line(130, 34, 195, 34);
-  doc.line(130, 42, 195, 42);
-  doc.line(130, 26, 130, 42);
-  doc.line(162, 26, 162, 42);
-  doc.line(195, 26, 195, 42);
+  doc.line(130, 27, 195, 27);
+  doc.line(130, 35, 195, 35);
+  doc.line(130, 43, 195, 43);
+  doc.line(130, 27, 130, 43);
+  doc.line(162, 27, 162, 43);
+  doc.line(195, 27, 195, 43);
 
   doc.setFont(fontBody, 'bold');
   doc.setFontSize(8);
   doc.setTextColor(15, 23, 42);
-  doc.text('INVOICE #', 146, 31, { align: 'center' });
-  doc.text('DATE', 178, 31, { align: 'center' });
+  doc.text('INVOICE #', 146, 32, { align: 'center' });
+  doc.text('DATE', 178, 32, { align: 'center' });
   doc.setFont(fontBody, 'normal');
   doc.setFontSize(8.5);
-  doc.text(invoiceNum, 146, 39, { align: 'center' });
-  doc.text(dateStr, 178, 39, { align: 'center' });
+  doc.text(invoiceNum, 146, 40, { align: 'center' });
+  doc.text(`${dateStr}`, 178, 40, { align: 'center' });
 
   // BILL TO Banner
   doc.setFillColor(203, 213, 225);

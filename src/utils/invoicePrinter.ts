@@ -26,11 +26,18 @@ function numberToIndianWords(num: number): string {
 
 function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'ADMINISTRATION COPY'): string {
   const invoiceNum = `INV-${booking.id.substring(booking.id.indexOf('-') + 1)}`;
-  const dateStr = new Date(booking.createdAt).toLocaleDateString('en-IN', {
+  const createdDate = new Date(booking.createdAt || Date.now());
+  const dateStr = createdDate.toLocaleDateString('en-IN', {
     day: '2-digit',
-    month: 'short',
+    month: '2-digit',
     year: 'numeric'
   });
+  const timeStr = createdDate.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  const invoiceIdentifier = `${dateStr}, ${timeStr} Invoice - ${booking.id}`;
 
   const baseVal = booking.financials.baseAmount ?? booking.financials.subtotal;
   const isGst = booking.billingType === 'GST';
@@ -69,9 +76,10 @@ function renderSinglePageHtml(booking: Booking, copyLabel: 'CUSTOMER COPY' | 'AD
 
         <div class="invoice-meta">
           <h2 class="meta-title">${isGst ? 'TAX INVOICE' : 'SERVICE INVOICE'}</h2>
+          <div class="meta-tagline">${invoiceIdentifier}</div>
           <table class="meta-table">
             <tr><td>Invoice No:</td><td><strong>${invoiceNum}</strong></td></tr>
-            <tr><td>Date:</td><td>${dateStr}</td></tr>
+            <tr><td>Date:</td><td>${dateStr} (${timeStr})</td></tr>
             <tr><td>Booking ID:</td><td>${booking.id}</td></tr>
             <tr><td>Billing:</td><td>${isGst ? 'GST Registered' : 'Standard'}</td></tr>
           </table>
@@ -308,11 +316,24 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>Invoice - ${booking.id}</title>
+      <title></title>
       <style>
         @page {
           size: A4 portrait;
-          margin: 10mm;
+          margin: 0;
+        }
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 0 !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #FFFFFF !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
         }
         * {
           box-sizing: border-box;
@@ -330,12 +351,16 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
         }
         .invoice-page {
           width: 100%;
-          max-width: 190mm;
+          max-width: 210mm;
+          min-height: 297mm;
           margin: 0 auto;
-          padding: 4mm 0;
+          padding: 8mm 12mm 10mm 12mm;
+          box-sizing: border-box;
+          background: #FFFFFF;
         }
         .page-break {
           page-break-after: always;
+          break-after: page;
           height: 0;
         }
         .copy-bar {
@@ -400,13 +425,24 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
         }
         .invoice-meta {
           text-align: right;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
         }
         .meta-title {
           font-size: 14pt;
           font-weight: 800;
-          color: #C9A227;
-          margin: 0 0 4px 0;
+          color: #0F2942;
+          margin: 0;
           letter-spacing: 0.05em;
+        }
+        .meta-tagline {
+          font-size: 8.5pt;
+          font-weight: 700;
+          color: #475569;
+          margin: 2px 0 6px 0;
+          letter-spacing: 0.02em;
+          text-align: right;
         }
         .meta-table {
           margin-left: auto;
@@ -414,7 +450,7 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
           font-size: 7.5pt;
         }
         .meta-table td {
-          padding: 1px 4px;
+          padding: 1.5px 4px;
           text-align: right;
         }
         .details-grid {
@@ -641,10 +677,14 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
     doc.open();
     doc.write(fullHtml);
     doc.close();
+    try {
+      doc.title = '';
+    } catch {}
 
     // Allow resources/styles to settle before triggering native print
     setTimeout(() => {
       try {
+        if (doc) doc.title = '';
         printFrame.contentWindow?.focus();
         printFrame.contentWindow?.print();
       } catch (e) {
@@ -654,6 +694,9 @@ export function printInvoice(booking: Booking, copyType: 'customer' | 'admin' | 
         if (win) {
           win.document.write(fullHtml);
           win.document.close();
+          try {
+            win.document.title = '';
+          } catch {}
           win.focus();
           win.print();
         }
