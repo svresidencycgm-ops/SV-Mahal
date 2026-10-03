@@ -24,27 +24,30 @@
   --info-bg: #E0F2FE;
   
   /* Typography scale */
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif;
-  --font-crm-sans: 'Aptos', 'Calibri', 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-crm-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   --font-crm-serif: 'Times New Roman', Times, Baskerville, Georgia, serif;
   
   /* Component tokens */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.1);
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --sidebar-width: 260px;
+  --sidebar-width: 250px;
 
-  /* Neomorphic Design System Tokens */
-  --purple-gradient: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%);
-  --sidebar-gradient: linear-gradient(180deg, #38BDF8 0%, #0284C7 100%);
-  --soft-shadow-out: 6px 6px 12px #e8eef6, -6px -6px 12px #ffffff;
-  --soft-shadow-in: inset 3px 3px 6px #cbd5e1, inset -3px -3px 6px #ffffff;
+  /* Modern Admin CRM Dashboard Design Tokens */
+  --sidebar-purple: #5C24FF;
+  --sidebar-gradient: linear-gradient(180deg, #6320EE 0%, #4A12D4 100%);
+  --sidebar-active-bg: rgba(255, 255, 255, 0.18);
+  --crm-bg: #F4F7FE;
+  --purple-gradient: linear-gradient(135deg, #6320EE 0%, #4A12D4 100%);
+  --soft-shadow-out: 0 8px 24px rgba(149, 157, 165, 0.06);
+  --soft-shadow-in: inset 0 2px 4px rgba(0,0,0,0.04);
 }
 
 /* Global Reset */

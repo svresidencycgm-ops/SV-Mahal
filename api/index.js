@@ -165,6 +165,42 @@ export default async function handler(req, res) {
       }
     }
 
+    // /api/upload (Cloudinary Multimedia Upload Proxy)
+    if (pathname.startsWith('/upload')) {
+      if (req.method === 'POST') {
+        const { file, folder = 'sv_residency_multimedia', upload_preset } = req.body || {};
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const preset = upload_preset || process.env.CLOUDINARY_UPLOAD_PRESET || process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+        if (!cloudName || !preset) {
+          // If not configured, echo back file or acknowledge
+          return res.status(200).json({ 
+            success: true, 
+            url: file, 
+            isCloudinary: false, 
+            message: 'Cloudinary credentials pending configuration' 
+          });
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', preset);
+        formData.append('folder', folder);
+
+        const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const cloudJson = await cloudRes.json();
+        if (cloudRes.ok) {
+          return res.status(200).json({ success: true, url: cloudJson.secure_url, isCloudinary: true, data: cloudJson });
+        } else {
+          return res.status(200).json({ success: false, url: file, isCloudinary: false, error: cloudJson?.error?.message });
+        }
+      }
+    }
+
     return res.status(404).json({ error: 'API route not found' });
   } catch (error) {
     console.error('API Error:', error);

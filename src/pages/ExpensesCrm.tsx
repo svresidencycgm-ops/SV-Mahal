@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Trash2, ArrowDownRight, Plus, Calendar, DollarSign, Tag, Landmark } from 'lucide-react';
+import { Trash2, ArrowDownRight, Plus } from 'lucide-react';
 import type { Expense } from '../types';
 
 export const ExpensesCrm: React.FC = () => {
@@ -80,7 +80,7 @@ export const ExpensesCrm: React.FC = () => {
             <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Total Outflow</span>
             <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#DC2626' }}>₹{totalExpenses.toLocaleString()}</span>
           </div>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifycontent: 'center' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ArrowDownRight size={18} color="#DC2626" style={{ margin: 'auto' }} />
           </div>
         </div>

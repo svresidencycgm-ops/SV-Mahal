@@ -4,7 +4,7 @@ import { Edit, X } from 'lucide-react';
 import type { Room } from '../types';
 
 export const RoomsCrm: React.FC = () => {
-  const { rooms, updateRoom, addRoom, deleteRoom, currentUserRole } = useApp();
+  const { rooms, updateRoom, addRoom, deleteRoom } = useApp();
   
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -72,7 +72,8 @@ export const RoomsCrm: React.FC = () => {
         bedType,
         description,
         status: 'Available',
-        amenities: []
+        amenities: [],
+        images: []
       });
       setIsEditOpen(false);
     } else if (selectedRoom) {

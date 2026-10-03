@@ -3,7 +3,7 @@
  * Accepts a base64 Data URL or file and returns a Promise resolving to the watermarked base64 Data URL.
  */
 export const addTimestampWatermark = (base64Str: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!base64Str) {
       resolve('');
       return;

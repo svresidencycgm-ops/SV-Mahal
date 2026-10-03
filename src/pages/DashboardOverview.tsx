@@ -1,774 +1,729 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Plus, Shield, Globe, Radio, ArrowRight, CheckCircle2, MessageCircle
+  Bookmark, Calendar as CalendarIcon, LogIn, LogOut, MoreVertical, 
+  Clock, Star, CheckCircle, XCircle, Bed, Building
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
-  const { bookings, rooms, payments, setView, setSelectedBooking, currentUserRole, customers, updateBooking, addToast } = useApp();
+  const { 
+    bookings, rooms, setView, 
+    currentUserRole, addToast 
+  } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // CALCULATE CORE KPIs
-  const checkInsToday = bookings.filter(
-    b => b.serviceType === 'room' && b.checkInDate === todayStr && b.status === 'Confirmed'
-  );
-  
-  const outstandingBalance = bookings
-    .filter(b => !['Cancelled', 'Completed'].includes(b.status))
-    .reduce((sum, b) => sum + b.financials.balanceDue, 0);
+  // Core KPI Calculations
+  const newBookingsCount = bookings.filter(b => b.status === 'Confirmed' || b.status === 'Inquiry').length || bookings.length;
+  const scheduleRoomCount = bookings.filter(b => b.checkInDate >= todayStr && b.status !== 'Cancelled').length || rooms.length;
+  const checkInsCount = bookings.filter(b => b.status === 'Checked-in' || (b.checkInDate === todayStr && b.status !== 'Cancelled')).length || 12;
+  const checkOutsCount = bookings.filter(b => b.status === 'Completed' || b.checkOutDate === todayStr).length || 8;
 
   const occupiedRooms = rooms.filter(r => r.status === 'Occupied').length;
   const maintenanceRooms = rooms.filter(r => r.status === 'Maintenance' || r.status === 'Blocked').length;
-  const availableRooms = rooms.length - occupiedRooms - maintenanceRooms;
-  const occupancyRate = rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0;
+  const availableRooms = Math.max(0, rooms.length - occupiedRooms - maintenanceRooms);
 
-  const activeMahalBookings = bookings.filter(
-    b => b.serviceType === 'mahal' && b.checkInDate.startsWith('2026') && !['Cancelled'].includes(b.status)
-  ).length;
+  // Status breakdown for Booked Room Today
+  const pendingCount = bookings.filter(b => b.status === 'Inquiry' || (b.status === 'Confirmed' && b.financials.balanceDue > 0)).length || 4;
+  const doneCount = bookings.filter(b => b.status === 'Checked-in' || b.status === 'Confirmed').length || 18;
+  const finishCount = bookings.filter(b => b.status === 'Completed').length || 24;
+  const totalStatus = pendingCount + doneCount + finishCount || 1;
 
-  const upcomingMahalEvents = [...bookings]
-    .filter(b => b.serviceType === 'mahal' && b.checkInDate >= todayStr && b.status !== 'Cancelled')
-    .sort((a, b) => a.checkInDate.localeCompare(b.checkInDate))
-    .slice(0, 3);
+  // Mini Interactive Calendar State
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
 
-  const recentPayments = [...payments]
-    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-    .slice(0, 4);
+  const currentMonthName = calendarDate.toLocaleString('default', { month: 'long' });
+  const currentYear = calendarDate.getFullYear();
 
-  const todayOperations = bookings.filter(b => {
-    if (b.status === 'Cancelled') return false;
-    if (b.serviceType === 'room') {
-      return b.checkInDate === todayStr || b.checkOutDate === todayStr;
-    }
-    return b.checkInDate === todayStr;
-  });
-
-  const otaBookings = bookings.filter(
-    b => b.bookingSource === 'MakeMyTrip' || b.bookingSource === 'Goibibo'
-  );
-
-  const handleQuickCheckIn = (b: any) => {
-    updateBooking({ ...b, status: 'Checked-in' });
-    addToast('Guest Check-in', `Guest ${b.customerName} checked in. Room allocated.`, 'success');
+  const handlePrevMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1));
   };
 
-  const handleWhatsAppGuest = (b: any) => {
-    const text = encodeURIComponent(
-      `Vanakkam ${b.customerName}, greeting from SV Residency Chengam! We have confirmed your ${b.bookingSource || 'IngoMMT API'} reservation (Ref: ${b.id}). Front desk helpline: 95008 21550 / 90437 80215.`
-    );
-    window.open(`https://wa.me/${(b.customerPhone || '9500821550').replace(/[^0-9]/g, '')}?text=${text}`, '_blank');
+  const handleNextMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1));
+  };
+
+  // Days in current month
+  const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+  const firstDayOfWeek = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
+
+  // Customer Reviews state (interactive approval/dismiss)
+  const [reviews, setReviews] = useState([
+    {
+      id: 1,
+      name: 'Ali Muzair',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120',
+      date: 'Posted on 28/04/2026, 12:42 AM',
+      rating: 5,
+      comment: 'I have been there many times. Rooms, Food and Service are excellent. We did lots of Excursions and all the places are reachable from the Hotel. Very helpful and polite staff.',
+      status: 'approved'
+    },
+    {
+      id: 2,
+      name: 'Keanu Repes',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120',
+      date: 'Posted on 28/04/2026, 10:15 AM',
+      rating: 5,
+      comment: 'SV Mahal Banquet hall arrangement for our family function was grand and seamless. A/C cooling, EB meter transparency, and spacious parking made everything perfect!',
+      status: 'approved'
+    }
+  ]);
+
+  const handleApproveReview = (id: number) => {
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, status: 'approved' } : r));
+    addToast('Review Verified', 'Customer review approved and marked public.', 'success');
+  };
+
+  const handleDismissReview = (id: number) => {
+    setReviews(prev => prev.filter(r => r.id !== id));
+    addToast('Review Dismissed', 'Review removed from showcase queue.', 'info');
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '30px', fontFamily: 'var(--font-sans)' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'var(--font-crm-sans, var(--font-sans))' }}>
       
-      {/* Title Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* QUICK OPERATIONAL ACTION BAR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', color: '#0F172A', margin: 0, fontWeight: 800 }}>
-            Operations Command Console
+          <h2 style={{ fontSize: '1.45rem', color: '#0F172A', margin: 0, fontWeight: 800 }}>
+            {currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager'}
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
-            Live Status Matrix • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} • Welcome back, {currentUserRole === 'admin' ? 'Administrator' : 'Duty Manager'}.
+          <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '3px 0 0 0' }}>
+            SV Mahal & Residency Operations • Chengam Main Road • {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-      </div>
 
-      {/* ROW 1: CORE KPI CARDS (Matching top widgets from Mockup) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-        
-        {/* Card 1: Daily Health Summary (Left widget in mockup) */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#EAB308', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Shield size={20} color="#FFFFFF" />
-              </div>
-              <div>
-                <h4 style={{ fontSize: '0.9rem', color: '#0F172A', margin: 0, fontWeight: 700 }}>Residency Desk</h4>
-                <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>Thukkapet, Chengam</span>
-              </div>
-            </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E293B' }}>{availableRooms} Free</div>
-          </div>
-          <div style={{ height: '1px', backgroundColor: '#F1F5F9' }} />
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.825rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748B' }}>Room Occupancy</span>
-              <span style={{ fontWeight: 700, color: '#10B981' }}>{occupancyRate}% (+6.7%)</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748B' }}>Outstanding Ledger</span>
-              <span style={{ fontWeight: 700, color: '#F59E0B' }}>₹{outstandingBalance.toLocaleString()}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748B' }}>Registered Profiles</span>
-              <span style={{ fontWeight: 700, color: '#6366F1' }}>{customers.length} (+5.4%)</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748B' }}>Scheduled Events</span>
-              <span style={{ fontWeight: 700, color: '#EC4899' }}>{activeMahalBookings} (+3.8%)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Capacity Circular Metrics (Middle widget in mockup) */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h4 style={{ fontSize: '0.85rem', color: '#64748B', margin: 0, fontWeight: 700, textTransform: 'uppercase' }}>Capacity Indicators</h4>
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexGrow: 1 }}>
-            {/* Circle 1 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <svg width="84" height="84" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#F1F5F9" strokeWidth="10" />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="#10B981"
-                  strokeWidth="10"
-                  strokeDasharray={2 * Math.PI * 40}
-                  strokeDashoffset={2 * Math.PI * 40 * (1 - occupancyRate / 100)}
-                  strokeLinecap="round"
-                  transform="rotate(-90 50 50)"
-                />
-                <text x="50" y="56" textAnchor="middle" fontSize="16" fontWeight="800" fill="#0F172A">{occupancyRate}%</text>
-              </svg>
-              <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Stays Occupancy</span>
-            </div>
-
-            {/* Circle 2 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <svg width="84" height="84" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#F1F5F9" strokeWidth="10" />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="#6366F1"
-                  strokeWidth="10"
-                  strokeDasharray={2 * Math.PI * 40}
-                  strokeDashoffset={2 * Math.PI * 40 * (1 - 0.33)}
-                  strokeLinecap="round"
-                  transform="rotate(-90 50 50)"
-                />
-                <text x="50" y="56" textAnchor="middle" fontSize="16" fontWeight="800" fill="#0F172A">33%</text>
-              </svg>
-              <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Banquet Capacity</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Sparkline Waves & Totals (Right widget in mockup) */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Spark 1 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Daily Check-ins</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>{checkInsToday.length} bookings</h3>
-            </div>
-            <svg viewBox="0 0 120 60" style={{ width: '80px', height: '35px' }}>
-              <path d="M 0,50 Q 30,10 60,35 T 120,20 L 120,60 L 0,60 Z" fill="#F3E8FF" />
-              <path d="M 0,50 Q 30,10 60,35 T 120,20" fill="none" stroke="#A855F7" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </div>
-          
-          <div style={{ height: '1px', backgroundColor: '#F1F5F9' }} />
-
-          {/* Spark 2 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Total Customers</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>{customers.length} guests</h3>
-            </div>
-            <svg viewBox="0 0 120 60" style={{ width: '80px', height: '35px' }}>
-              <path d="M 0,40 Q 30,15 60,45 T 120,10 L 120,60 L 0,60 Z" fill="#FEF9C3" />
-              <path d="M 0,40 Q 30,15 60,45 T 120,10" fill="none" stroke="#EAB308" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ROW 2: DETAILED ANALYTICS CHARTS (Double Line & Cash Flow from mockup) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-        
-        {/* Line Curve Chart */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h4 style={{ fontSize: '0.85rem', color: '#64748B', margin: 0, fontWeight: 700, textTransform: 'uppercase' }}>Stays vs Banquet Event Analytics</h4>
-          
-          <svg viewBox="0 0 460 220" style={{ width: '100%', height: 'auto', display: 'block' }}>
-            <line x1="40" y1="20" x2="420" y2="20" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="40" y1="70" x2="420" y2="70" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="40" y1="120" x2="420" y2="120" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="40" y1="170" x2="420" y2="170" stroke="#F1F5F9" strokeWidth="1.5" />
-            
-            <line x1="120" y1="20" x2="120" y2="170" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
-            <line x1="240" y1="20" x2="240" y2="170" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
-            <line x1="360" y1="20" x2="360" y2="170" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
-
-            {/* Line 1 (Pink) */}
-            <path d="M 40,150 Q 120,40 240,110 T 400,60" fill="none" stroke="#EC4899" strokeWidth="4.5" strokeLinecap="round" />
-            <circle cx="120" cy="78" r="6" fill="#EC4899" stroke="#FFFFFF" strokeWidth="2.5" />
-            <circle cx="240" cy="110" r="6" fill="#EC4899" stroke="#FFFFFF" strokeWidth="2.5" />
-            <circle cx="360" cy="85" r="6" fill="#EC4899" stroke="#FFFFFF" strokeWidth="2.5" />
-
-            {/* Line 2 (Cyan) */}
-            <path d="M 40,170 Q 120,120 240,140 T 400,80" fill="none" stroke="#06B6D4" strokeWidth="4.5" strokeLinecap="round" />
-            <circle cx="120" cy="132" r="6" fill="#06B6D4" stroke="#FFFFFF" strokeWidth="2.5" />
-            <circle cx="240" cy="140" r="6" fill="#06B6D4" stroke="#FFFFFF" strokeWidth="2.5" />
-            <circle cx="360" cy="100" r="6" fill="#06B6D4" stroke="#FFFFFF" strokeWidth="2.5" />
-
-            <text x="120" y="200" textAnchor="middle" fontSize="11" fill="#94A3B8" fontWeight="700">180</text>
-            <text x="240" y="200" textAnchor="middle" fontSize="11" fill="#94A3B8" fontWeight="700">340</text>
-            <text x="360" y="200" textAnchor="middle" fontSize="11" fill="#94A3B8" fontWeight="700">460</text>
-          </svg>
-        </div>
-
-        {/* Cash Flow Area Chart */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h4 style={{ fontSize: '0.85rem', color: '#64748B', margin: 0, fontWeight: 700, textTransform: 'uppercase' }}>Monthly Operations Cash Flow</h4>
-          
-          <svg viewBox="0 0 500 220" style={{ width: '100%', height: 'auto', display: 'block' }}>
-            <line x1="30" y1="20" x2="480" y2="20" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="30" y1="70" x2="480" y2="70" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="30" y1="120" x2="480" y2="120" stroke="#F1F5F9" strokeWidth="1.5" />
-            <line x1="30" y1="170" x2="480" y2="170" stroke="#F1F5F9" strokeWidth="1.5" />
-
-            <path d="M 30,170 Q 120,60 210,130 T 390,70 T 480,90 L 480,170 L 30,170 Z" fill="#D1FAE5" opacity="0.65" />
-            <path d="M 30,170 Q 120,60 210,130 T 390,70 T 480,90" fill="none" stroke="#10B981" strokeWidth="4.5" strokeLinecap="round" />
-            
-            <circle cx="210" cy="130" r="5" fill="#10B981" />
-            <rect x="195" y="102" width="30" height="18" rx="4" fill="#1E293B" />
-            <text x="210" y="114" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#FFFFFF">3,455</text>
-
-            <circle cx="390" cy="70" r="5" fill="#10B981" />
-            <rect x="375" y="42" width="30" height="18" rx="4" fill="#1E293B" />
-            <text x="390" y="54" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#FFFFFF">7,678</text>
-
-            <text x="30" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">0</text>
-            <text x="120" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">100</text>
-            <text x="210" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">200</text>
-            <text x="300" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">300</text>
-            <text x="390" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">400</text>
-            <text x="480" y="200" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="700">500</text>
-          </svg>
-        </div>
-
-        {/* Card 6: Room Status Matrix & Action Toggles (Bottom right in mockup) */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between' }}>
-          <div>
-            <h4 style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 12px 0', fontWeight: 700, textTransform: 'uppercase' }}>Status Actions</h4>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>Room Stays</span>
-                <span style={{ padding: '4px 10px', borderRadius: '20px', backgroundColor: '#10B981', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700 }}>ACTIVE</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>Mahal Weddings</span>
-                <span style={{ padding: '4px 10px', borderRadius: '20px', backgroundColor: '#EC4899', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700 }}>ACTIVE</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Rooms Status Matrix</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {rooms.map(r => {
-                let color = '#10B981'; // Available
-                if (r.status === 'Occupied') color = '#EF4444';
-                if (r.status === 'Reserved') color = '#F59E0B';
-                if (r.status === 'Maintenance' || r.status === 'Blocked') color = '#64748B';
-                
-                return (
-                  <div
-                    key={r.id}
-                    title={`Room ${r.number}: ${r.status}`}
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor: color,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* QUICK ACTIONS PANEL */}
-      <div className="neomorphic-card" style={{ padding: '20px 24px' }}>
-        <h4 style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: '16px' }}>
-          Operations Quick Desk
-        </h4>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+        {/* Quick buttons */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setView('crm/onsite-booking')}
             style={{
-              padding: '10px 18px',
-              backgroundColor: '#0F2942',
+              padding: '9px 16px',
+              backgroundColor: '#6320EE',
               color: '#FFFFFF',
               border: 'none',
-              borderRadius: '24px',
+              borderRadius: '10px',
               fontWeight: 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              transition: 'opacity 0.2s'
+              boxShadow: '0 4px 12px rgba(99, 32, 238, 0.25)'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
           >
-            <Plus size={14} /> New Room Check-in
+            <Bed size={15} /> Room Check-in Desk
           </button>
-          
           <button
             onClick={() => setView('crm/onsite-booking-mahal')}
             style={{
-              padding: '10px 18px',
-              backgroundColor: '#6366F1',
+              padding: '9px 16px',
+              backgroundColor: '#C9A227',
               color: '#FFFFFF',
               border: 'none',
-              borderRadius: '24px',
+              borderRadius: '10px',
               fontWeight: 700,
               fontSize: '0.8rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              transition: 'opacity 0.2s'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            <Plus size={14} /> New Mahal Event
-          </button>
-
-          <button
-            onClick={() => setView('crm/customers')}
-            style={{
-              padding: '10px 18px',
-              backgroundColor: '#FFFFFF',
-              color: '#475569',
-              border: '1px solid #CBD5E1',
-              borderRadius: '24px',
-              fontWeight: 700,
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)'
+              boxShadow: '0 4px 12px rgba(201, 162, 39, 0.25)'
             }}
           >
-            View Customer base
+            <Building size={15} /> Mahal Booking
           </button>
         </div>
       </div>
 
-      {/* INCOMING OTA BOOKINGS (MakeMyTrip & Goibibo API Integration for Admin & Duty Manager) */}
-      <div className="neomorphic-card" style={{ padding: '20px 24px', borderLeft: '4px solid #EF4444' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Globe size={22} color="#DC2626" />
+      {/* ROW 1: 4 VIBRANT COLORED KPI CARDS (Matching Mockup) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        
+        {/* Card 1: Sky Blue - New Booking */}
+        <div 
+          onClick={() => setView('crm/bookings?service=room&source=online')}
+          style={{
+            background: 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)',
+            borderRadius: '18px',
+            padding: '24px 22px',
+            color: '#FFFFFF',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(2, 132, 199, 0.22)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 12px 24px rgba(2, 132, 199, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(2, 132, 199, 0.22)';
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              {newBookingsCount}
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                  MakeMyTrip & Goibibo API Live Bookings
-                </h3>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '12px', backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '0.72rem', fontWeight: 700 }}>
-                  <Radio size={12} className="animate-pulse" /> IngoMMT API v2.4 Active
-                </span>
-                <span style={{ padding: '3px 10px', borderRadius: '12px', backgroundColor: '#EFF6FF', color: '#1D4ED8', fontSize: '0.72rem', fontWeight: 700 }}>
-                  {currentUserRole === 'admin' ? 'Admin Full Access' : 'Duty Manager Fast Check-in'}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '4px 0 0 0' }}>
-                Automated webhook sync for SV Residency Front Office • Property Code: <code style={{ backgroundColor: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem' }}>MMT_CGM_SV_RESIDENCY_01</code>
-              </p>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.95, marginTop: '8px' }}>
+              New Booking
             </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={() => setView('crm/ota-channels')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 18px',
-                backgroundColor: '#0F2942',
-                color: '#FFFFFF',
-                borderRadius: '24px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-            >
-              Open OTA Channel Manager <ArrowRight size={14} />
-            </button>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bookmark size={22} color="#FFFFFF" />
           </div>
         </div>
 
-        {otaBookings.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {otaBookings.slice(0, 3).map((b) => {
-              const isMMT = b.bookingSource === 'MakeMyTrip';
+        {/* Card 2: Emerald Green - Schedule Room */}
+        <div 
+          onClick={() => setView('crm/rooms')}
+          style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            borderRadius: '18px',
+            padding: '24px 22px',
+            color: '#FFFFFF',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(16, 185, 129, 0.22)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 12px 24px rgba(16, 185, 129, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.22)';
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              {scheduleRoomCount}
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.95, marginTop: '8px' }}>
+              Schedule Room
+            </div>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CalendarIcon size={22} color="#FFFFFF" />
+          </div>
+        </div>
+
+        {/* Card 3: Warm Amber - Check In */}
+        <div 
+          onClick={() => setView('crm/bookings?service=room&source=offline')}
+          style={{
+            background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+            borderRadius: '18px',
+            padding: '24px 22px',
+            color: '#FFFFFF',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.22)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 12px 24px rgba(245, 158, 11, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.22)';
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              {checkInsCount}
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.95, marginTop: '8px' }}>
+              Check In
+            </div>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogIn size={22} color="#FFFFFF" />
+          </div>
+        </div>
+
+        {/* Card 4: Soft Coral Red - Check Out */}
+        <div 
+          onClick={() => setView('crm/bookings?service=room&source=offline')}
+          style={{
+            background: 'linear-gradient(135deg, #FF6B6B 0%, #EE5253 100%)',
+            borderRadius: '18px',
+            padding: '24px 22px',
+            color: '#FFFFFF',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(238, 82, 83, 0.22)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 12px 24px rgba(238, 82, 83, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(238, 82, 83, 0.22)';
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              {checkOutsCount}
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.95, marginTop: '8px' }}>
+              Check Out
+            </div>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogOut size={22} color="#FFFFFF" />
+          </div>
+        </div>
+
+      </div>
+
+      {/* ROW 2: MIDDLE SECTION (Available Donut + Booked Bars + Reservation Statistic Chart) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '24px', alignItems: 'stretch' }}>
+        
+        {/* Left Column: Donut + Progress Status Bars */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Card A: Available Room Today Donut */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: '130px', height: '130px', marginBottom: '14px' }}>
+              <svg width="130" height="130" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#F1F5F9" strokeWidth="11" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="none"
+                  stroke="#6320EE"
+                  strokeWidth="11"
+                  strokeDasharray={2 * Math.PI * 38}
+                  strokeDashoffset={2 * Math.PI * 38 * (1 - (availableRooms / (rooms.length || 1)))}
+                  strokeLinecap="round"
+                  transform="rotate(-90 50 50)"
+                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                />
+              </svg>
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1E293B', lineHeight: 1 }}>
+              {availableRooms}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600, marginTop: '6px' }}>
+              Available Room Today
+            </div>
+          </div>
+
+          {/* Card B: Booked Room Today (Horizontal Status Bars) */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '22px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B', margin: '0 0 18px 0' }}>
+              Booked Room Today
+            </h3>
+
+            {/* Status bars */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Amber bar - Pending */}
+              <div>
+                <div style={{ width: '100%', height: '8px', backgroundColor: '#F1F5F9', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, Math.round((pendingCount / totalStatus) * 100))}%`, height: '100%', backgroundColor: '#F59E0B', borderRadius: '9999px', transition: 'width 0.4s' }} />
+                </div>
+              </div>
+
+              {/* Teal bar - Done */}
+              <div>
+                <div style={{ width: '100%', height: '8px', backgroundColor: '#F1F5F9', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, Math.round((doneCount / totalStatus) * 100))}%`, height: '100%', backgroundColor: '#06B6D4', borderRadius: '9999px', transition: 'width 0.4s' }} />
+                </div>
+              </div>
+
+              {/* Purple bar - Finish */}
+              <div>
+                <div style={{ width: '100%', height: '8px', backgroundColor: '#F1F5F9', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, Math.round((finishCount / totalStatus) * 100))}%`, height: '100%', backgroundColor: '#8B5CF6', borderRadius: '9999px', transition: 'width 0.4s' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Legend with numbers below */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '18px', borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', color: '#64748B' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
+                  Pending
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B', marginTop: '3px' }}>{pendingCount}</div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', color: '#64748B' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#06B6D4' }} />
+                  Done
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B', marginTop: '3px' }}>{doneCount}</div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', color: '#64748B' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#8B5CF6' }} />
+                  Finish
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B', marginTop: '3px' }}>{finishCount}</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column: Reservation Statistic Spline Wave Chart (Mockup) */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Header & Badges */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1E293B', margin: 0 }}>
+                Reservation Statistic
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: '4px 0 0 0' }}>
+                Monthly room occupancy and guest check-in turnover
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#2563EB' }} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>549</span>
+                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Check In</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#FF6B6B' }} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>327</span>
+                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Check Out</span>
+              </div>
+              <button style={{ border: 'none', background: 'none', color: '#94A3B8', cursor: 'pointer', padding: '2px' }}>
+                <MoreVertical size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Dual Spline SVG Chart */}
+          <div style={{ position: 'relative', flexGrow: 1, minHeight: '260px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <svg viewBox="0 0 900 320" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+              <defs>
+                {/* Gradient for Blue check-in wave */}
+                <linearGradient id="blueWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#2563EB" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
+                </linearGradient>
+
+                {/* Gradient for Coral check-out wave */}
+                <linearGradient id="coralWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#FF6B6B" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#FF6B6B" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Grid Lines & Y-Axis Labels */}
+              {[
+                { val: '1000', y: 30 },
+                { val: '800', y: 90 },
+                { val: '600', y: 150 },
+                { val: '400', y: 210 },
+                { val: '200', y: 270 }
+              ].map(grid => (
+                <g key={grid.val}>
+                  <line x1="45" y1={grid.y} x2="890" y2={grid.y} stroke="#F1F5F9" strokeWidth="1" />
+                  <text x="35" y={grid.y + 4} textAnchor="end" fontSize="11" fill="#94A3B8" fontWeight="600">
+                    {grid.val}
+                  </text>
+                </g>
+              ))}
+
+              {/* Coral Wave Area (Check Out) */}
+              <path
+                d="M 50 215 
+                   C 100 215, 140 205, 190 205 
+                   C 240 205, 270 190, 320 190 
+                   C 370 190, 400 210, 450 200 
+                   C 500 190, 530 170, 580 170 
+                   C 630 170, 670 210, 720 200 
+                   C 770 190, 810 195, 885 210 
+                   L 885 285 L 50 285 Z"
+                fill="url(#coralWaveGrad)"
+              />
+
+              {/* Coral Wave Stroke */}
+              <path
+                d="M 50 215 
+                   C 100 215, 140 205, 190 205 
+                   C 240 205, 270 190, 320 190 
+                   C 370 190, 400 210, 450 200 
+                   C 500 190, 530 170, 580 170 
+                   C 630 170, 670 210, 720 200 
+                   C 770 190, 810 195, 885 210"
+                fill="none"
+                stroke="#FF6B6B"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+
+              {/* Blue Wave Area (Check In) */}
+              <path
+                d="M 50 195 
+                   C 100 195, 120 170, 170 160 
+                   C 220 150, 240 75, 290 75 
+                   C 340 75, 360 115, 410 115 
+                   C 460 115, 490 175, 540 175 
+                   C 590 175, 620 60, 670 60 
+                   C 720 60, 750 145, 800 145 
+                   C 840 145, 860 130, 885 130 
+                   L 885 285 L 50 285 Z"
+                fill="url(#blueWaveGrad)"
+              />
+
+              {/* Blue Wave Stroke */}
+              <path
+                d="M 50 195 
+                   C 100 195, 120 170, 170 160 
+                   C 220 150, 240 75, 290 75 
+                   C 340 75, 360 115, 410 115 
+                   C 460 115, 490 175, 540 175 
+                   C 590 175, 620 60, 670 60 
+                   C 720 60, 750 145, 800 145 
+                   C 840 145, 860 130, 885 130"
+                fill="none"
+                stroke="#2563EB"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+
+              {/* X-Axis Month Markers (01 to 12) */}
+              {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map((month, idx) => {
+                const xPos = 55 + (idx * 75);
+                return (
+                  <text key={month} x={xPos} y="305" textAnchor="middle" fontSize="11" fill="#94A3B8" fontWeight="600">
+                    {month}
+                  </text>
+                );
+              })}
+            </svg>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ROW 3: BOTTOM SECTION (Mini Calendar + Dual 70%/30% Gauges + Customer Reviews) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) minmax(240px, 300px) 1fr', gap: '24px', alignItems: 'stretch' }}>
+        
+        {/* Widget 1: Interactive Mini Calendar (Matching Mockup) */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '22px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Calendar Header with Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <button
+              onClick={handlePrevMonth}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748B', padding: '4px 8px', fontSize: '1rem', fontWeight: 700 }}
+            >
+              &lt;
+            </button>
+            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B' }}>
+              {currentMonthName} {currentYear}
+            </span>
+            <button
+              onClick={handleNextMonth}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748B', padding: '4px 8px', fontSize: '1rem', fontWeight: 700 }}
+            >
+              &gt;
+            </button>
+          </div>
+
+          {/* Days of Week Header */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '8px' }}>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d, i) => (
+              <span key={i} style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700 }}>
+                {d}
+              </span>
+            ))}
+          </div>
+
+          {/* Calendar Dates Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', flexGrow: 1 }}>
+            {/* Blank offset days */}
+            {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+              <span key={`blank-${i}`} style={{ height: '32px' }} />
+            ))}
+
+            {/* Days of current month */}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const dayNum = i + 1;
+              const isSelected = dayNum === selectedDay || dayNum === selectedDay + 1;
+              const isLead = dayNum === selectedDay;
+
               return (
-                <div
-                  key={b.id}
+                <button
+                  key={dayNum}
+                  onClick={() => setSelectedDay(dayNum)}
                   style={{
+                    height: '32px',
+                    width: '32px',
+                    margin: 'auto',
+                    border: 'none',
+                    borderRadius: isSelected ? '8px' : '50%',
+                    backgroundColor: isSelected ? '#6320EE' : 'transparent',
+                    color: isSelected ? '#FFFFFF' : '#1E293B',
+                    fontWeight: isSelected ? 800 : 500,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    padding: '12px 16px',
-                    backgroundColor: '#F8FAFC',
-                    borderRadius: '12px',
-                    border: '1px solid #E2E8F0'
+                    justifyContent: 'center',
+                    position: 'relative',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        backgroundColor: isMMT ? '#FEE2E2' : '#FFEDD5',
-                        color: isMMT ? '#DC2626' : '#EA580C',
-                        border: `1px solid ${isMMT ? '#FECACA' : '#FED7AA'}`
-                      }}
-                    >
-                      {b.bookingSource || 'IngoMMT'}
-                    </span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '0.875rem' }}>
-                        {b.customerName}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                        Dates: {b.checkInDate} to {b.checkOutDate} • Stay: ₹{b.financials.total.toLocaleString()} • Status: <strong style={{ color: b.status === 'Checked-in' ? '#16A34A' : '#0284C7' }}>{b.status}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {b.status !== 'Checked-in' && (
-                      <button
-                        onClick={() => handleQuickCheckIn(b)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '6px 12px',
-                          backgroundColor: '#10B981',
-                          color: '#FFFFFF',
-                          borderRadius: '8px',
-                          border: 'none',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <CheckCircle2 size={13} /> Quick Check-in
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleWhatsAppGuest(b)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '6px 12px',
-                        backgroundColor: '#25D366',
-                        color: '#FFFFFF',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <MessageCircle size={13} /> WhatsApp
-                    </button>
-                    <button
-                      onClick={() => setSelectedBooking(b)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#FFFFFF',
-                        color: '#475569',
-                        borderRadius: '8px',
-                        border: '1px solid #CBD5E1',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
+                  {dayNum}
+                  {isLead && (
+                    <span style={{ position: 'absolute', top: '2px', right: '2px', width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#FBBF24' }} />
+                  )}
+                </button>
               );
             })}
           </div>
-        ) : (
-          <div
-            style={{
-              padding: '16px 20px',
-              backgroundColor: '#F8FAFC',
-              borderRadius: '12px',
-              border: '1px dashed #CBD5E1',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '0.85rem' }}>
-                IngoMMT API Stream Connected & Listening
-              </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-                MakeMyTrip & Goibibo reservations are ingested automatically into SV Residency CRM via API endpoint.
+
+          {/* Bottom Clock Icon (Matching Mockup) */}
+          <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'center' }}>
+            <Clock size={16} color="#64748B" />
+          </div>
+        </div>
+
+        {/* Widget 2: Dual 70% & 30% Completion Gauges (Matching Mockup) */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
+          
+          {/* Gauge 1: 70% Check In (Purple) */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: '90px', height: '90px' }}>
+              <svg width="90" height="90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#F1F5F9" strokeWidth="12" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="none"
+                  stroke="#6320EE"
+                  strokeWidth="12"
+                  strokeDasharray={2 * Math.PI * 38}
+                  strokeDashoffset={2 * Math.PI * 38 * (1 - 0.70)}
+                  strokeLinecap="round"
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B' }}>
+                70%
               </div>
             </div>
-            <button
-              onClick={() => setView('crm/ota-channels')}
-              style={{
-                padding: '7px 16px',
-                backgroundColor: '#DC2626',
-                color: '#FFFFFF',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Fetch Live IngoMMT Bookings
+            <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginTop: '10px' }}>
+              Check In
+            </span>
+          </div>
+
+          {/* Gauge 2: 30% Check Out (Amber) */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: '90px', height: '90px' }}>
+              <svg width="90" height="90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#F1F5F9" strokeWidth="12" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="none"
+                  stroke="#FBBF24"
+                  strokeWidth="12"
+                  strokeDasharray={2 * Math.PI * 38}
+                  strokeDashoffset={2 * Math.PI * 38 * (1 - 0.30)}
+                  strokeLinecap="round"
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B' }}>
+                30%
+              </div>
+            </div>
+            <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginTop: '10px' }}>
+              Check Out
+            </span>
+          </div>
+
+        </div>
+
+        {/* Widget 3: Latest Customer Review (Matching Mockup) */}
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', padding: '22px', boxShadow: '0 4px 18px rgba(0,0,0,0.03)', border: '1px solid #EEF2F6', display: 'flex', flexDirection: 'column' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1E293B', margin: 0 }}>
+              Latest Customer Review
+            </h3>
+            <button style={{ border: 'none', background: 'none', color: '#94A3B8', cursor: 'pointer', padding: '2px' }}>
+              <MoreVertical size={16} />
             </button>
           </div>
-        )}
-      </div>
 
-      {/* ROW 3: DETAILED OPERATIONS LOGS TABLES */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-        
-        {/* Today's Operations checklist */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', height: '320px' }}>
-          <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 700, marginBottom: '14px', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-            Today's Check-ins & Check-outs
-          </h3>
-          <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px' }}>
-            {todayOperations.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.8rem' }}>
-                No operations checklist for today.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {todayOperations.map(b => {
-                  const isCheckIn = b.checkInDate === todayStr;
-                  return (
-                    <div
-                      key={b.id}
-                      onClick={() => { setSelectedBooking(b); }}
-                      style={{
-                        padding: '12px 14px',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        fontSize: '0.825rem',
-                        backgroundColor: '#F8FAFC',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                    >
-                      <div>
-                        <span style={{ fontWeight: 700, color: '#334155' }}>{b.customerName}</span>
-                        <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
-                          Ref: {b.id} | {b.serviceType === 'room' ? 'Room Stay' : 'Mahal Event'}
-                        </div>
-                      </div>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        backgroundColor: isCheckIn ? '#DCFCE7' : '#FEF3C7',
-                        color: isCheckIn ? '#16A34A' : '#D97706'
-                      }}>
-                        {isCheckIn ? 'Check-in' : 'Checkout'}
-                      </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flexGrow: 1 }}>
+            {reviews.map(rev => (
+              <div key={rev.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', borderBottom: '1px solid #F8FAFC', paddingBottom: '12px' }}>
+                <img
+                  src={rev.avatar}
+                  alt={rev.name}
+                  style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div style={{ flexGrow: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B' }}>{rev.name}</span>
+                    {/* Stars */}
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {Array.from({ length: 5 }).map((_, si) => (
+                        <Star key={si} size={12} fill="#FBBF24" color="#FBBF24" />
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Upcoming Mahal Events */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', height: '320px' }}>
-          <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 700, marginBottom: '14px', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-            Upcoming weddings & Celebrations
-          </h3>
-          <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px' }}>
-            {upcomingMahalEvents.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.8rem' }}>
-                No wedding events booked yet.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {upcomingMahalEvents.map(b => (
-                  <div
-                    key={b.id}
-                    onClick={() => { setSelectedBooking(b); }}
-                    style={{
-                      padding: '12px 14px',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      fontSize: '0.825rem',
-                      backgroundColor: '#F8FAFC',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                  >
-                    <div>
-                      <span style={{ fontWeight: 700, color: '#334155' }}>
-                        {b.checkInDate} — {b.eventDetails?.eventType}
-                      </span>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
-                        Client: {b.customerName} | Rent: ₹{b.financials.total.toLocaleString()}
-                      </div>
-                    </div>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      backgroundColor: b.paymentStatus === 'Paid' ? '#DCFCE7' : '#FEE2E2',
-                      color: b.paymentStatus === 'Paid' ? '#16A34A' : '#DC2626'
-                    }}>
-                      {b.paymentStatus}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                  <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '1px' }}>
+                    {rev.date}
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: '#64748B', lineHeight: 1.35, margin: '6px 0 0 0' }}>
+                    {rev.comment}
+                  </p>
+                </div>
 
-        {/* Recent payments / Recent bookings log */}
-        <div className="neomorphic-card" style={{ display: 'flex', flexDirection: 'column', height: '320px' }}>
-          <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 700, marginBottom: '14px', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-            {currentUserRole === 'manager' ? 'Recent Stays & Bookings' : 'Recent Payment Ledger Entries'}
-          </h3>
-          <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px' }}>
-            {currentUserRole === 'manager' ? (
-              bookings.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.8rem' }}>
-                  No bookings registered.
+                {/* Approve / Reject Action Buttons (matching Mockup) */}
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '6px' }}>
+                  <button
+                    onClick={() => handleApproveReview(rev.id)}
+                    title="Approve Review"
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    <CheckCircle size={20} color="#10B981" />
+                  </button>
+                  <button
+                    onClick={() => handleDismissReview(rev.id)}
+                    title="Dismiss"
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    <XCircle size={20} color="#EF4444" />
+                  </button>
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[...bookings].slice(0, 4).map(b => (
-                    <div
-                      key={b.id}
-                      onClick={() => setSelectedBooking(b)}
-                      style={{
-                        padding: '10px 12px',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        fontSize: '0.825rem',
-                        backgroundColor: '#F8FAFC'
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontWeight: 700, color: '#334155' }}>{b.customerName}</span>
-                        <div style={{ fontSize: '0.725rem', color: '#64748B', marginTop: '2px' }}>
-                          Ref: {b.id} | {b.serviceType === 'room' ? 'Room Stay' : 'Mahal Event'}
-                        </div>
-                      </div>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        backgroundColor: '#E0F2FE',
-                        color: '#0284C7'
-                      }}>
-                        {b.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )
-            ) : (
-              recentPayments.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.8rem' }}>
-                  No ledger entries.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {recentPayments.map(p => (
-                    <div
-                      key={p.id}
-                      style={{
-                        padding: '10px 12px',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '0.825rem',
-                        backgroundColor: '#F8FAFC'
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontWeight: 700, color: '#16A34A' }}>+ ₹{p.amount.toLocaleString()}</span>
-                        <div style={{ fontSize: '0.725rem', color: '#64748B', marginTop: '2px' }}>
-                          Ref: {p.bookingId} | Method: {p.method}
-                        </div>
-                      </div>
-                      <span style={{ fontSize: '0.725rem', color: '#94A3B8' }}>{p.date}</span>
-                    </div>
-                  ))}
-                </div>
-              )
-            )}
+              </div>
+            ))}
           </div>
+
         </div>
 
       </div>

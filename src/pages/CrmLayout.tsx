@@ -3,7 +3,8 @@ import { useApp } from '../context/AppContext';
 import { 
   Menu, Bell, Search, LogOut, LayoutDashboard, 
   Inbox, Users, Bed, Building, DollarSign, Settings, 
-  History, BarChart3, Check, ShieldCheck, Globe 
+  History, BarChart3, Check, ShieldCheck, Globe,
+  MessageSquare, Heart, Droplets
 } from 'lucide-react';
 import { OnsiteBookingCrm } from './OnsiteBookingCrm';
 import { MahalOnsiteBookingCrm } from './MahalOnsiteBookingCrm';
@@ -154,6 +155,23 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   };
 
   const navItems = getNavItems();
+
+  const getPageTitle = (view: string) => {
+    if (view === 'crm/overview') return 'Dashboard';
+    if (view === 'crm/reports') return 'Analytics & Reports';
+    if (view === 'crm/finance') return 'Finance & Ledger';
+    if (view === 'crm/bill-inventory') return 'Bill Inventory';
+    if (view.includes('service=room')) return 'Hotel Rooms Desk';
+    if (view.includes('service=mahal')) return 'SV Mahal Banquet';
+    if (view.includes('ota-channels')) return 'MakeMyTrip & Goibibo';
+    if (view.includes('online-requests')) return 'Online Approvals';
+    if (view.includes('customers')) return 'Guest Profiles';
+    if (view.includes('rooms')) return 'Room Inventory';
+    if (view.includes('mahal')) return 'Mahal Settings';
+    if (view.includes('audit')) return 'Security Audit Logs';
+    if (view.includes('settings')) return 'System Settings';
+    return 'Dashboard';
+  };
 
   return (
     <div 
@@ -313,110 +331,132 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
       {/* 2. MAIN LAYOUT AND HEADER */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', flexGrow: 1, width: isMobile ? '100%' : (isSidebarOpen ? 'calc(100% - var(--sidebar-width))' : '100%'), transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
         
-        {/* Header Bar */}
+        {/* Header Bar matching Mockup */}
         <header
           style={{
-            height: '68px',
-            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+            height: '76px',
+            backgroundColor: '#FFFFFF',
+            borderBottom: '1px solid #EEF2F6',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 24px',
+            padding: '0 28px',
             position: 'sticky',
             top: 0,
             zIndex: 90,
-            boxShadow: '0 4px 20px -5px rgba(0, 0, 0, 0.05)'
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)'
           }}
         >
-          {/* Left search & menu toggle & pill tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexGrow: 1 }}>
+          {/* Left: Menu toggle & Page Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{
                 width: '38px',
                 height: '38px',
-                borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
+                borderRadius: '10px',
+                backgroundColor: '#F8FAFC',
                 border: '1px solid #E2E8F0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: '#475569',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                 transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
             >
               <Menu size={18} />
             </button>
 
-            {/* Global Search box */}
-            <div ref={searchRef} style={{ position: 'relative', width: '240px' }} className="desktop-only">
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '6px 14px', backgroundColor: '#F8FAFC', transition: 'border-color 0.2s' }}>
-                <Search size={14} color="#94A3B8" style={{ marginRight: '8px' }} />
-                <input
-                  type="text"
-                  placeholder="Global Search..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  style={{ border: 'none', background: 'none', outline: 'none', width: '100%', fontSize: '0.8rem', color: '#1E293B', fontWeight: 600 }}
-                />
-              </div>
-
-              {/* Suggestions Dropdown */}
-              {searchResults.length > 0 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '42px',
-                    left: 0,
-                    right: 0,
-                    width: '320px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '12px',
-                    boxShadow: '0 12px 30px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.05)',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    zIndex: 200
-                  }}
-                >
-                  <div style={{ padding: '10px 14px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
-                    SEARCH SUGGESTIONS
-                  </div>
-                  {searchResults.map((item, i) => (
-                    <div
-                      key={i}
-                      onClick={() => handleSearchItemClick(item)}
-                      style={{
-                        padding: '12px 14px',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #F1F5F9',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>{item.title}</span>
-                        <span style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#E0F2FE', color: '#0369A1', fontWeight: 700 }}>{item.type}</span>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{item.subtitle}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div>
+              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1E293B', margin: 0, letterSpacing: '-0.02em' }}>
+                {getPageTitle(currentView)}
+              </h1>
             </div>
           </div>
 
-          {/* Right widgets (Notifications & Profiles) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Center: Search Here pill input */}
+          <div ref={searchRef} style={{ position: 'relative', width: '380px' }} className="desktop-only">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                borderRadius: '9999px',
+                padding: '10px 20px',
+                backgroundColor: '#F4F7FE',
+                border: '1px solid transparent',
+                transition: 'all 0.2s ease',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Search here"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: '0.85rem',
+                  color: '#1E293B',
+                  fontWeight: 500
+                }}
+              />
+              <Search size={18} color="#6320EE" style={{ marginLeft: '8px', cursor: 'pointer', flexShrink: 0 }} />
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {searchResults.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '46px',
+                  left: 0,
+                  right: 0,
+                  width: '380px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.05)',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  zIndex: 200
+                }}
+              >
+                <div style={{ padding: '10px 16px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
+                  SEARCH SUGGESTIONS
+                </div>
+                {searchResults.map((item, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handleSearchItemClick(item)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #F1F5F9',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>{item.title}</span>
+                      <span style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#E0F2FE', color: '#0369A1', fontWeight: 700 }}>{item.type}</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{item.subtitle}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right widgets (Mockup pill icons & User Profile) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             
             {/* LANGUAGE SELECTOR */}
             <div style={{ position: 'relative' }}>
@@ -424,38 +464,65 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                 value={currentLanguage}
                 onChange={(e) => setLanguage(e.target.value as 'en' | 'ta')}
                 style={{
-                  padding: '6px 12px',
+                  padding: '7px 12px',
                   borderRadius: '20px',
                   border: '1px solid #E2E8F0',
                   backgroundColor: '#FFFFFF',
                   color: '#475569',
                   fontWeight: 700,
-                  fontSize: '0.8rem',
+                  fontSize: '0.78rem',
                   cursor: 'pointer',
                   outline: 'none',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                   appearance: 'none',
                   WebkitAppearance: 'none',
-                  paddingRight: '28px',
+                  paddingRight: '24px',
                   backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'none\'%3E%3Cpath d=\'M7 9l3 3 3-3\' stroke=\'%23475569\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',
                   backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 10px center',
-                  backgroundSize: '14px'
+                  backgroundPosition: 'right 8px center',
+                  backgroundSize: '12px'
                 }}
               >
                 <option value="en">🇬🇧 EN</option>
                 <option value="ta">🇮🇳 தமிழ்</option>
               </select>
             </div>
-            
-            {/* NOTIFICATIONS BELL DROPDOWN */}
+
+            {/* MESSAGE ICON PILL (Mockup) */}
+            <button
+              type="button"
+              title="Guest Inquiries"
+              onClick={() => setView('crm/customers')}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                position: 'relative',
+                color: '#6320EE',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+            >
+              <MessageSquare size={17} />
+              <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
+            </button>
+
+            {/* NOTIFICATIONS BELL PILL (Mockup) */}
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #E2E8F0',
@@ -464,35 +531,20 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   position: 'relative',
-                  color: '#475569',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  color: '#6320EE',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
                   transition: 'background-color 0.2s'
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
               >
-                <Bell size={18} />
-                {unreadNotifs.length > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      right: '-2px',
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '50%',
-                      backgroundColor: '#EF4444',
-                      color: '#FFFFFF',
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 4px rgba(239, 68, 68, 0.3)'
-                    }}
-                  >
+                <Bell size={17} />
+                {unreadNotifs.length > 0 ? (
+                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', minWidth: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: '0.62rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>
                     {unreadNotifs.length}
-                  </div>
+                  </span>
+                ) : (
+                  <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
                 )}
               </button>
 
@@ -500,12 +552,12 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '46px',
+                    top: '48px',
                     right: '-10px',
                     width: '320px',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid #E2E8F0',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
                     zIndex: 200,
                     overflow: 'hidden'
@@ -513,7 +565,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #F1F5F9', backgroundColor: '#F8FAFC' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>Notifications</span>
-                    <button type="button" onClick={clearNotifications} style={{ border: 'none', background: 'none', color: '#4F46E5', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+                    <button type="button" onClick={clearNotifications} style={{ border: 'none', background: 'none', color: '#6320EE', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
                       Clear All
                     </button>
                   </div>
@@ -533,7 +585,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                           style={{
                             padding: '12px 16px',
                             borderBottom: '1px solid #F1F5F9',
-                            backgroundColor: n.read ? '#FFFFFF' : '#F0F9FF',
+                            backgroundColor: n.read ? '#FFFFFF' : '#F4F7FE',
                             cursor: 'pointer'
                           }}
                         >
@@ -550,32 +602,91 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
               )}
             </div>
 
-            {/* Profile Avatar with Online indicator */}
-            <div style={{ position: 'relative', width: '38px', height: '38px', cursor: 'pointer' }} onClick={() => setIsProfileOpen(!isProfileOpen)}>
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-                alt="User Profile"
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6C28D9', boxShadow: '0 2px 6px rgba(108, 40, 217, 0.15)' }}
-              />
-              <div style={{ position: 'absolute', bottom: '0', right: '0', width: '11px', height: '11px', borderRadius: '50%', backgroundColor: '#10B981', border: '2px solid #FFFFFF' }} />
-              
+            {/* HEART / FAVORITES PILL (Mockup) */}
+            <button
+              type="button"
+              title="Quick Action"
+              onClick={() => setView('crm/overview')}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                position: 'relative',
+                color: '#6320EE',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+            >
+              <Heart size={17} />
+              <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
+            </button>
+
+            {/* USER PROFILE PILL - "Welcome Admin" or "Welcome Manager" (Mockup) */}
+            <div
+              style={{ position: 'relative' }}
+            >
+              <div
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  padding: '4px 10px 4px 6px',
+                  borderRadius: '30px',
+                  transition: 'background 0.2s',
+                  marginLeft: '4px'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
+                  <img
+                    src={currentUserRole === 'admin'
+                      ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
+                      : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
+                    }
+                    alt="User"
+                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6320EE' }}
+                  />
+                  <div style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10B981', border: '2px solid #FFFFFF' }} />
+                </div>
+
+                <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.2 }}>
+                    {currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager'}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600 }}>
+                    {currentUserRole === 'admin' ? 'Superadmin' : 'Duty Manager'}
+                  </span>
+                </div>
+              </div>
+
               {isProfileOpen && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '46px',
+                    top: '50px',
                     right: 0,
-                    width: '180px',
+                    width: '200px',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid #E2E8F0',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
                     zIndex: 200,
-                    padding: '6px 0'
+                    padding: '8px 0'
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div style={{ padding: '8px 12px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
+                  <div style={{ padding: '8px 14px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
                     SWITCH ROLE
                   </div>
                   <button
@@ -585,7 +696,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       border: 'none',
                       backgroundColor: 'transparent',
                       textAlign: 'left',
@@ -608,7 +719,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       border: 'none',
                       backgroundColor: 'transparent',
                       textAlign: 'left',
@@ -632,7 +743,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       border: 'none',
                       backgroundColor: 'transparent',
                       textAlign: 'left',
@@ -653,6 +764,63 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
 
           </div>
         </header>
+
+        {/* Floating Settings & Theme Tab (matching Mockup) */}
+        <div
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: '240px',
+            zIndex: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            backgroundColor: '#2563EB',
+            padding: '4px',
+            borderTopLeftRadius: '10px',
+            borderBottomLeftRadius: '10px',
+            boxShadow: '-2px 4px 12px rgba(37, 99, 235, 0.3)'
+          }}
+        >
+          <button
+            type="button"
+            title="System Settings"
+            onClick={() => setView('crm/settings')}
+            style={{
+              width: '32px',
+              height: '32px',
+              border: 'none',
+              background: 'transparent',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              borderRadius: '6px'
+            }}
+          >
+            <Settings size={18} />
+          </button>
+          <button
+            type="button"
+            title="Toggle Language"
+            onClick={() => setLanguage(currentLanguage === 'en' ? 'ta' : 'en')}
+            style={{
+              width: '32px',
+              height: '32px',
+              border: 'none',
+              background: 'transparent',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              borderRadius: '6px'
+            }}
+          >
+            <Droplets size={18} />
+          </button>
+        </div>
 
         {/* Page Content viewport */}
         <main style={{ padding: '24px', flexGrow: 1, backgroundColor: '#F1F5F9' }}>

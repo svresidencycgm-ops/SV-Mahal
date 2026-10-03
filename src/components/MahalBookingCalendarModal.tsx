@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar as CalendarIcon, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { uploadToCloudinary } from '../services/cloudinary';
 
 export const MahalBookingCalendarModal: React.FC<{
   isOpen: boolean;
@@ -312,11 +313,22 @@ export const MahalBookingCalendarModal: React.FC<{
                         accept="image/*"
                         capture="environment"
                         style={{ display: 'none' }}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             const r = new FileReader();
-                            r.onloadend = () => setEbInitialPic(r.result as string);
+                            r.onloadend = async () => {
+                              const base64 = r.result as string;
+                              setEbInitialPic(base64);
+                              try {
+                                const cloudRes = await uploadToCloudinary(base64, 'sv_residency_eb_bills');
+                                if (cloudRes.isCloudinary && cloudRes.url) {
+                                  setEbInitialPic(cloudRes.url);
+                                }
+                              } catch (err) {
+                                console.warn('Cloudinary upload deferred:', err);
+                              }
+                            };
                             r.readAsDataURL(file);
                           }
                         }}

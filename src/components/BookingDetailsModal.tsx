@@ -10,6 +10,7 @@ import {
 import type { Booking } from '../types';
 
 import { addTimestampWatermark } from '../utils/watermark';
+import { uploadToCloudinary } from '../services/cloudinary';
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -52,7 +53,8 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setterPic: (val: string) => void,
-    setterTime: (val: string) => void
+    setterTime: (val: string) => void,
+    mediaFolder: string = 'sv_residency_eb_bills'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -63,6 +65,17 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
       setterPic(watermarked);
       const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
       setterTime(nowStr);
+
+      // Cloudinary cloud upload
+      try {
+        const res = await uploadToCloudinary(watermarked, mediaFolder);
+        if (res.isCloudinary && res.url) {
+          setterPic(res.url);
+          addToast('Cloudinary Upload', 'EB meter media stored in Cloudinary CDN.', 'success');
+        }
+      } catch (uploadErr) {
+        console.warn('Cloudinary upload deferred, retained local secure copy:', uploadErr);
+      }
     };
     reader.readAsDataURL(file);
   };

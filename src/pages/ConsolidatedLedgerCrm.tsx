@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Database, ArrowDownRight, ArrowUpRight, FileText, Search, Filter } from 'lucide-react';
+import { Database, ArrowDownRight, ArrowUpRight, Search } from 'lucide-react';
 
 interface UnifiedTransaction {
   id: string;

@@ -8,7 +8,7 @@ export const ReportsCrm: React.FC = () => {
   // Expense form state
   const [expCategory, setExpCategory] = React.useState('Maintenance');
   const [expAmount, setExpAmount] = React.useState('');
-  const [expDate, setExpDate] = React.useState(new Date().toISOString().split('T')[0]);
+  const [expDate] = React.useState(new Date().toISOString().split('T')[0]);
   const [expDesc, setExpDesc] = React.useState('');
   const [expMethod, setExpMethod] = React.useState('Cash');
 

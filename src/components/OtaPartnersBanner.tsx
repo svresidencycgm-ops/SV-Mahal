@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, ShieldCheck, Check, Sparkles, ExternalLink, Phone } from 'lucide-react';
+import { Star, Check, Sparkles, ExternalLink, Phone } from 'lucide-react';
 import { CONTACT_INFO } from '../config/contact';
 
 export const OtaPartnersBanner: React.FC = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Eye, Ban, Trash2, Search, Plus, ChevronLeft, ChevronRight, Building } from 'lucide-react';
+import { Eye, Ban, Trash2, Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Booking } from '../types';
 import { MahalBookingCalendarModal } from '../components/MahalBookingCalendarModal';
 

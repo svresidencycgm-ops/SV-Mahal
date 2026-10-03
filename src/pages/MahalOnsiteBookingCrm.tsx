@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Check, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { invoiceService } from '../services/invoiceService';
+import { uploadToCloudinary } from '../services/cloudinary';
+import { addTimestampWatermark } from '../utils/watermark';
 
 interface MahalOnsiteBookingCrmProps {
   onClose?: () => void;
@@ -417,9 +419,35 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Meter Picture Upload *</label>
-                    <input type="file" accept="image/*" capture="environment" onChange={(e) => {
-                      if (e.target.files?.[0]) setEbInitialPic(URL.createObjectURL(e.target.files[0]));
-                    }} style={{ width: '100%', fontSize: '0.8rem' }} />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = async (ev) => {
+                            const base64 = ev.target?.result as string;
+                            const watermarked = await addTimestampWatermark(base64);
+                            setEbInitialPic(watermarked);
+                            try {
+                              const res = await uploadToCloudinary(watermarked, 'sv_residency_eb_bills');
+                              if (res.isCloudinary && res.url) {
+                                setEbInitialPic(res.url);
+                              }
+                            } catch (err) {
+                              console.warn('Cloudinary upload deferred:', err);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
+                      style={{ width: '100%', fontSize: '0.8rem' }} 
+                    />
+                    {ebInitialPic && (
+                      <img src={ebInitialPic} alt="EB Preview" style={{ marginTop: '8px', maxHeight: '90px', borderRadius: '4px', border: '1px solid #CBD5E1', display: 'block' }} />
+                    )}
                   </div>
                 </div>
               </div>

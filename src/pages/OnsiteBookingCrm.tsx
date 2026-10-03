@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Building, Check, Search, Upload, Info, FileText, Camera, ShieldAlert } from 'lucide-react';
 import type { Room } from '../types';
 import { invoiceService } from '../services/invoiceService';
+import { uploadToCloudinary } from '../services/cloudinary';
 
 interface OnsiteBookingCrmProps {
   initialServiceType?: 'room' | 'mahal';
@@ -661,14 +662,25 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                               accept="image/*"
                               capture="environment"
                               style={{ display: 'none' }}
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
                                   const r = new FileReader();
-                                  r.onloadend = () => {
+                                  r.onloadend = async () => {
+                                    const base64 = r.result as string;
                                     const copy = [...aadhaarPics];
-                                    copy[idx] = r.result as string;
+                                    copy[idx] = base64;
                                     setAadhaarPics(copy);
+                                    try {
+                                      const cloudRes = await uploadToCloudinary(base64, 'sv_residency_guest_ids');
+                                      if (cloudRes.isCloudinary && cloudRes.url) {
+                                        const c2 = [...copy];
+                                        c2[idx] = cloudRes.url;
+                                        setAadhaarPics(c2);
+                                      }
+                                    } catch (err) {
+                                      console.warn('Cloudinary upload deferred:', err);
+                                    }
                                   };
                                   r.readAsDataURL(file);
                                 }
@@ -712,12 +724,21 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                           accept="image/*"
                           capture="user"
                           style={{ display: 'none' }}
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
                               const r = new FileReader();
-                              r.onloadend = () => {
-                                setMembersPic(r.result as string);
+                              r.onloadend = async () => {
+                                const base64 = r.result as string;
+                                setMembersPic(base64);
+                                try {
+                                  const cloudRes = await uploadToCloudinary(base64, 'sv_residency_guests');
+                                  if (cloudRes.isCloudinary && cloudRes.url) {
+                                    setMembersPic(cloudRes.url);
+                                  }
+                                } catch (err) {
+                                  console.warn('Cloudinary upload deferred:', err);
+                                }
                               };
                               r.readAsDataURL(file);
                             }
