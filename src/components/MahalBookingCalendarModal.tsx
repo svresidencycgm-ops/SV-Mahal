@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Calendar as CalendarIcon, Users, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { X, Calendar as CalendarIcon, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const MahalBookingCalendarModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
 }> = ({ isOpen, onClose }) => {
-  const { bookings, addBooking, currentUserRole, mahalConfig } = useApp();
+  const { bookings, addBooking, mahalConfig } = useApp();
   
   // State
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -112,6 +112,7 @@ export const MahalBookingCalendarModal: React.FC<{
     const basePrice = selectedPackage ? selectedPackage.price : mahalConfig.price;
     const cgst = basePrice * 0.09;
     const sgst = basePrice * 0.09;
+    const tax = cgst + sgst;
     const subtotal = basePrice;
     const total = subtotal + cgst + sgst;
     const balance = total - advancePaid;
@@ -145,6 +146,7 @@ export const MahalBookingCalendarModal: React.FC<{
         baseAmount: basePrice,
         subtotal: subtotal,
         discount: 0,
+        tax: tax,
         cgst: cgst,
         sgst: sgst,
         roundOff: 0,

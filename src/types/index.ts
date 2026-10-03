@@ -51,6 +51,8 @@ export interface BookingEventDetails {
   eventType: string;
   decorator: boolean;
   catering: boolean;
+  slot?: string;
+  stageRequired?: boolean;
 }
 
 export interface Booking {
