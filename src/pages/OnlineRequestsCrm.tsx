@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, ShieldAlert } from 'lucide-react';
+import { X, ShieldAlert, CreditCard } from 'lucide-react';
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }}>
@@ -9,7 +9,7 @@ const WhatsAppIcon = () => (
 );
 
 export const OnlineRequestsCrm: React.FC = () => {
-  const { bookings, updateBooking, addPayment, addToast } = useApp();
+  const { bookings, updateBooking, addPayment, addToast, setSelectedBooking } = useApp();
 
   // Selected booking for approval panel
   const [selectedReq, setSelectedReq] = useState<any>(null);
@@ -20,9 +20,9 @@ export const OnlineRequestsCrm: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI' | 'Card'>('UPI');
   const [txnRef, setTxnRef] = useState('');
 
-  // Filter only online pending requests (Inquiry or Pending)
+  // Filter pending online inquiries and reservations
   const pendingRequests = bookings.filter(
-    b => ['Inquiry', 'Pending'].includes(b.status) && b.idNumber === 'VERIFIED-OTP'
+    b => ['Inquiry', 'Pending'].includes(b.status)
   );
 
   const openApprovalDialog = (req: any) => {
@@ -169,9 +169,21 @@ Phone / WhatsApp: 95008 21550 / 90437 80215`;
                     <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, backgroundColor: '#FFFBEB', color: '#D97706' }}>
                       {req.status}
                     </span>
+                    {req.paymentRequest && req.paymentRequest.status === 'Pending' && (
+                      <span style={{ display: 'block', marginTop: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, backgroundColor: '#FEF3C7', color: '#B45309' }}>
+                        💳 Req: ₹{req.paymentRequest.amount.toLocaleString()}
+                      </span>
+                    )}
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setSelectedBooking(req)}
+                        title="Initiate / Manage Payment Request & Details"
+                        style={{ padding: '6px 10px', backgroundColor: '#6320EE', color: '#FFFFFF', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <CreditCard size={13} /> Payment Req
+                      </button>
                       <button
                         onClick={() => openApprovalDialog(req)}
                         title="Approve Booking"

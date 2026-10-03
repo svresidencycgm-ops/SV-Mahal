@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
 import { printInvoice } from '../utils/invoicePrinter';
 import { invoiceService } from '../services/invoiceService';
 import { 
   X, Calendar, User, DollarSign, CreditCard, Trash2, Printer, 
-  Download, Ban, Phone, Mail, MapPin, Edit, Save, Camera 
+  Download, Ban, Phone, Mail, MapPin, Edit, Save, Camera,
+  Send, Share2 
 } from 'lucide-react';
 import type { Booking } from '../types';
 
 import { addTimestampWatermark } from '../utils/watermark';
 import { uploadToCloudinary } from '../services/cloudinary';
+import { broadcastOperationalEvent } from '../utils/operationalEvents';
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -25,6 +27,10 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
 
   // Local drawer toggles
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const [isPaymentReqOpen, setIsPaymentReqOpen] = useState(false);
+  const [reqAmount, setReqAmount] = useState<number>(0);
+  const [reqUpi, setReqUpi] = useState<string>('svresidencycgm@upi');
+  const [reqNote, setReqNote] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Checkout auto-capture states
@@ -137,7 +143,103 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
     setIsEditMode(true);
   };
 
+  useEffect(() => {
+    if (selectedBooking) {
+      const defaultDeposit = selectedBooking.serviceType === 'mahal' ? 30000 : Math.min(2000, selectedBooking.financials.balanceDue);
+      setReqAmount(selectedBooking.paymentRequest ? selectedBooking.paymentRequest.amount : (selectedBooking.financials.balanceDue > 0 ? (selectedBooking.financials.advancePaid === 0 ? defaultDeposit : selectedBooking.financials.balanceDue) : 0));
+      setReqUpi(selectedBooking.serviceType === 'mahal' ? 'svmahal@upi' : 'svresidencycgm@upi');
+      setReqNote(selectedBooking.paymentRequest?.note || (selectedBooking.financials.advancePaid === 0 ? 'Advance deposit for booking confirmation' : 'Balance payment settlement'));
+    }
+  }, [selectedBooking]);
+
   if (!isOpen || !selectedBooking) return null;
+
+  const handleInitiatePaymentRequest = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedBooking) return;
+    if (reqAmount <= 0) {
+      addToast('Invalid Amount', 'Payment request amount must be greater than zero.', 'warning');
+      return;
+    }
+    if (reqAmount > selectedBooking.financials.balanceDue) {
+      addToast('Excess Amount', `Request cannot exceed outstanding balance of ₹${selectedBooking.financials.balanceDue.toLocaleString()}.`, 'warning');
+      return;
+    }
+
+    const roleName = currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager';
+    const updated: Booking = {
+      ...selectedBooking,
+      paymentStatus: 'Payment Requested',
+      paymentRequest: {
+        id: `REQ-${Date.now().toString().slice(-6)}`,
+        amount: Number(reqAmount),
+        requestedAt: new Date().toISOString(),
+        requestedBy: roleName,
+        status: 'Pending',
+        note: reqNote || 'Payment requested by management',
+        upiId: reqUpi
+      }
+    };
+
+    const res = updateBooking(updated);
+    if (res.success) {
+      setSelectedBooking(updated);
+      setIsPaymentReqOpen(false);
+      broadcastOperationalEvent({
+        type: 'PAYMENT_REQUESTED',
+        title: '💳 Payment Request Sent',
+        message: `${roleName} requested ₹${Number(reqAmount).toLocaleString()} for ${selectedBooking.customerName} (${selectedBooking.id})`
+      });
+      addToast('Payment Request Sent', `Payment request of ₹${Number(reqAmount).toLocaleString()} initiated for ${selectedBooking.customerName}.`, 'success');
+    } else {
+      addToast('Error', res.error || 'Failed to initiate payment request.', 'danger');
+    }
+  };
+
+  const handleCancelPaymentRequest = () => {
+    if (!selectedBooking) return;
+    const updated: Booking = {
+      ...selectedBooking,
+      paymentStatus: selectedBooking.financials.advancePaid > 0 ? 'Partially Paid' : 'Unpaid',
+      paymentRequest: undefined
+    };
+    const res = updateBooking(updated);
+    if (res.success) {
+      setSelectedBooking(updated);
+      addToast('Request Withdrawn', 'Active payment request has been cancelled.', 'info');
+    }
+  };
+
+  const handleShareWhatsAppRequest = () => {
+    if (!selectedBooking) return;
+    const cleanPhone = selectedBooking.customerPhone.replace(/\D/g, '');
+    const phoneWithCountry = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
+    const amountVal = Number(reqAmount || selectedBooking.paymentRequest?.amount || 0);
+
+    const message = `*SV MAHAL & SV RESIDENCY - PAYMENT REQUEST*
+--------------------------------------------------
+Dear *${selectedBooking.customerName}*,
+
+A payment request has been initiated for your reservation *${selectedBooking.id}* (${selectedBooking.serviceType === 'mahal' ? 'SV Mahal Banquet Hall' : 'SV Residency Lodging Stay'} on ${selectedBooking.checkInDate}).
+
+*Billing Summary:*
+• Total Booking Amount: ₹${selectedBooking.financials.total.toLocaleString()}
+• Advance Paid: ₹${selectedBooking.financials.advancePaid.toLocaleString()}
+• *Requested Payment: ₹${amountVal.toLocaleString()}*
+• Outstanding Balance: ₹${Math.max(0, selectedBooking.financials.balanceDue - amountVal).toLocaleString()}
+• Note: ${reqNote || selectedBooking.paymentRequest?.note || 'Booking advance confirmation'}
+
+*UPI Payment ID:* ${reqUpi}
+*Customer Portal:* http://localhost:5173/#public/profile
+
+Kindly complete the payment and share the transaction reference / screenshot.
+
+Thank you!
+SV Mahal & SV Residency, Chengam
+Front Desk: 95008 21550 | 90437 80215`;
+
+    window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`, '_blank');
+  };
 
   const filteredPayments = payments.filter(p => p.bookingId === selectedBooking.id);
   const invoiceNumber = `INV-${selectedBooking.id.substring(selectedBooking.id.indexOf('-') + 1)}`;
@@ -1104,28 +1206,247 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ isOpen
 
               {/* Payments History log */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h3 style={{ fontSize: '0.95rem', color: '#0F172A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                     <CreditCard size={16} color="#C9A227" /> Transaction Logs
                   </h3>
                   {selectedBooking.financials.balanceDue > 0 && (
-                    <button
-                      onClick={() => setIsRecordPaymentOpen(!isRecordPaymentOpen)}
-                      style={{
-                        padding: '4px 10px',
-                        backgroundColor: '#C9A227',
-                        border: 'none',
-                        borderRadius: '4px',
-                        color: '#FFFFFF',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isRecordPaymentOpen ? 'Close Panel' : 'Record Payment'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsPaymentReqOpen(!isPaymentReqOpen);
+                          if (!isPaymentReqOpen) setIsRecordPaymentOpen(false);
+                        }}
+                        style={{
+                          padding: '5px 12px',
+                          backgroundColor: '#0284C7',
+                          border: 'none',
+                          borderRadius: '6px',
+                          color: '#FFFFFF',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)'
+                        }}
+                      >
+                        <Send size={12} /> {isPaymentReqOpen ? 'Close Req' : 'Initiate Payment Req'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRecordPaymentOpen(!isRecordPaymentOpen);
+                          if (!isRecordPaymentOpen) setIsPaymentReqOpen(false);
+                        }}
+                        style={{
+                          padding: '5px 12px',
+                          backgroundColor: '#C9A227',
+                          border: 'none',
+                          borderRadius: '6px',
+                          color: '#FFFFFF',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isRecordPaymentOpen ? 'Close Panel' : 'Record Payment'}
+                      </button>
+                    </div>
                   )}
                 </div>
+
+                {/* Active Payment Request Notice */}
+                {selectedBooking.paymentRequest && (
+                  <div style={{ backgroundColor: '#F0F9FF', border: '1.5px solid #BAE6FD', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        ⚡ ACTIVE PAYMENT REQUEST INITIATED
+                      </div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F2942', marginTop: '2px' }}>
+                        Requested: <span style={{ color: '#0284C7' }}>₹{selectedBooking.paymentRequest.amount.toLocaleString()}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748B', marginLeft: '8px' }}>
+                          ({selectedBooking.paymentRequest.note})
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
+                        Requested by <strong>{selectedBooking.paymentRequest.requestedBy}</strong> • {new Date(selectedBooking.paymentRequest.requestedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={handleShareWhatsAppRequest}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#25D366',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <Share2 size={13} /> WhatsApp Link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelPaymentRequest}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: '#F1F5F9',
+                          color: '#DC2626',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel Request
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Initiate Payment Request Form Drawer */}
+                {isPaymentReqOpen && (
+                  <form onSubmit={handleInitiatePaymentRequest} style={{ backgroundColor: '#F0F9FF', border: '1.5px solid #0284C7', borderRadius: '8px', padding: '16px', marginBottom: '16px' }} className="animate-fade-in">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0369A1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Send size={15} color="#0284C7" /> INITIATE PAYMENT REQUEST TO CUSTOMER
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                        Customer: <strong>{selectedBooking.customerName}</strong> ({selectedBooking.customerPhone})
+                      </span>
+                    </div>
+
+                    {/* Quick Amount Suggestion Chips */}
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                      {selectedBooking.serviceType === 'mahal' ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setReqAmount(30000)}
+                            style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid #BAE6FD', backgroundColor: reqAmount === 30000 ? '#0284C7' : '#FFFFFF', color: reqAmount === 30000 ? '#FFFFFF' : '#0369A1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            ₹30,000 (Mahal Advance)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReqAmount(selectedBooking.financials.balanceDue)}
+                            style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid #BAE6FD', backgroundColor: reqAmount === selectedBooking.financials.balanceDue ? '#0284C7' : '#FFFFFF', color: reqAmount === selectedBooking.financials.balanceDue ? '#FFFFFF' : '#0369A1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Full Balance (₹{selectedBooking.financials.balanceDue.toLocaleString()})
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setReqAmount(Math.min(2000, selectedBooking.financials.balanceDue))}
+                            style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid #BAE6FD', backgroundColor: reqAmount === Math.min(2000, selectedBooking.financials.balanceDue) ? '#0284C7' : '#FFFFFF', color: reqAmount === Math.min(2000, selectedBooking.financials.balanceDue) ? '#FFFFFF' : '#0369A1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            ₹2,000 (Room Deposit)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReqAmount(selectedBooking.financials.balanceDue)}
+                            style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid #BAE6FD', backgroundColor: reqAmount === selectedBooking.financials.balanceDue ? '#0284C7' : '#FFFFFF', color: reqAmount === selectedBooking.financials.balanceDue ? '#FFFFFF' : '#0369A1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Full Due (₹{selectedBooking.financials.balanceDue.toLocaleString()})
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>REQUESTED AMOUNT (₹)</label>
+                        <input
+                          type="number"
+                          required
+                          min={1}
+                          max={selectedBooking.financials.balanceDue}
+                          value={reqAmount || ''}
+                          onChange={(e) => setReqAmount(Number(e.target.value))}
+                          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>UPI DESTINATION ACCOUNT</label>
+                        <select
+                          value={reqUpi}
+                          onChange={(e) => setReqUpi(e.target.value)}
+                          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFFFFF' }}
+                        >
+                          <option value="svresidencycgm@upi">svresidencycgm@upi (Residency Lodging)</option>
+                          <option value="svmahal@upi">svmahal@upi (Mahal Banquet)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>PURPOSE / NOTE FOR CUSTOMER</label>
+                      <input
+                        type="text"
+                        value={reqNote}
+                        onChange={(e) => setReqNote(e.target.value)}
+                        placeholder="e.g. Advance deposit for booking confirmation"
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        type="submit"
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          backgroundColor: '#0284C7',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Send size={15} /> Save & Send Request
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleShareWhatsAppRequest}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: '#25D366',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Share2 size={15} /> Send WhatsApp Direct
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {isRecordPaymentOpen && (
                   <form onSubmit={handleRecordPayment} style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '16px', marginBottom: '16px' }} className="animate-fade-in">

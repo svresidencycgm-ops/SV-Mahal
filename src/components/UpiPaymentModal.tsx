@@ -7,6 +7,7 @@ interface UpiPaymentModalProps {
   amount: number;
   bookingId: string;
   customerName: string;
+  upiId?: string;
   onPaymentSuccess: (referenceNumber: string) => void;
 }
 
@@ -16,6 +17,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
   amount,
   bookingId,
   customerName,
+  upiId: propUpiId,
   onPaymentSuccess
 }) => {
   const [upiRef, setUpiRef] = useState('');
@@ -24,8 +26,8 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Standard UPI URI format
-  const upiId = 'svresidency@ybl';
+  // Standard UPI URI format - official business UPI IDs
+  const upiId = propUpiId || 'svresidencycgm@upi';
   const merchantName = 'SV Residency and Mahal';
   const transactionNote = `Booking Advance for ${bookingId}`;
   

@@ -3,16 +3,19 @@ import { useApp } from '../context/AppContext';
 import { 
   Calendar, User, Phone, Mail, ShieldCheck, AlertCircle, Check, 
   Download, Printer, Camera, UploadCloud, Award,
-  Bed, Building, Sparkles 
+  Bed, Building, Sparkles, QrCode 
 } from 'lucide-react';
 import { uploadToCloudinary } from '../services/cloudinary';
 import { printInvoice } from '../utils/invoicePrinter';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
+import { UpiPaymentModal } from '../components/UpiPaymentModal';
+import type { Booking } from '../types';
 
 export const PublicProfile: React.FC = () => {
-  const { bookings, customerUser, setView, addToast, payments } = useApp();
+  const { bookings, customerUser, setView, addToast, payments, updateBooking, addPayment } = useApp();
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'documents' | 'loyalty'>('bookings');
+  const [payingBooking, setPayingBooking] = useState<Booking | null>(null);
   
   // Custom customer avatar and ID document states backed by localStorage / Cloudinary
   const [profileAvatar, setProfileAvatar] = useState<string>(() => {
@@ -135,6 +138,52 @@ export const PublicProfile: React.FC = () => {
     { idx: 3, label: 'Checked-In' },
     { idx: 4, label: 'Completed' }
   ];
+
+  const handleUpiSuccess = (referenceNumber: string) => {
+    if (!payingBooking || !payingBooking.paymentRequest) return;
+    
+    const reqAmount = payingBooking.paymentRequest.amount;
+    const currentAdvance = payingBooking.financials?.advancePaid || 0;
+    const totalAmount = payingBooking.financials?.total || 0;
+    const newAdvance = currentAdvance + reqAmount;
+    const newBalance = Math.max(0, totalAmount - newAdvance);
+    const newPaymentStatus = newBalance <= 0 ? 'Paid' : 'Partially Paid';
+
+    // 1. Record payment transaction
+    addPayment({
+      bookingId: payingBooking.id,
+      customerName: payingBooking.customerName,
+      amount: reqAmount,
+      method: 'UPI',
+      date: new Date().toISOString().split('T')[0],
+      referenceNumber: referenceNumber,
+      recordedBy: 'Customer (Online Portal)',
+      notes: `Online UPI Settlement (Ref: ${referenceNumber}) - Note: ${payingBooking.paymentRequest.note || 'Settled via Guest Portal'}`
+    });
+
+    // 2. Update booking state
+    const updatedBooking: Booking = {
+      ...payingBooking,
+      status: payingBooking.status === 'Inquiry' ? 'Confirmed' : payingBooking.status,
+      financials: {
+        ...payingBooking.financials,
+        advancePaid: newAdvance,
+        balanceDue: newBalance
+      },
+      paymentStatus: newPaymentStatus as any,
+      paymentRequest: {
+        ...payingBooking.paymentRequest,
+        status: 'Completed'
+      }
+    };
+
+    const res = updateBooking(updatedBooking);
+    if (res.success) {
+      addToast('Payment Received via UPI', `Payment of ₹${reqAmount.toLocaleString()} logged with Ref #${referenceNumber}. Your booking status is updated!`, 'success');
+    }
+
+    setPayingBooking(null);
+  };
 
   return (
     <div className="container animate-fade-in" style={{ padding: '40px 0 80px 0', minHeight: '85vh', maxWidth: '1100px', margin: '0 auto' }}>
@@ -478,6 +527,66 @@ export const PublicProfile: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Active Front Desk Payment Request Notice */}
+                  {b.paymentRequest && b.paymentRequest.status === 'Pending' && (
+                    <div
+                      style={{
+                        backgroundColor: '#FEF3C7',
+                        border: '1.5px solid #F59E0B',
+                        borderRadius: '12px',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '14px',
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <QrCode size={22} color="#B45309" />
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', backgroundColor: '#B45309', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px' }}>
+                              Payment Requested
+                            </span>
+                            <strong style={{ fontSize: '1.1rem', color: '#78350F' }}>
+                              ₹{b.paymentRequest.amount.toLocaleString()}
+                            </strong>
+                          </div>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '0.825rem', color: '#92400E' }}>
+                            {b.paymentRequest.note || 'Front desk management has requested this payment for your reservation.'}
+                          </p>
+                          <span style={{ fontSize: '0.72rem', color: '#B45309', marginTop: '2px', display: 'inline-block' }}>
+                            Requested by {b.paymentRequest.requestedBy} • VPA: <strong>{b.paymentRequest.upiId || 'svresidencycgm@upi'}</strong>
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setPayingBooking(b)}
+                        style={{
+                          padding: '10px 18px',
+                          backgroundColor: '#16A34A',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+                        }}
+                      >
+                        <QrCode size={16} /> Pay ₹{b.paymentRequest.amount.toLocaleString()} via UPI QR
+                      </button>
+                    </div>
+                  )}
+
                   {/* Card Details Footer */}
                   <div style={{ backgroundColor: '#F8FAFC', padding: '12px 16px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#64748B', flexWrap: 'wrap', gap: '10px' }}>
                     <div>
@@ -613,6 +722,19 @@ export const PublicProfile: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* UPI Payment Modal for Customer Payment Settlement */}
+      {payingBooking && payingBooking.paymentRequest && (
+        <UpiPaymentModal
+          isOpen={!!payingBooking}
+          onClose={() => setPayingBooking(null)}
+          amount={payingBooking.paymentRequest.amount}
+          bookingId={payingBooking.id}
+          customerName={payingBooking.customerName}
+          upiId={payingBooking.paymentRequest.upiId || (payingBooking.serviceType === 'mahal' ? 'svmahal@upi' : 'svresidencycgm@upi')}
+          onPaymentSuccess={handleUpiSuccess}
+        />
       )}
 
     </div>

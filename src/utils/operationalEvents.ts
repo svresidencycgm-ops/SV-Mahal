@@ -1,7 +1,7 @@
 // Cross-tab & Real-time Operational Events Broadcaster
 // Reflects instant notifications and desk bell sound on Admin & Manager panels
 
-export type OperationalEventType = 'NEW_BOOKING' | 'USER_REGISTERED' | 'PAYMENT_RECORDED';
+export type OperationalEventType = 'NEW_BOOKING' | 'USER_REGISTERED' | 'PAYMENT_RECORDED' | 'PAYMENT_REQUESTED';
 
 export interface OperationalEvent {
   type: OperationalEventType;

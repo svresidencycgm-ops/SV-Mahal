@@ -55,6 +55,16 @@ export interface BookingEventDetails {
   stageRequired?: boolean;
 }
 
+export interface PaymentRequest {
+  id: string;
+  amount: number;
+  requestedAt: string;
+  requestedBy: string;
+  status: 'Pending' | 'Completed' | 'Cancelled';
+  note?: string;
+  upiId?: string;
+}
+
 export interface Booking {
   id: string;
   customerName: string;
@@ -75,7 +85,8 @@ export interface Booking {
   eventDetails?: BookingEventDetails; // Mahal only
   financials: BookingFinancials;
   status: 'Inquiry' | 'Pending' | 'Confirmed' | 'Checked-in' | 'Checked-out' | 'Completed' | 'Cancelled' | 'No-show' | 'Blocked' | 'Maintenance';
-  paymentStatus: 'Unpaid' | 'Partially Paid' | 'Paid' | 'Refunded';
+  paymentStatus: 'Unpaid' | 'Partially Paid' | 'Paid' | 'Refunded' | 'Payment Requested';
+  paymentRequest?: PaymentRequest;
   createdBy: string;
   createdAt: string;
   bookingSource?: 'Online' | 'Offline' | 'MakeMyTrip' | 'Goibibo' | 'Direct';

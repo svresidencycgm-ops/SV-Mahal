@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, Star, Check, ChevronLeft, ChevronRight, X, QrCode, Sparkles, Compass, Phone, MessageCircle } from 'lucide-react';
+import { Calendar, Star, Check, ChevronLeft, ChevronRight, X, Sparkles, Compass, Phone, MessageCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
 import { MahalDecorsGallery } from '../components/MahalDecorsGallery';
 
 export const PublicMahal: React.FC = () => {
-  const { bookings, mahalConfig, customerUser, addToast, loginCustomer, addBooking } = useApp();
+  const { bookings, mahalConfig, customerUser, addToast, addBooking, setView } = useApp();
 
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -28,19 +28,12 @@ export const PublicMahal: React.FC = () => {
   const [hasDecor, setHasDecor] = useState(true);
   const [hasCatering, setHasCatering] = useState(false);
 
-  // Local Guest Details & OTP Checkout
+  // Local Guest Details
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
-  const [guestAddress, setGuestAddress] = useState('');
-  const [guestIdNumber, setGuestIdNumber] = useState('');
-  const [otpStep, setOtpStep] = useState<'details' | 'otp' | 'verified'>('details');
-  const [localOtp, setLocalOtp] = useState<string[]>(['', '', '', '']);
-  const [sentOtp, setSentOtp] = useState('');
-
-  // Local checkout payment details
-  const [payMethod, setPayMethod] = useState<'Cash' | 'UPI'>('UPI');
-  const [refNum, setRefNum] = useState('');
+  const [guestAddress] = useState('');
+  const [guestIdNumber] = useState('');
   const [isBookedSuccess, setIsBookedSuccess] = useState(false);
 
   // Calendar filter state
@@ -200,20 +193,15 @@ export const PublicMahal: React.FC = () => {
   useEffect(() => {
     if (showBookingPopup) {
       if (customerUser) {
-        setOtpStep('verified');
         setGuestName(customerUser.name);
         setGuestPhone(customerUser.phone);
         setGuestEmail(customerUser.email);
       } else {
-        setOtpStep('details');
         setGuestName('');
         setGuestPhone('');
         setGuestEmail('');
-        setLocalOtp(['', '', '', '']);
-        setSentOtp('');
       }
       setIsBookedSuccess(false);
-      setRefNum('');
     }
   }, [showBookingPopup, customerUser]);
 
@@ -354,19 +342,19 @@ export const PublicMahal: React.FC = () => {
     const status = getMahalDayStatus(dateStr);
     
     if (status === 'booked') {
-      alert('Sorry, this date is already booked.');
+      addToast('Date Unavailable', 'This date is already reserved by another patron.', 'danger');
       return;
     }
     if (status === 'blocked') {
-      alert('Sorry, this date is blocked for management reservations.');
+      addToast('Date Blocked', 'This date is blocked for management reservations.', 'warning');
       return;
     }
     if (status === 'maintenance') {
-      alert('Sorry, this date is unavailable due to scheduled hall maintenance.');
+      addToast('Under Maintenance', 'This date is unavailable due to scheduled hall maintenance.', 'info');
       return;
     }
     if (status === 'pending') {
-      alert('This date has a pending inquiry. However, you can still place your check-out details.');
+      addToast('Pending Inquiry', 'This date has a pending inquiry, but you can still submit your reservation details.', 'warning');
     }
 
     setSelectedDate(dateStr);
@@ -376,45 +364,22 @@ export const PublicMahal: React.FC = () => {
 
   const handleBookClick = () => {
     if (!selectedDate) {
-      alert('Please select an available event date from the calendar.');
+      addToast('Select Date', 'Please select an available event date from the calendar.', 'warning');
       return;
     }
     setBookingDate(selectedDate);
     setShowBookingPopup(true);
   };
 
-  // OTP verification handlers inside booking popup
-  const handleSendLocalOtp = (e: React.MouseEvent) => {
+  // Submit quick inquiry directly to Front Desk / CRM
+  const handleConfirmInquiry = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guestName.trim() || guestPhone.length < 10 || !guestEmail.trim()) {
-      alert('Please fill in your name, 10-digit mobile number, and email.');
-      return;
-    }
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    setSentOtp(code);
-    setOtpStep('otp');
+    const finalName = guestName.trim() || customerUser?.name || '';
+    const finalPhone = guestPhone.trim() || customerUser?.phone || '';
+    const finalEmail = guestEmail.trim() || customerUser?.email || `${finalPhone}@guest.svmahal.com`;
 
-    setTimeout(() => {
-      addToast('Verification Code', `OTP Sent to ${guestPhone}: ${code}`, 'warning');
-    }, 400);
-  };
-
-  const handleVerifyLocalOtp = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const entered = localOtp.join('');
-    if (entered !== sentOtp) {
-      alert('Invalid OTP. Please enter the 4-digit code sent to your mobile.');
-      return;
-    }
-    loginCustomer(guestName, guestPhone, guestEmail);
-    setOtpStep('verified');
-  };
-
-  // Checkout submission
-  const handleConfirmBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (payMethod === 'UPI' && !refNum.trim()) {
-      alert('Please enter your UPI transaction reference number.');
+    if (!finalName || finalPhone.length < 10) {
+      addToast('Missing Details', 'Please provide your full name and 10-digit mobile number.', 'warning');
       return;
     }
 
@@ -424,12 +389,11 @@ export const PublicMahal: React.FC = () => {
     const subtotal = pkgPrice + decorPrice + cateringPrice;
     const tax = subtotal * 0.18;
     const total = subtotal + tax;
-    const advanceAmount = 30000; // fixed advance
 
     const res = addBooking({
-      customerName: guestName,
-      customerPhone: guestPhone,
-      customerEmail: guestEmail,
+      customerName: finalName,
+      customerPhone: finalPhone,
+      customerEmail: finalEmail,
       customerAddress: guestAddress || 'Chengam, Tamil Nadu',
       serviceType: 'mahal',
       serviceId: 'mahal-sv',
@@ -437,8 +401,8 @@ export const PublicMahal: React.FC = () => {
       checkOutDate: bookingDate,
       guestCount: Number(estimatedGuests),
       idType: 'Aadhaar Card',
-      idNumber: guestIdNumber || 'Awaiting Physical Presentation',
-      specialRequirements: `Mugurtham/Divine Booking Inquiry via Calendar Checkout.\n[Payment Ref: ${refNum || 'Cash Counter'}]`,
+      idNumber: guestIdNumber || 'Awaiting Presentation',
+      specialRequirements: `Online Reservation Request via SV Mahal Calendar for ${bookingDate}.\nPackage: ${packageName}. Decor: ${hasDecor ? 'Yes' : 'No'}. Catering: ${hasCatering ? 'Yes' : 'No'}.`,
       packageName: packageName,
       eventDetails: {
         eventType: eventType,
@@ -450,23 +414,37 @@ export const PublicMahal: React.FC = () => {
         discount: 0,
         tax: tax,
         total: total,
-        advancePaid: advanceAmount,
-        balanceDue: Math.max(0, total - advanceAmount)
+        advancePaid: 0,
+        balanceDue: total
       },
-      status: 'Confirmed'
+      status: 'Inquiry',
+      bookingSource: 'Online'
     });
 
     if (res.success) {
       setIsBookedSuccess(true);
-      addToast('🎉 Booking Confirmed', `Grand SV Mahal is reserved for you on ${bookingDate}!`, 'success');
+      addToast('🎉 Inquiry Registered', `Your reservation request for SV Mahal on ${bookingDate} has been sent to Front Desk!`, 'success');
       setTimeout(() => {
         setShowBookingPopup(false);
         setIsBookedSuccess(false);
-        setSelectedDate('');
       }, 2500);
     } else {
-      alert(res.error || 'Failed to create booking.');
+      addToast('Inquiry Failed', res.error || 'Failed to submit inquiry.', 'danger');
     }
+  };
+
+  const handleProceedToCheckout = () => {
+    const query = new URLSearchParams({
+      service: 'mahal',
+      date: bookingDate,
+      package: packageName,
+      guests: estimatedGuests.toString(),
+      type: eventType,
+      decor: hasDecor ? 'true' : 'false',
+      catering: hasCatering ? 'true' : 'false'
+    }).toString();
+    setShowBookingPopup(false);
+    setView(`public/book?${query}`);
   };
 
   // Render Mini Month View (Year view grids)
@@ -788,7 +766,6 @@ export const PublicMahal: React.FC = () => {
   const subtotalPrice = pkgPrice + decorPrice + cateringPrice;
   const taxPrice = subtotalPrice * 0.18;
   const totalAmountPrice = subtotalPrice + taxPrice;
-  const advanceAmountPrice = 30000;
 
   return (
     <div className="animate-fade-in" style={{ padding: '40px 0' }}>
@@ -1233,49 +1210,80 @@ export const PublicMahal: React.FC = () => {
             </div>
           )}
 
-          {/* Selected Date Action Panel (for non-popups if needed) */}
-          {selectedDate && !showBookingPopup && (
+          {/* Selected Date Action Panel */}
+          {selectedDate && (
             <div
               className="animate-fade-in"
               style={{
                 backgroundColor: '#F8FAFC',
-                borderRadius: '8px',
-                border: '1px solid #E2E8F0',
-                padding: '20px',
+                borderRadius: '12px',
+                border: '1.5px solid #0284C7',
+                padding: '20px 24px',
                 marginTop: '30px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: '16px'
+                gap: '16px',
+                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.1)'
               }}
             >
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>SELECTED EVENT DATE</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Calendar size={20} color="#0284C7" /> {selectedDate}
+                <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  SELECTED EVENT DATE
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#16A34A', fontWeight: 600, marginTop: '2px' }}>
-                  🟢 Date is available for booking.
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Calendar size={22} color="#0284C7" /> {selectedDate}
+                  <span style={{ fontSize: '0.75rem', backgroundColor: '#FEF3C7', color: '#92400E', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                    {getDayInfo(selectedDate)?.name || 'Available Date'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#16A34A', fontWeight: 600, marginTop: '2px' }}>
+                  🟢 Grand SV Mahal is completely available for your celebration on this date.
                 </div>
               </div>
 
-              <button
-                onClick={handleBookClick}
-                style={{
-                  padding: '12px 30px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: '#0284C7',
-                  color: '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  transition: 'var(--transition)'
-                }}
-              >
-                Proceed to Booking Form
-              </button>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleBookClick}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#0284C7',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 6px -1px rgba(2, 132, 199, 0.25)'
+                  }}
+                >
+                  <Star size={16} fill="#FFFFFF" /> Reserve SV Mahal Now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView(`public/book?service=mahal&date=${selectedDate}`)}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#0F2942',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  Direct Checkout <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
           )}
         </section>
@@ -1619,303 +1627,276 @@ export const PublicMahal: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 41, 66, 0.65)',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
             backdropFilter: 'blur(4px)',
-            zIndex: 1050,
+            zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px',
+            padding: '16px',
             fontFamily: 'var(--font-sans)'
           }}
           className="animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBookingPopup(false);
+          }}
         >
           <div
             style={{
               backgroundColor: '#FFFFFF',
-              borderRadius: '12px',
+              borderRadius: '16px',
               width: '100%',
-              maxWidth: '560px',
-              maxHeight: '90vh',
+              maxWidth: '600px',
+              maxHeight: '92vh',
               overflowY: 'auto',
-              boxShadow: 'var(--shadow-lg)',
-              border: '1px solid #D2E3F8',
-              padding: '28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+              border: '1px solid #CBD5E1',
+              padding: '24px 28px',
               position: 'relative'
             }}
             className="animate-scale-bounce"
           >
             {/* Header */}
-            <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '16px', marginBottom: '20px' }}>
+            <div style={{ borderBottom: '1px solid #E2E8F0', paddingBottom: '14px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#FEF3C7', color: '#92400E', padding: '3px 10px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <Star size={13} fill="#D97706" color="#D97706" />
+                  {getDayInfo(bookingDate)?.name || 'Available Auspicious Date'}
+                </div>
+                <h3 style={{ fontSize: '1.35rem', color: '#0F2942', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Reserve SV Mahal Grand Banquet
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
+                  Selected Date: <strong style={{ color: '#0284C7' }}>{bookingDate}</strong>
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowBookingPopup(false)}
-                style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
+                style={{
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
-              <h3 style={{ fontSize: '1.4rem', color: '#0F2942', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Star size={22} fill="#C9A227" color="#C9A227" /> Reserve SV Mahal
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '4px 0 0 0' }}>
-                Selected Date: <strong>{bookingDate}</strong> {getDayInfo(bookingDate) ? `(${getDayInfo(bookingDate)?.name})` : ''}
-              </p>
             </div>
 
-            {/* Success animation block */}
+            {/* Success Animation */}
             {isBookedSuccess ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }} className="animate-scale-bounce">
-                <div style={{ width: '72px', height: '72px', borderRadius: '50%', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
-                  <Check size={40} color="#16A34A" />
+              <div style={{ textAlign: 'center', padding: '36px 0' }} className="animate-scale-bounce">
+                <div style={{ width: '70px', height: '70px', borderRadius: '50%', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                  <Check size={38} color="#16A34A" />
                 </div>
-                <h4 style={{ fontSize: '1.5rem', color: '#16A34A', fontWeight: 800, marginBottom: '8px' }}>Reserve Confirmed!</h4>
-                <p style={{ color: '#475569', fontSize: '0.9rem', maxWidth: '300px', margin: '0 auto' }}>
-                  Your event registration details are recorded. SV Mahal is blocked for your celebrations!
+                <h4 style={{ fontSize: '1.4rem', color: '#16A34A', fontWeight: 800, marginBottom: '8px' }}>Inquiry Submitted!</h4>
+                <p style={{ color: '#475569', fontSize: '0.9rem', maxWidth: '340px', margin: '0 auto 16px auto', lineHeight: 1.5 }}>
+                  Your event reservation inquiry for <strong>{bookingDate}</strong> has been received. Our Front Desk Manager will contact you and send the advance payment request.
                 </p>
               </div>
             ) : (
-              /* Booking Form Content */
-              <form onSubmit={handleConfirmBooking} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* 1. Event setup parameters */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 1. Venue Package Selection */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Choose Banquet Package
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {[
+                      { name: 'Basic', price: '₹1,00,000', desc: 'Standard Hall + Seating' },
+                      { name: 'Standard', price: '₹1,50,000', desc: 'Full AC + Rooms + Dining' },
+                      { name: 'Premium', price: '₹2,20,000', desc: 'Royal Suite + All AC + Sound' }
+                    ].map(pkg => (
+                      <div
+                        key={pkg.name}
+                        onClick={() => setPackageName(pkg.name)}
+                        style={{
+                          border: packageName === pkg.name ? '2px solid #0284C7' : '1px solid #E2E8F0',
+                          backgroundColor: packageName === pkg.name ? '#F0F9FF' : '#FFFFFF',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ fontWeight: 800, fontSize: '0.85rem', color: packageName === pkg.name ? '#0284C7' : '#0F2942' }}>
+                          {pkg.name}
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#C9A227', margin: '2px 0' }}>
+                          {pkg.price}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B', lineHeight: 1.2 }}>
+                          {pkg.desc}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Event Type & Estimated Guests */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '4px' }}>EVENT TYPE</label>
                     <select
                       value={eventType}
                       onChange={(e) => setEventType(e.target.value)}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', backgroundColor: '#FFFFFF', fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', backgroundColor: '#FFFFFF', fontSize: '0.85rem' }}
                     >
-                      <option value="Wedding">Wedding</option>
-                      <option value="Reception">Reception</option>
-                      <option value="Engagement">Engagement</option>
+                      <option value="Wedding">Wedding (திருமணம்)</option>
+                      <option value="Reception">Reception (வரவேற்பு)</option>
+                      <option value="Engagement">Engagement (நிச்சயதார்த்தம்)</option>
                       <option value="Birthday">Birthday Party</option>
                       <option value="Corporate Function">Corporate / Conferences</option>
                       <option value="Other Function">Other Celebrations</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '4px' }}>VENUE PACKAGE</label>
-                    <select
-                      value={packageName}
-                      onChange={(e) => setPackageName(e.target.value)}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', backgroundColor: '#FFFFFF', fontSize: '0.85rem' }}
-                    >
-                      <option value="Basic">Basic (₹1,00,000)</option>
-                      <option value="Standard">Standard (₹1,50,000)</option>
-                      <option value="Premium">Premium (₹2,20,000)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '4px' }}>ESTIMATED GUESTS</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '4px' }}>EXPECTED GUESTS</label>
                     <input
                       type="number"
-                      required
                       min={50}
                       max={2000}
+                      step={50}
                       value={estimatedGuests}
                       onChange={(e) => setEstimatedGuests(Number(e.target.value))}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem' }}
                     />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '16px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#475569', fontWeight: 600, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={hasDecor} onChange={(e) => setHasDecor(e.target.checked)} /> Decor Extras (+₹25K)
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#475569', fontWeight: 600, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={hasCatering} onChange={(e) => setHasCatering(e.target.checked)} /> Food Catering (+₹350/hd)
-                    </label>
                   </div>
                 </div>
 
-                {/* 2. Customer Auth Step */}
-                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#0F2942', fontWeight: 800 }}>
-                    Guest Authentication (Required)
-                  </h4>
-                  
-                  {otpStep === 'verified' ? (
-                    <div style={{ fontSize: '0.8rem', color: '#16A34A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      🛡️ Verified Account: <strong>{guestName}</strong> ({guestPhone})
+                {/* 3. Optional Services */}
+                <div style={{ display: 'flex', gap: '16px', backgroundColor: '#F8FAFC', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={hasDecor} onChange={(e) => setHasDecor(e.target.checked)} />
+                    🌸 Stage Theme Floral Decor (+₹25,000)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={hasCatering} onChange={(e) => setHasCatering(e.target.checked)} />
+                    🍽️ Catering Buffet (+₹350/guest)
+                  </label>
+                </div>
+
+                {/* 4. Live Pricing Ledger */}
+                <div style={{ backgroundColor: '#F1F5F9', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#475569', marginBottom: '4px' }}>
+                    <span>{packageName} Hall Package:</span>
+                    <span>₹{pkgPrice.toLocaleString()}</span>
+                  </div>
+                  {hasDecor && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#475569', marginBottom: '4px' }}>
+                      <span>Stage Floral Decoration:</span>
+                      <span>₹25,000</span>
                     </div>
-                  ) : otpStep === 'details' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <input
-                          type="text"
-                          placeholder="Full Name *"
-                          value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
-                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
-                        />
-                        <input
-                          type="email"
-                          placeholder="Email Address *"
-                          value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
-                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
-                        />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <input
-                          type="text"
-                          placeholder="City / Address"
-                          value={guestAddress}
-                          onChange={(e) => setGuestAddress(e.target.value)}
-                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Aadhaar / ID Number"
-                          value={guestIdNumber}
-                          onChange={(e) => setGuestIdNumber(e.target.value)}
-                          style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                          type="tel"
-                          placeholder="10-digit mobile number *"
-                          value={guestPhone}
-                          onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').substring(0, 10))}
-                          style={{ flexGrow: 1, padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleSendLocalOtp}
-                          style={{ padding: '6px 14px', borderRadius: '4px', border: 'none', backgroundColor: '#0284C7', color: '#FFFFFF', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          Send OTP
-                        </button>
-                      </div>
+                  )}
+                  {hasCatering && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#475569', marginBottom: '4px' }}>
+                      <span>Buffet Catering ({estimatedGuests} guests):</span>
+                      <span>₹{cateringPrice.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#475569', marginBottom: '4px' }}>
+                    <span>GST (18%):</span>
+                    <span>₹{taxPrice.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 800, color: '#0F2942', borderTop: '1px solid #CBD5E1', paddingTop: '6px', marginTop: '4px' }}>
+                    <span>Estimated Total:</span>
+                    <span style={{ color: '#0F2942' }}>₹{totalAmountPrice.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: '#D97706', marginTop: '2px' }}>
+                    <span>Advance to Confirm Booking:</span>
+                    <span>₹30,000</span>
+                  </div>
+                </div>
+
+                {/* 5. Guest Information */}
+                <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '6px' }}>
+                    YOUR CONTACT DETAILS
+                  </label>
+                  {customerUser ? (
+                    <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', padding: '10px 14px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#16A34A', fontWeight: 600 }}>
+                      <ShieldCheck size={18} color="#16A34A" />
+                      Logged in as: <strong>{customerUser.name}</strong> ({customerUser.phone})
                     </div>
                   ) : (
-                    /* OTP input */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {localOtp.map((digit, idx) => (
-                          <input
-                            key={idx}
-                            id={`local-otp-${idx}`}
-                            type="text"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, '');
-                              setLocalOtp(prev => {
-                                const next = [...prev];
-                                next[idx] = val;
-                                return next;
-                              });
-                              if (val && idx < 3) {
-                                document.getElementById(`local-otp-${idx + 1}`)?.focus();
-                              }
-                            }}
-                            style={{ width: '36px', height: '36px', borderRadius: '4px', border: '1px solid #CBD5E1', textAlign: 'center', fontSize: '1rem', fontWeight: 800 }}
-                          />
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleVerifyLocalOtp}
-                        style={{ width: '100%', padding: '8px', border: 'none', backgroundColor: '#16A34A', color: '#FFFFFF', borderRadius: '4px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
-                      >
-                        Confirm Code
-                      </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <input
+                        type="text"
+                        placeholder="Your Full Name *"
+                        required
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        style={{ padding: '9px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                      />
+                      <input
+                        type="tel"
+                        placeholder="10-digit Mobile Number *"
+                        required
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        style={{ padding: '9px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                      />
                     </div>
                   )}
                 </div>
 
-                {/* 3. Pricing Math Summary */}
-                <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '14px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#0F2942', fontWeight: 800 }}>Billing Ledger Summary</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: '#475569' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Base Package:</span>
-                      <span>₹{pkgPrice.toLocaleString()}</span>
-                    </div>
-                    {hasDecor && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Stage Theme Floral Decoration:</span>
-                        <span>₹25,000</span>
-                      </div>
-                    )}
-                    {hasCatering && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Catering Buffet (₹350 * {estimatedGuests} guests):</span>
-                        <span>₹{cateringPrice.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #E2E8F0', paddingTop: '4px' }}>
-                      <span>Subtotal:</span>
-                      <span>₹{subtotalPrice.toLocaleString()}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Event Service Tax GST (18%):</span>
-                      <span>₹{taxPrice.toLocaleString()}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: '#0F2942', borderTop: '1px solid #E2E8F0', paddingTop: '6px' }}>
-                      <span>Total Amount:</span>
-                      <span>₹{totalAmountPrice.toLocaleString()}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#DC2626', fontWeight: 700 }}>
-                      <span>Advance Required to Confirm:</span>
-                      <span>₹{advanceAmountPrice.toLocaleString()}</span>
-                    </div>
-                  </div>
+                {/* 6. Action Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={handleProceedToCheckout}
+                    style={{
+                      width: '100%',
+                      padding: '13px',
+                      backgroundColor: '#0284C7',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(2, 132, 199, 0.25)'
+                    }}
+                  >
+                    Proceed to Step-by-Step Checkout & Pay Advance <ArrowRight size={18} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleConfirmInquiry}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#0F2942',
+                      border: '1.5px solid #0F2942',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    Submit Quick Online Inquiry (Admin/Manager Will Call & Send Payment Request)
+                  </button>
                 </div>
-
-                {/* 4. Payment Checkout */}
-                {otpStep === 'verified' && (
-                  <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '14px' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#475569', fontWeight: 700, marginBottom: '6px' }}>
-                      DEPOSIT PAYMENT METHOD
-                    </label>
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPayMethod('UPI')}
-                        style={{ flex: 1, padding: '8px', border: payMethod === 'UPI' ? '2px solid #0284C7' : '1px solid #CBD5E1', backgroundColor: '#FFFFFF', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        UPI Payment
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPayMethod('Cash')}
-                        style={{ flex: 1, padding: '8px', border: payMethod === 'Cash' ? '2px solid #0284C7' : '1px solid #CBD5E1', backgroundColor: '#FFFFFF', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Cash Counter
-                      </button>
-                    </div>
-
-                    {payMethod === 'UPI' && (
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#F8FAFC', padding: '12px', borderRadius: '6px', border: '1px solid #E2E8F0', marginBottom: '10px' }} className="animate-fade-in">
-                        <QrCode size={48} color="#0F2942" />
-                        <div style={{ flexGrow: 1 }}>
-                          <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748B', fontWeight: 700 }}>MERCHANT UPI ID</span>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F2942' }}>svmahal@upi</span>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Enter Transaction Ref Num"
-                            value={refNum}
-                            onChange={(e) => setRefNum(e.target.value)}
-                            style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.75rem', marginTop: '6px' }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      style={{ width: '100%', padding: '12px', backgroundColor: '#16A34A', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', transition: 'var(--transition)' }}
-                    >
-                      Reserve & Complete Booking
-                    </button>
-                  </div>
-                )}
-              </form>
+              </div>
             )}
           </div>
         </div>
