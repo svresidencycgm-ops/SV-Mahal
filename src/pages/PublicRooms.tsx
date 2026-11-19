@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { bookingService } from '../services/bookingService';
-import { Users, Bed, Check, Snowflake, Phone, MessageCircle, ShieldCheck, Camera, Sparkles } from 'lucide-react';
+import { 
+  Users, Bed, Check, Snowflake, Phone, MessageCircle, ShieldCheck, Camera, Sparkles,
+  ChevronLeft, ChevronRight, Maximize2, Eye 
+} from 'lucide-react';
 import type { Room } from '../types';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
-
+import { PropertyGalleryModal } from '../components/PropertyGalleryModal';
 
 export const PublicRooms: React.FC = () => {
   const { rooms, bookings, setView, customerUser, addToast } = useApp();
@@ -15,6 +18,22 @@ export const PublicRooms: React.FC = () => {
   const [checkOut, setCheckOut] = useState<string>('');
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Gallery Modal & Interactive Room Photo States
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | undefined>(undefined);
+  const [roomPhotoIndices, setRoomPhotoIndices] = useState<Record<string, number>>({
+    Standard: 0,
+    Deluxe: 0,
+    Premium: 0,
+    'Family Room': 0
+  });
+
+  const [bannerActiveImg, setBannerActiveImg] = useState({
+    src: '/images/property/room-302-suite.jpg',
+    id: 'room-302-suite',
+    label: 'Deluxe Suite'
+  });
 
   // Read URL query parameters if redirected from Quick Widget
   useEffect(() => {
@@ -36,7 +55,7 @@ export const PublicRooms: React.FC = () => {
     parseUrlParams();
   }, []);
 
-  // Filter unique room types for details display
+  // Filter unique room types for details display with authentic photos
   const roomTypesData = [
     {
       type: 'Standard' as const,
@@ -44,8 +63,14 @@ export const PublicRooms: React.FC = () => {
       capacity: 2,
       beds: 'Queen Bed',
       ac: 'Non-AC',
-      desc: 'Comfortable standard room ideal for budget travelers, featuring essential stay amenities and a cozy queen bed.',
-      amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom', 'Housekeeping']
+      desc: 'Comfortable standard room ideal for budget travelers and spiritual yatris, featuring clean bed linens, intercom, and attached bathroom.',
+      amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom', 'Housekeeping'],
+      images: [
+        { src: '/images/property/room-comfort-2.jpg', label: 'Comfort Queen Bedroom', id: 'room-comfort-2' },
+        { src: '/images/property/scenic-corridor.jpg', label: 'Sunlit Marble Corridor', id: 'scenic-corridor' },
+        { src: '/images/property/elevator-lobby.jpg', label: 'Granite Lift Lobby', id: 'elevator-lobby' },
+        { src: '/images/property/reception-desk.jpg', label: '24/7 Front Desk', id: 'reception-desk' }
+      ]
     },
     {
       type: 'Deluxe' as const,
@@ -53,8 +78,14 @@ export const PublicRooms: React.FC = () => {
       capacity: 2,
       beds: 'King Bed',
       ac: 'Air-conditioned',
-      desc: 'Elegant air-conditioned deluxe room featuring a spacious king bed, premium linen, and writing desk.',
-      amenities: ['AC', 'Free Wi-Fi', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water', 'Coffee/Tea maker']
+      desc: 'Elegant air-conditioned deluxe room featuring a spacious king bed, wardrobe, dressing mirror vanity, and floating smart TV console.',
+      amenities: ['Split AC', 'Free Wi-Fi', 'Flat TV', 'Mini Fridge', 'Intercom', 'Hot Water', 'Dressing Vanity'],
+      images: [
+        { src: '/images/property/room-302-suite.jpg', label: 'Deluxe Suite', id: 'room-302-suite' },
+        { src: '/images/property/room-deluxe-1.jpg', label: 'Executive King Bed Setup', id: 'room-deluxe-1' },
+        { src: '/images/property/scenic-corridor.jpg', label: 'Mountain View Corridor', id: 'scenic-corridor' },
+        { src: '/images/property/elevator-lobby.jpg', label: 'Granite Lift Lobby', id: 'elevator-lobby' }
+      ]
     },
     {
       type: 'Premium' as const,
@@ -62,8 +93,14 @@ export const PublicRooms: React.FC = () => {
       capacity: 3,
       beds: 'King + Single Bed',
       ac: 'Air-conditioned',
-      desc: 'Luxurious premium room offering beautiful view balconies, coffee makers, and premium toilet amenities.',
-      amenities: ['AC', 'Free Wi-Fi', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Box', 'Balcony', 'Luxury Toiletries']
+      desc: 'Luxurious premium suite offering expansive king bedding, scenic mountain corridor views, split air conditioning, and luxury toiletries.',
+      amenities: ['Split AC', 'Free Wi-Fi', 'Flat TV', 'Mini Fridge', 'Coffee Maker', 'Safe Box', 'Scenic Corridor', 'Luxury Toiletries'],
+      images: [
+        { src: '/images/property/room-deluxe-1.jpg', label: 'Premium King Bedroom', id: 'room-deluxe-1' },
+        { src: '/images/property/room-302-suite.jpg', label: 'Spacious Suite Layout', id: 'room-302-suite' },
+        { src: '/images/property/room-comfort-2.jpg', label: 'Triple Bed Configuration', id: 'room-comfort-2' },
+        { src: '/images/property/scenic-corridor.jpg', label: 'Marble Guest Corridor', id: 'scenic-corridor' }
+      ]
     },
     {
       type: 'Family Room' as const,
@@ -71,8 +108,14 @@ export const PublicRooms: React.FC = () => {
       capacity: 4,
       beds: '2 Double Beds',
       ac: 'Air-conditioned',
-      desc: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and extra towels for group comfort.',
-      amenities: ['AC', 'Free Wi-Fi', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Box', 'Separate Lounge', 'Luxury Toiletries']
+      desc: 'Spacious family suite equipped with two double beds, dedicated lounge seating, extra storage wardrobe, and senior citizen lift access.',
+      amenities: ['Split AC', 'Free Wi-Fi', 'Flat TV', 'Mini Fridge', 'Coffee Maker', 'Safe Box', 'Elevator Access', 'Luxury Toiletries'],
+      images: [
+        { src: '/images/property/room-302-suite.jpg', label: 'Family Suite Layout', id: 'room-302-suite' },
+        { src: '/images/property/room-deluxe-1.jpg', label: 'Double Bedding & TV Console', id: 'room-deluxe-1' },
+        { src: '/images/property/elevator-lobby.jpg', label: 'Automatic Passenger Lift', id: 'elevator-lobby' },
+        { src: '/images/property/courtyard-parking.jpg', label: 'Secure Family Parking', id: 'courtyard-parking' }
+      ]
     }
   ];
 
@@ -338,7 +381,7 @@ export const PublicRooms: React.FC = () => {
           </p>
         </div>
 
-        {/* Authentic Property Exterior Feature Banner */}
+        {/* Authentic Property Exterior & Suites Feature Banner */}
         <div
           style={{
             marginBottom: '40px',
@@ -352,123 +395,388 @@ export const PublicRooms: React.FC = () => {
             alignItems: 'center'
           }}
         >
-          <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: '260px', overflow: 'hidden', backgroundColor: '#070D17' }}>
             <img
-              src="/images/sv-residency-exterior.webp"
-              alt="SV Residency Exterior Facade"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              src={bannerActiveImg.src}
+              alt={bannerActiveImg.label}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.3s ease' }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
-            <div style={{ position: 'absolute', bottom: '12px', left: '14px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, transparent 60%)' }} />
+            
+            {/* Top Badge */}
+            <div style={{ position: 'absolute', top: '12px', left: '14px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.2)' }}>
               <Camera size={13} color="#C9A227" />
-              <span style={{ fontSize: '0.72rem', color: '#FFFFFF', fontWeight: 600 }}>Authentic Exterior View</span>
+              <span style={{ fontSize: '0.72rem', color: '#F1D675', fontWeight: 700 }}>{bannerActiveImg.label}</span>
+            </div>
+
+            {/* Interactive Banner Switcher Pills */}
+            <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px', display: 'flex', gap: '6px', overflowX: 'auto', zIndex: 2 }}>
+              {[
+                { label: 'Deluxe Suite', src: '/images/property/room-302-suite.jpg', id: 'room-302-suite' },
+                { label: 'King Bed', src: '/images/property/room-deluxe-1.jpg', id: 'room-deluxe-1' },
+                { label: 'Granite Lift', src: '/images/property/elevator-lobby.jpg', id: 'elevator-lobby' },
+                { label: 'Sunlit Corridor', src: '/images/property/scenic-corridor.jpg', id: 'scenic-corridor' },
+                { label: 'Front Desk', src: '/images/property/reception-desk.jpg', id: 'reception-desk' }
+              ].map((b, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setBannerActiveImg(b)}
+                  style={{
+                    backgroundColor: bannerActiveImg.id === b.id ? '#C9A227' : 'rgba(15, 23, 42, 0.85)',
+                    color: bannerActiveImg.id === b.id ? '#0F172A' : '#FFFFFF',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    backdropFilter: 'blur(4px)'
+                  }}
+                >
+                  {b.label}
+                </button>
+              ))}
             </div>
           </div>
+
           <div style={{ padding: '24px 28px', color: '#FFFFFF' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(201,162,39,0.15)', border: '1px solid rgba(201,162,39,0.35)', color: '#F1D675', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, marginBottom: '10px' }}>
-              <Sparkles size={12} /> SV RESIDENCY LODGING
+              <Sparkles size={12} /> AUTHENTIC SUITES & AMENITIES
             </div>
             <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', margin: '0 0 8px 0', fontFamily: 'var(--font-sans)' }}>
               Spacious & Modern Accommodation in Chengam
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#94A3B8', margin: '0 0 16px 0', lineHeight: 1.6 }}>
-              Located right opposite SV Mahal, offering 24/7 front desk, elevator access, backup generator, and secured parking for temple yatris and wedding guests.
+              Located right opposite SV Mahal, offering 24/7 front desk, automatic elevator, 100% generator backup, and secured parking for temple yatris and wedding guests.
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '0.78rem', color: '#CBD5E1' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '0.78rem', color: '#CBD5E1', marginBottom: '16px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><ShieldCheck size={14} color="#10B981" /> 100% Sanitized Rooms</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><ShieldCheck size={14} color="#10B981" /> 24/7 Hot Water & Power</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><ShieldCheck size={14} color="#10B981" /> Free High-Speed Wi-Fi</span>
             </div>
+            <button
+              onClick={() => {
+                setSelectedPhotoId(bannerActiveImg.id);
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                backgroundColor: 'rgba(201, 162, 39, 0.15)',
+                border: '1px solid #C9A227',
+                color: '#F1D675',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Maximize2 size={13} /> View Photo in Fullscreen HD
+            </button>
           </div>
         </div>
 
-        {/* Dynamic Rooms Display Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', marginBottom: '50px' }}>
-          {roomTypesData.map(room => (
-            <div
-              key={room.type}
-              style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '8px',
-                border: '1px solid #E2E8F0',
-                overflow: 'hidden',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              {/* Image Frame with real exterior context */}
-              <div style={{ height: '180px', backgroundColor: '#0F172A', position: 'relative', overflow: 'hidden' }}>
-                <img
-                  src="/images/sv-residency-exterior.webp"
-                  alt={`SV Residency ${room.type}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.88 }}
-                />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, transparent 60%)' }} />
-                <div style={{ position: 'absolute', bottom: '10px', left: '12px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Bed size={13} color="#C9A227" /> {room.type} Suite
-                </div>
-                <div style={{ position: 'absolute', top: '12px', right: '12px', padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)' }}>
-                  {room.ac}
-                </div>
-              </div>
+        {/* Dynamic Rooms Display Grid with Interactive Image Carousels */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '50px' }}>
+          {roomTypesData.map(room => {
+            const photoIdx = roomPhotoIndices[room.type] || 0;
+            const currentImg = room.images[photoIdx] || room.images[0];
 
-              {/* Body */}
-              <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                  <h3 style={{ fontSize: '1.25rem', color: '#0F172A', margin: 0, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
-                    {room.type} Room
-                  </h3>
-                  <div style={{ textAlign: 'right' }}>
-                     <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0284C7' }}>₹{room.price}</span>
-                    <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>/ Night</span>
+            return (
+              <div
+                key={room.type}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '12px',
+                  border: '1px solid #E2E8F0',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                {/* Interactive Image Frame with Swipeable Carousel */}
+                <div style={{ height: '210px', backgroundColor: '#0F172A', position: 'relative', overflow: 'hidden' }}>
+                  <img
+                    src={currentImg.src}
+                    alt={`SV Residency ${room.type} - ${currentImg.label}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.3s ease' }}
+                  />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, transparent 60%)' }} />
+                  
+                  {/* Photo label caption */}
+                  <div style={{ position: 'absolute', bottom: '12px', left: '12px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Bed size={13} color="#C9A227" /> {currentImg.label}
+                  </div>
+
+                  {/* AC badge */}
+                  <div style={{ position: 'absolute', top: '12px', right: '12px', padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)' }}>
+                    {room.ac}
+                  </div>
+
+                  {/* Left Arrow Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRoomPhotoIndices(prev => ({
+                        ...prev,
+                        [room.type]: (photoIdx - 1 + room.images.length) % room.images.length
+                      }));
+                    }}
+                    aria-label="Previous photo"
+                    style={{
+                      position: 'absolute',
+                      left: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      backdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 2
+                    }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  {/* Right Arrow Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRoomPhotoIndices(prev => ({
+                        ...prev,
+                        [room.type]: (photoIdx + 1) % room.images.length
+                      }));
+                    }}
+                    aria-label="Next photo"
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      backdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 2
+                    }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+
+                  {/* Interactive Dot indicators & HD zoom pill */}
+                  <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPhotoId(currentImg.id);
+                        setGalleryModalOpen(true);
+                      }}
+                      style={{
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        color: '#F1D675',
+                        padding: '3px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Eye size={11} /> Photo {photoIdx + 1}/{room.images.length}
+                    </button>
                   </div>
                 </div>
 
-                <p style={{ fontSize: '0.85rem', color: '#64748B', lineHeight: 1.5, marginBottom: '16px', flexGrow: 1 }}>
-                  {room.desc}
-                </p>
+                {/* Body */}
+                <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                    <h3 style={{ fontSize: '1.25rem', color: '#0F172A', margin: 0, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
+                      {room.type} Room
+                    </h3>
+                    <div style={{ textAlign: 'right' }}>
+                       <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0284C7' }}>₹{room.price}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>/ Night</span>
+                    </div>
+                  </div>
 
-                {/* Info Badges */}
-                <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: '#475569', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px', marginBottom: '12px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> Max {room.capacity} Guests</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Bed size={14} /> {room.beds}</span>
-                  {room.ac.includes('AC') && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Snowflake size={14} /> AC</span>}
+                  <p style={{ fontSize: '0.85rem', color: '#64748B', lineHeight: 1.5, marginBottom: '16px', flexGrow: 1 }}>
+                    {room.desc}
+                  </p>
+
+                  {/* Info Badges */}
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: '#475569', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px', marginBottom: '12px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> Max {room.capacity} Guests</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Bed size={14} /> {room.beds}</span>
+                    {room.ac.includes('AC') && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Snowflake size={14} /> AC</span>}
+                  </div>
+
+                  {/* Amenities checklist */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                    {room.amenities.slice(0, 4).map(amenity => (
+                      <span key={amenity} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#475569', fontSize: '0.7rem', fontWeight: 500 }}>
+                        <Check size={10} color="#16A34A" /> {amenity}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => {
+                        setSelectedType(room.type);
+                        document.getElementById('rooms-calendar')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: '6px',
+                        border: selectedType === room.type ? 'none' : '1px solid #0284C7',
+                        backgroundColor: selectedType === room.type ? '#0284C7' : 'transparent',
+                        color: selectedType === room.type ? '#FFFFFF' : '#0284C7',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        transition: 'var(--transition)'
+                      }}
+                    >
+                      {selectedType === room.type ? 'Selected for Availability' : 'Check Availability'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPhotoId(currentImg.id);
+                        setGalleryModalOpen(true);
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        backgroundColor: '#F8FAFC',
+                        color: '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Eye size={13} /> Photos
+                    </button>
+                  </div>
                 </div>
-
-                {/* Amenities checklist */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
-                  {room.amenities.slice(0, 4).map(amenity => (
-                    <span key={amenity} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#475569', fontSize: '0.7rem', fontWeight: 500 }}>
-                      <Check size={10} color="#16A34A" /> {amenity}
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSelectedType(room.type);
-                    // scroll to calendar
-                    document.getElementById('rooms-calendar')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: selectedType === room.type ? 'none' : '1px solid #0284C7',
-                    backgroundColor: selectedType === room.type ? '#0284C7' : 'transparent',
-                    color: selectedType === room.type ? '#FFFFFF' : '#0284C7',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    transition: 'var(--transition)'
-                  }}
-                >
-                  {selectedType === room.type ? 'Selected for Availability' : 'Check Availability'}
-                </button>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Interactive Property Facilities & Amenities Spotlight */}
+        <div style={{ marginBottom: '50px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <span style={{ fontSize: '0.72rem', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Sparkles size={13} color="#C9A227" /> REAL AMENITIES & ARCHITECTURE
+              </span>
+              <h3 style={{ fontSize: '1.6rem', color: '#0F172A', fontWeight: 800, margin: '4px 0 0 0', fontFamily: 'var(--font-sans)' }}>
+                Modern Facilities for a Comfortable Stay
+              </h3>
             </div>
-          ))}
+            <button
+              onClick={() => {
+                setSelectedPhotoId('all');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                padding: '10px 18px',
+                backgroundColor: '#0F172A',
+                color: '#F1D675',
+                border: '1px solid #C9A227',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Maximize2 size={14} /> Open All 10 HD Photos
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '18px' }}>
+            {[
+              { id: 'elevator-lobby', title: 'High-Speed Granite Lift', tag: 'Lift Access', img: '/images/property/elevator-lobby.jpg', desc: 'Automatic passenger lift framed in black galaxy granite and teakwood.' },
+              { id: 'scenic-corridor', title: 'Sunlit Marble Corridor', tag: 'Mountain Views', img: '/images/property/scenic-corridor.jpg', desc: 'Italian Calacatta marble wall tiles and wide windows overlooking hills.' },
+              { id: 'reception-desk', title: '24/7 Front Desk & Shrine', tag: 'Round-the-Clock', img: '/images/property/reception-desk.jpg', desc: 'Auspicious Lord Balaji sanctum, billing desk, and polite multilingual staff.' },
+              { id: 'temple-shrine', title: 'On-Campus Temple Shrine', tag: 'Sacred Blessings', img: '/images/property/temple-shrine.jpg', desc: 'Traditional Sri Vinayagar temple with sculpted multi-tier gopuram.' },
+              { id: 'courtyard-parking', title: '200+ Vehicle Parking', tag: 'Spacious Courtyard', img: '/images/property/courtyard-parking.jpg', desc: 'Heavy-duty interlocking paver stones for buses, wedding cars, and SUVs.' },
+              { id: 'aerial-mountain-view', title: 'Scenic Mountain Panorama', tag: 'Drone Vista', img: '/images/property/aerial-mountain-view.jpg', desc: 'High-altitude panoramic view of the venue and Chengam valley.' }
+            ].map(facility => (
+              <div
+                key={facility.id}
+                onClick={() => {
+                  setSelectedPhotoId(facility.id);
+                  setGalleryModalOpen(true);
+                }}
+                style={{
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.04)';
+                }}
+              >
+                <div style={{ height: '160px', position: 'relative', overflow: 'hidden' }}>
+                  <img src={facility.img} alt={facility.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                  <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                    {facility.tag}
+                  </div>
+                  <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <Eye size={12} /> Tap to zoom
+                  </div>
+                </div>
+                <div style={{ padding: '14px' }}>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.98rem', fontWeight: 700, color: '#0F172A' }}>{facility.title}</h4>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748B', lineHeight: 1.4 }}>{facility.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 2-MONTH AVAILABILITY CALENDAR BLOCK */}
@@ -670,6 +978,12 @@ export const PublicRooms: React.FC = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={() => setView(`public/book?service=room&type=${selectedType}&in=${checkIn}&out=${checkOut}`)}
+      />
+
+      <PropertyGalleryModal
+        isOpen={galleryModalOpen}
+        onClose={() => setGalleryModalOpen(false)}
+        initialPhotoId={selectedPhotoId}
       />
     </div>
   );

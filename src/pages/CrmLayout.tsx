@@ -4,7 +4,8 @@ import {
   Menu, Search, LogOut, LayoutDashboard, 
   Inbox, Users, Bed, Building, DollarSign, Settings, 
   History, BarChart3, Check, ShieldCheck, Globe,
-  MessageSquare, Heart, Droplets, User, Camera
+  Bell, User, Camera, ChevronDown, ChevronRight, Plus, X,
+  DoorOpen
 } from 'lucide-react';
 import { OnsiteBookingCrm } from './OnsiteBookingCrm';
 import { MahalOnsiteBookingCrm } from './MahalOnsiteBookingCrm';
@@ -18,8 +19,8 @@ interface CrmLayoutProps {
 export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   const { 
     currentView, setView, currentUserRole, setUserRole, 
-    globalSearch, setSelectedBooking, bookings,
-    currentLanguage, setLanguage, translate, addToast
+    globalSearch, setSelectedBooking, bookings, rooms,
+    currentLanguage, setLanguage, addToast
   } = useApp();
 
   const [userAvatar, setUserAvatar] = useState<string>(() => {
@@ -73,6 +74,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   useEffect(() => {
@@ -104,16 +106,24 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     return () => unsubscribe();
   }, [currentUserRole, addToast]);
   
-  // Search state
+  // Search state and dropdown refs
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setSearchResults([]);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
       }
     };
     document.addEventListener('click', handleOutsideClick);
@@ -145,82 +155,160 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     setView(item.hash);
   };
 
-  // We build navItems dynamically based on role
-  const getNavItems = () => {
+  // Categorized navigation buckets dynamically structured for Admin and Manager roles
+  interface NavBucketItem {
+    view: string;
+    label: string;
+    icon: React.ComponentType<any>;
+    badge?: string;
+  }
+
+  interface NavBucket {
+    id: string;
+    title: string;
+    badge?: string;
+    items: NavBucketItem[];
+  }
+
+  const getNavBuckets = (): NavBucket[] => {
+    const invCount = rooms.length;
+
     if (currentUserRole === 'admin') {
       return [
-        { type: 'section', label: translate('section.dashboard') },
-        { view: 'crm/overview', label: translate('page.overview'), icon: LayoutDashboard },
-        { view: 'crm/reports', label: translate('page.reports'), icon: BarChart3 },
-
-        { type: 'section', label: 'Finance & Billing' },
-        { view: 'crm/finance', label: translate('page.finance'), icon: DollarSign },
-        { view: 'crm/bill-inventory', label: 'Bill Inventory', icon: Inbox },
-
-        { type: 'section', label: translate('section.hotel_rooms') },
-        { view: 'crm/bookings?service=room&source=offline', label: translate('page.offline_bookings'), icon: Inbox },
-        { view: 'crm/bookings?service=room&source=online', label: translate('page.online_bookings'), icon: ShieldCheck },
-        { view: 'crm/ota-channels', label: 'MakeMyTrip & Goibibo', icon: Globe },
-        { view: 'crm/onsite-booking', label: translate('page.onsite_booking'), icon: Bed },
-
-        { type: 'section', label: translate('section.mahal_booking') },
-        { view: 'crm/bookings?service=mahal&source=offline', label: translate('page.offline_bookings'), icon: Inbox },
-        { view: 'crm/bookings?service=mahal&source=online', label: translate('page.online_bookings'), icon: ShieldCheck },
-        { view: 'crm/onsite-booking-mahal', label: 'Onsite Booking', icon: Building },
-        { view: 'crm/mahal', label: translate('page.mahal_settings'), icon: Building },
-
-        { type: 'section', label: translate('section.global_data') },
-        { view: 'crm/online-requests', label: 'Online Approvals', icon: ShieldCheck },
-        { view: 'crm/customers', label: translate('page.customers'), icon: Users },
-        { view: 'crm/rooms', label: translate('page.rooms'), icon: Bed },
-
-        { type: 'section', label: 'Security & Settings' },
-        { view: 'crm/audit', label: translate('page.audit'), icon: History },
-        { view: 'crm/settings', label: translate('page.settings'), icon: Settings }
+        {
+          id: 'executive',
+          title: '📊 Executive & Analytics',
+          badge: 'HQ',
+          items: [
+            { view: 'crm/overview', label: '📊 Dashboard Overview', icon: LayoutDashboard },
+            { view: 'crm/reports', label: '📈 Analytics & Reports', icon: BarChart3 }
+          ]
+        },
+        {
+          id: 'finance',
+          title: '💰 Revenue & Finance',
+          badge: 'Admin',
+          items: [
+            { view: 'crm/finance', label: '💵 Cash Flow & Ledger', icon: DollarSign },
+            { view: 'crm/bill-inventory', label: '🧾 Tax Invoices & Bills', icon: Inbox }
+          ]
+        },
+        {
+          id: 'rooms',
+          title: '🏨 Residency Operations',
+          badge: 'Hotel',
+          items: [
+            { view: 'crm/door-matrix', label: '🚪 Live Door Matrix', icon: DoorOpen, badge: 'Live' },
+            { view: 'crm/bookings?service=room&source=offline', label: '🛎️ Front Desk Bookings', icon: Inbox },
+            { view: 'crm/bookings?service=room&source=online', label: '🌐 Online Room Stays', icon: ShieldCheck },
+            { view: 'crm/ota-channels', label: '✈️ MakeMyTrip & Goibibo', icon: Globe },
+            { view: 'crm/onsite-booking', label: '✨ Walk-in Check-In', icon: Bed }
+          ]
+        },
+        {
+          id: 'mahal',
+          title: '🏛️ SV Mahal Banquets',
+          badge: 'Mandapam',
+          items: [
+            { view: 'crm/bookings?service=mahal&source=offline', label: '🏛️ Mahal Offline Bookings', icon: Building },
+            { view: 'crm/bookings?service=mahal&source=online', label: '💍 Online Wedding Requests', icon: ShieldCheck },
+            { view: 'crm/onsite-booking-mahal', label: '🎪 Mahal Walk-In Booking', icon: Building },
+            { view: 'crm/mahal', label: '⚙️ Hall Configuration', icon: Settings }
+          ]
+        },
+        {
+          id: 'directory',
+          title: '📋 Master Directory',
+          badge: 'Inventory',
+          items: [
+            { view: 'crm/online-requests', label: '✅ Online Approvals', icon: ShieldCheck },
+            { view: 'crm/customers', label: '👥 Guest Profiles', icon: Users },
+            { view: 'crm/rooms', label: `🔑 Room Inventory (${invCount})`, icon: Bed }
+          ]
+        },
+        {
+          id: 'security',
+          title: '🛡️ Security & System',
+          badge: 'Logs',
+          items: [
+            { view: 'crm/audit', label: '📜 Security Audit Logs', icon: History },
+            { view: 'crm/settings', label: '⚙️ System Settings', icon: Settings }
+          ]
+        }
       ];
     } else {
-      // Manager role - no financial data, structured pages
+      // Manager role - focused operations, without admin ledger
       return [
-        { type: 'section', label: translate('section.dashboard') },
-        { view: 'crm/overview', label: translate('page.overview'), icon: LayoutDashboard },
-        { view: 'crm/reports', label: translate('page.reports'), icon: BarChart3 },
-        
-        { type: 'section', label: translate('section.hotel_rooms') },
-        { view: 'crm/bookings?service=room&source=offline', label: translate('page.offline_bookings'), icon: Inbox },
-        { view: 'crm/bookings?service=room&source=online', label: translate('page.online_bookings'), icon: ShieldCheck },
-        { view: 'crm/ota-channels', label: 'MakeMyTrip & Goibibo', icon: Globe },
-        
-        { type: 'section', label: translate('section.mahal_booking') },
-        { view: 'crm/bookings?service=mahal&source=offline', label: translate('page.offline_bookings'), icon: Inbox },
-        { view: 'crm/bookings?service=mahal&source=online', label: translate('page.online_bookings'), icon: ShieldCheck },
-        { view: 'crm/onsite-booking-mahal', label: 'Onsite Booking', icon: Building },
-        
-        { type: 'section', label: translate('section.global_data') },
-        { view: 'crm/online-requests', label: 'Online Approvals', icon: ShieldCheck },
-        { view: 'crm/customers', label: translate('page.customers'), icon: Users },
-        { view: 'crm/rooms', label: translate('page.rooms'), icon: Bed },
-        { view: 'crm/settings', label: translate('page.settings'), icon: Settings }
+        {
+          id: 'operations',
+          title: '📊 Operations Desk',
+          badge: 'Daily',
+          items: [
+            { view: 'crm/overview', label: '📊 Dashboard Overview', icon: LayoutDashboard },
+            { view: 'crm/reports', label: '📈 Daily Reports', icon: BarChart3 }
+          ]
+        },
+        {
+          id: 'rooms',
+          title: '🏨 Residency Front Desk',
+          badge: 'Hotel',
+          items: [
+            { view: 'crm/door-matrix', label: '🚪 Live Door Matrix', icon: DoorOpen, badge: 'Live' },
+            { view: 'crm/bookings?service=room&source=offline', label: '🛎️ Front Desk Bookings', icon: Inbox },
+            { view: 'crm/bookings?service=room&source=online', label: '🌐 Online Stays', icon: ShieldCheck },
+            { view: 'crm/ota-channels', label: '✈️ OTAs (MMT/Goibibo)', icon: Globe },
+            { view: 'crm/onsite-booking', label: '✨ Walk-in Check-In', icon: Bed }
+          ]
+        },
+        {
+          id: 'mahal',
+          title: '🏛️ SV Mahal Banquets',
+          badge: 'Events',
+          items: [
+            { view: 'crm/bookings?service=mahal&source=offline', label: '🏛️ Mahal Bookings', icon: Building },
+            { view: 'crm/bookings?service=mahal&source=online', label: '💍 Event Requests', icon: ShieldCheck },
+            { view: 'crm/onsite-booking-mahal', label: '🎪 Mahal Walk-In', icon: Building }
+          ]
+        },
+        {
+          id: 'directory',
+          title: '📋 Directory & Inventory',
+          badge: 'Database',
+          items: [
+            { view: 'crm/online-requests', label: '✅ Online Approvals', icon: ShieldCheck },
+            { view: 'crm/customers', label: '👥 Guest Profiles', icon: Users },
+            { view: 'crm/rooms', label: `🔑 Room Status (${invCount})`, icon: Bed }
+          ]
+        },
+        {
+          id: 'terminal',
+          title: '⚙️ Terminal Settings',
+          items: [
+            { view: 'crm/settings', label: '⚙️ System Settings', icon: Settings }
+          ]
+        }
       ];
     }
   };
 
-  const navItems = getNavItems();
+  const navBuckets = getNavBuckets();
 
-  const getPageTitle = (view: string) => {
-    if (view === 'crm/overview') return 'Dashboard';
-    if (view === 'crm/reports') return 'Analytics & Reports';
-    if (view === 'crm/finance') return 'Finance & Ledger';
-    if (view === 'crm/bill-inventory') return 'Bill Inventory';
-    if (view.includes('service=room')) return 'Hotel Rooms Desk';
-    if (view.includes('service=mahal')) return 'SV Mahal Banquet';
-    if (view.includes('ota-channels')) return 'MakeMyTrip & Goibibo';
-    if (view.includes('online-requests')) return 'Online Approvals';
-    if (view.includes('customers')) return 'Guest Profiles';
-    if (view.includes('rooms')) return 'Room Inventory';
-    if (view.includes('mahal')) return 'Mahal Settings';
-    if (view.includes('audit')) return 'Security Audit Logs';
-    if (view.includes('settings')) return 'System Settings';
-    return 'Dashboard';
+  const getPageBreadcrumb = (view: string) => {
+    if (view === 'crm/overview') return { category: 'Executive Suite', title: '📊 Dashboard Overview' };
+    if (view === 'crm/door-matrix') return { category: 'Residency Operations', title: '🚪 Live Door Matrix' };
+    if (view === 'crm/reports') return { category: 'Executive Suite', title: '📈 Analytics & Financial Reports' };
+    if (view === 'crm/finance') return { category: 'Revenue & Accounts', title: '💵 Cash Flow & Ledger' };
+    if (view === 'crm/bill-inventory') return { category: 'Revenue & Accounts', title: '🧾 Tax Invoices & Bill Inventory' };
+    if (view.includes('service=room')) return { category: 'Residency Operations', title: '🛎️ Hotel Rooms & Stays Desk' };
+    if (view.includes('service=mahal')) return { category: 'SV Mahal Banquets', title: '🏛️ Grand Mandapam Bookings' };
+    if (view.includes('ota-channels')) return { category: 'Channel Manager', title: '✈️ MakeMyTrip & Goibibo OTAs' };
+    if (view.includes('online-requests')) return { category: 'Master Directory', title: '✅ Online Approvals Queue' };
+    if (view.includes('customers')) return { category: 'Master Directory', title: '👥 Guest Profiles & Directory' };
+    if (view.includes('rooms')) return { category: 'Master Directory', title: `🔑 Room Inventory (${rooms.length} Keys)` };
+    if (view.includes('mahal')) return { category: 'SV Mahal Banquets', title: '🎪 Hall Configuration & Tariffs' };
+    if (view.includes('audit')) return { category: 'Security & System', title: '📜 Security Audit Logs' };
+    if (view.includes('settings')) return { category: 'Security & System', title: '⚙️ System Configuration' };
+    return { category: 'Administration', title: 'Operational Overview' };
   };
 
   return (
@@ -261,15 +349,15 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: '16px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '18px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
               width: '42px',
               height: '42px',
-              borderRadius: '50%',
+              borderRadius: '10px',
               backgroundColor: '#FFFFFF',
-              border: '2px solid #C9A227',
-              boxShadow: '0 0 10px rgba(201, 162, 39, 0.4)',
+              border: '2px solid #2563EB',
+              boxShadow: '0 0 12px rgba(37, 99, 235, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -280,131 +368,171 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
             <img 
               src="/logo.png" 
               alt="SV Logo" 
-              style={{ width: '92%', height: '92%', objectFit: 'contain' }} 
+              style={{ width: '90%', height: '90%', objectFit: 'contain' }} 
             />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
-              SV. MAHAL <span style={{ color: '#C9A227' }}>&</span> RESIDENCY
+            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+              SV. MAHAL <span style={{ color: '#3B82F6' }}>&</span> RESIDENCY
             </div>
-            <div style={{ fontSize: '0.62rem', color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Management Portal
+            <div style={{ fontSize: '0.62rem', color: '#93C5FD', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
+              Admin Operations Portal
             </div>
           </div>
         </div>
 
-        {/* Navigation list */}
-        <nav style={{ flexGrow: 1, padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
-          {navItems.map((item, index) => {
-            if ('type' in item && item.type === 'section') {
-              return (
-                <div
-                  key={`sec-${index}`}
-                  style={{
-                    fontSize: '0.65rem',
-                    color: 'rgba(255,255,255,0.4)',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    padding: '16px 16px 4px 16px',
-                    whiteSpace: 'nowrap',
-                    marginTop: index > 0 ? '8px' : '0'
-                  }}
-                >
-                  {item.label}
-                </div>
-              );
-            }
-
-            const navItem = item as { view: string; label: string; icon: React.ComponentType<any> };
-            const Icon = navItem.icon;
-            const isActive = currentView === navItem.view;
+        {/* Categorized Navigation Buckets - Strict Blue, Red & White Theme */}
+        <nav style={{ flexGrow: 1, padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
+          {navBuckets.map((bucket) => {
+            const hasActiveItem = bucket.items.some(item => currentView === item.view);
 
             return (
-              <button
-                key={navItem.view}
-                onClick={() => {
-                  setView(navItem.view);
-                  if (isMobile) setIsSidebarOpen(false);
-                }}
+              <div
+                key={bucket.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
+                  backgroundColor: hasActiveItem ? 'rgba(37, 99, 235, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                  border: hasActiveItem ? '1px solid rgba(37, 99, 235, 0.35)' : '1px solid rgba(255, 255, 255, 0.06)',
                   borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                  color: '#FFFFFF',
-                  fontWeight: isActive ? 700 : 500,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  transition: 'all 0.2s',
-                  width: '100%',
-                  whiteSpace: 'nowrap'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
+                  padding: '8px 6px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Icon size={18} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.7 }} />
-                <span>{navItem.label}</span>
-              </button>
+                {/* Bucket Header */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '4px 8px 8px 8px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  marginBottom: '4px'
+                }}>
+                  <span style={{
+                    fontSize: '0.64rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: hasActiveItem ? '#93C5FD' : 'rgba(255, 255, 255, 0.6)'
+                  }}>
+                    {bucket.title}
+                  </span>
+                  {bucket.badge && (
+                    <span style={{
+                      fontSize: '0.55rem',
+                      fontWeight: 800,
+                      padding: '2px 6px',
+                      borderRadius: '8px',
+                      backgroundColor: bucket.badge === 'Admin' || bucket.badge === 'HQ' ? '#DC2626' : (hasActiveItem ? '#2563EB' : 'rgba(255, 255, 255, 0.1)'),
+                      color: '#FFFFFF'
+                    }}>
+                      {bucket.badge}
+                    </span>
+                  )}
+                </div>
+
+                {/* Bucket Nav Items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {bucket.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentView === item.view;
+
+                    return (
+                      <button
+                        key={item.view}
+                        onClick={() => {
+                          setView(item.view);
+                          if (isMobile) setIsSidebarOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '9px 12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: isActive ? '#2563EB' : 'transparent',
+                          color: '#FFFFFF',
+                          borderLeft: isActive ? '3px solid #FFFFFF' : '3px solid transparent',
+                          fontWeight: isActive ? 800 : 500,
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          transition: 'all 0.15s ease',
+                          width: '100%',
+                          whiteSpace: 'nowrap',
+                          boxShadow: isActive ? '0 4px 12px rgba(37, 99, 235, 0.35)' : 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.16)';
+                            e.currentTarget.style.color = '#FFFFFF';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#FFFFFF';
+                          }
+                        }}
+                      >
+                        <Icon size={16} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.8, color: isActive ? '#FFFFFF' : '#93C5FD' }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
 
-        {/* Floating SV Command Box (Lorem Ipsum box from mockup) */}
-        <div style={{ padding: '16px', margin: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #312E81 0%, #1E1B4B 100%)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <h3 style={{ fontSize: '0.8rem', color: '#FFFFFF', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SV COMMAND</h3>
-          <p style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.4, marginBottom: '12px' }}>
-            Fast guest search, Mugurtham scheduling, and billing controls active.
+        {/* Command Box at bottom - Blue, Red, White */}
+        <div style={{ padding: '16px', margin: '14px', borderRadius: '14px', background: 'linear-gradient(135deg, #1E3A8A 0%, #0F243E 100%)', border: '1px solid rgba(37, 99, 235, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#DC2626' }} />
+            <h3 style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ADMIN FAST TRACK</h3>
+          </div>
+          <p style={{ fontSize: '0.66rem', color: '#93C5FD', lineHeight: 1.4, margin: '4px 0 12px 0' }}>
+            Instant room check-ins, guest billing, and muhurtham scheduling active.
           </p>
           <button
             onClick={() => setView('crm/settings')}
-            style={{ width: '100%', padding: '8px', border: 'none', borderRadius: '8px', backgroundColor: '#FACC15', color: '#0F172A', fontWeight: 750, fontSize: '0.75rem', cursor: 'pointer', transition: 'opacity 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            style={{ width: '100%', padding: '9px', border: 'none', borderRadius: '8px', backgroundColor: '#DC2626', color: '#FFFFFF', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'background-color 0.2s', boxShadow: '0 4px 10px rgba(220, 38, 38, 0.3)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B91C1C')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#DC2626')}
           >
-            CRM CONTROLS
+            SYSTEM CONTROLS
           </button>
         </div>
       </aside>
       {/* 2. MAIN LAYOUT AND HEADER */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', flexGrow: 1, width: isMobile ? '100%' : (isSidebarOpen ? 'calc(100% - var(--sidebar-width))' : '100%'), transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
         
-        {/* Header Bar matching Mockup */}
+        {/* Header Bar - Modern Executive Blue/Red/White Module Header */}
         <header
           style={{
             height: '76px',
             backgroundColor: '#FFFFFF',
-            borderBottom: '1px solid #EEF2F6',
+            borderBottom: '1.5px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 28px',
+            padding: isMobile ? '0 16px' : '0 28px',
+            gap: isMobile ? '10px' : '20px',
             position: 'sticky',
             top: 0,
             zIndex: 90,
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)'
+            boxShadow: '0 2px 10px rgba(15, 23, 42, 0.03)'
           }}
         >
-          {/* Left: Menu toggle & Page Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Left: Menu toggle & Hierarchy Breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '16px', minWidth: 0, flexShrink: 0 }}>
             <button
               type="button"
+              aria-label="Toggle navigation menu"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{
-                width: '38px',
-                height: '38px',
+                width: '40px',
+                height: '40px',
                 borderRadius: '10px',
                 backgroundColor: '#F8FAFC',
                 border: '1px solid #E2E8F0',
@@ -412,39 +540,92 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#475569',
-                transition: 'all 0.2s'
+                color: '#1E293B',
+                transition: 'all 0.15s ease',
+                flexShrink: 0
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#EFF6FF';
+                e.currentTarget.style.borderColor = '#BFDBFE';
+                e.currentTarget.style.color = '#2563EB';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#F8FAFC';
+                e.currentTarget.style.borderColor = '#E2E8F0';
+                e.currentTarget.style.color = '#1E293B';
+              }}
             >
-              <Menu size={18} />
+              <Menu size={19} />
             </button>
 
-            <div>
-              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1E293B', margin: 0, letterSpacing: '-0.02em' }}>
-                {getPageTitle(currentView)}
-              </h1>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+              {!isMobile && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+                  <span style={{ textTransform: 'uppercase', color: '#64748B' }}>
+                    {getPageBreadcrumb(currentView).category}
+                  </span>
+                  <ChevronRight size={12} color="#94A3B8" />
+                  <span style={{ color: '#2563EB' }}>
+                    {getPageBreadcrumb(currentView).title}
+                  </span>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <h1 style={{
+                  fontSize: isMobile ? '1.05rem' : '1.32rem',
+                  fontWeight: 850,
+                  color: '#0F172A',
+                  margin: 0,
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1.15,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {getPageBreadcrumb(currentView).title}
+                </h1>
+                {!isMobile && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#FEF2F2',
+                      border: '1px solid #FEE2E2',
+                      fontSize: '0.64rem',
+                      fontWeight: 800,
+                      color: '#DC2626',
+                      flexShrink: 0
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#DC2626' }} />
+                    DESK LIVE
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Center: Search Here pill input */}
-          <div ref={searchRef} style={{ position: 'relative', width: '380px' }} className="desktop-only">
+          {/* Center: Interactive Omnisearch bar */}
+          <div ref={searchRef} style={{ position: 'relative', width: 'clamp(200px, 20vw, 340px)', flexShrink: 1 }} className="desktop-only">
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                borderRadius: '9999px',
-                padding: '10px 20px',
-                backgroundColor: '#F4F7FE',
-                border: '1px solid transparent',
+                borderRadius: '12px',
+                padding: '8px 14px',
+                backgroundColor: '#F8FAFC',
+                border: searchQuery ? '1.5px solid #2563EB' : '1.5px solid #E2E8F0',
                 transition: 'all 0.2s ease',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+                boxShadow: searchQuery ? '0 0 0 3px rgba(37, 99, 235, 0.1)' : 'none'
               }}
             >
+              <Search size={16} color="#2563EB" style={{ marginRight: '10px', flexShrink: 0 }} />
               <input
                 type="text"
-                placeholder="Search here"
+                placeholder="Search bookings, rooms, guests, bills..."
                 value={searchQuery}
                 onChange={handleSearchChange}
                 style={{
@@ -452,12 +633,24 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                   background: 'none',
                   outline: 'none',
                   width: '100%',
-                  fontSize: '0.85rem',
-                  color: '#1E293B',
-                  fontWeight: 500
+                  fontSize: '0.82rem',
+                  color: '#0F172A',
+                  fontWeight: 600
                 }}
               />
-              <Search size={18} color="#6320EE" style={{ marginLeft: '8px', cursor: 'pointer', flexShrink: 0 }} />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => { setSearchQuery(''); setSearchResults([]); }}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, display: 'flex', color: '#64748B' }}
+                >
+                  <X size={15} />
+                </button>
+              ) : (
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 5px', borderRadius: '4px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', color: '#64748B', flexShrink: 0 }}>
+                  ⌘K
+                </span>
+              )}
             </div>
 
             {/* Suggestions Dropdown */}
@@ -468,136 +661,294 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                   top: '46px',
                   left: 0,
                   right: 0,
-                  width: '380px',
+                  width: '100%',
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '16px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.05)',
-                  maxHeight: '300px',
+                  border: '1.5px solid #E2E8F0',
+                  borderRadius: '14px',
+                  boxShadow: '0 16px 36px rgba(15, 23, 42, 0.12)',
+                  maxHeight: '320px',
                   overflowY: 'auto',
                   zIndex: 200
                 }}
               >
-                <div style={{ padding: '10px 16px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
-                  SEARCH SUGGESTIONS
+                <div style={{ padding: '10px 14px', fontSize: '0.65rem', color: '#64748B', fontWeight: 800, borderBottom: '1px solid #F1F5F9', letterSpacing: '0.05em' }}>
+                  SEARCH RESULTS ({searchResults.length})
                 </div>
                 {searchResults.map((item, i) => (
                   <div
                     key={i}
                     onClick={() => handleSearchItemClick(item)}
                     style={{
-                      padding: '12px 16px',
+                      padding: '10px 14px',
                       cursor: 'pointer',
                       borderBottom: '1px solid #F1F5F9',
-                      transition: 'background-color 0.2s'
+                      transition: 'background-color 0.15s'
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#EFF6FF')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>{item.title}</span>
-                      <span style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#E0F2FE', color: '#0369A1', fontWeight: 700 }}>{item.type}</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A' }}>{item.title}</span>
+                      <span
+                        style={{
+                          fontSize: '0.64rem',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: item.type === 'Booking' ? '#EFF6FF' : (item.type === 'Invoice' ? '#FEF2F2' : '#F1F5F9'),
+                          color: item.type === 'Booking' ? '#2563EB' : (item.type === 'Invoice' ? '#DC2626' : '#0F172A'),
+                          fontWeight: 800
+                        }}
+                      >
+                        {item.type}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{item.subtitle}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>{item.subtitle}</div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Right widgets (Mockup pill icons & User Profile) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Right Action Controls: Quick Check-In + Alerts Bell + Language Switch + User Profile */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px', flexShrink: 0 }}>
             
-            {/* LANGUAGE SELECTOR */}
-            <div style={{ position: 'relative' }}>
-              <select
-                value={currentLanguage}
-                onChange={(e) => setLanguage(e.target.value as 'en' | 'ta')}
+            {/* 1. Quick Room Check-In Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setOfflineServiceType('room');
+                setIsOfflineModalOpen(true);
+              }}
+              className="desktop-only"
+              style={{
+                padding: '8px 14px',
+                borderRadius: '10px',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                transition: 'all 0.2s ease',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              <span>New Check-In</span>
+            </button>
+
+            {/* 2. Interactive Operational Alerts Popover (Bell) */}
+            <div ref={notificationRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                title="Operational Alerts"
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 style={{
-                  padding: '7px 12px',
-                  borderRadius: '20px',
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFFFFF',
-                  color: '#475569',
-                  fontWeight: 700,
-                  fontSize: '0.78rem',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: isNotificationsOpen ? '#EFF6FF' : '#FFFFFF',
+                  border: isNotificationsOpen ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  paddingRight: '24px',
-                  backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'none\'%3E%3Cpath d=\'M7 9l3 3 3-3\' stroke=\'%23475569\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 8px center',
-                  backgroundSize: '12px'
+                  position: 'relative',
+                  color: '#2563EB',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isNotificationsOpen) e.currentTarget.style.backgroundColor = '#EFF6FF';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isNotificationsOpen) e.currentTarget.style.backgroundColor = '#FFFFFF';
                 }}
               >
-                <option value="en">🇬🇧 EN</option>
-                <option value="ta">🇮🇳 தமிழ்</option>
-              </select>
+                <Bell size={18} />
+                {bookings.filter(b => b.status === 'Inquiry').length > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-3px',
+                      right: '-3px',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 4px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#DC2626',
+                      color: '#FFFFFF',
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #FFFFFF'
+                    }}
+                  >
+                    {bookings.filter(b => b.status === 'Inquiry').length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Popover Dropdown */}
+              {isNotificationsOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '48px',
+                    right: 0,
+                    width: isMobile ? '280px' : '330px',
+                    backgroundColor: '#FFFFFF',
+                    border: '1.5px solid #E2E8F0',
+                    borderRadius: '14px',
+                    boxShadow: '0 16px 36px rgba(15, 23, 42, 0.15)',
+                    zIndex: 210,
+                    overflow: 'hidden'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A' }}>Operational Alerts</span>
+                      <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '9999px', backgroundColor: '#FEF2F2', color: '#DC2626', fontWeight: 800 }}>
+                        {bookings.filter(b => b.status === 'Inquiry').length} Pending
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsNotificationsOpen(false)}
+                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748B', display: 'flex', padding: 0 }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
+                    {bookings.filter(b => b.status === 'Inquiry').length > 0 ? (
+                      bookings.filter(b => b.status === 'Inquiry').slice(0, 4).map((inq) => (
+                        <div
+                          key={inq.id}
+                          onClick={() => {
+                            setSelectedBooking(inq);
+                            setView(inq.serviceType === 'mahal' ? 'crm/bookings?service=mahal' : 'crm/bookings?service=room');
+                            setIsNotificationsOpen(false);
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            borderBottom: '1px solid #F1F5F9',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.15s'
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#EFF6FF')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A' }}>{inq.guestName || 'Inquiry Guest'}</span>
+                            <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '6px', backgroundColor: '#FEF2F2', color: '#DC2626', fontWeight: 800 }}>
+                              {inq.serviceType === 'mahal' ? 'Mahal' : 'Room'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                            {inq.checkIn} • Needs front desk verification
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '20px 16px', textAlign: 'center', color: '#64748B', fontSize: '0.78rem' }}>
+                        No pending inquiries. All desks are clear!
+                      </div>
+                    )}
+
+                    {/* System Sync Note */}
+                    <div style={{ padding: '10px 14px', backgroundColor: '#F8FAFC', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563EB', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 600 }}>
+                        Reception desk connected. {rooms.length} room inventory active.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '8px 14px', borderTop: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView('crm/customers');
+                        setIsNotificationsOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid #DBEAFE',
+                        backgroundColor: '#EFF6FF',
+                        color: '#2563EB',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      View Master Queue →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* MESSAGE ICON PILL (Mockup) */}
-            <button
-              type="button"
-              title="Guest Inquiries"
-              onClick={() => setView('crm/customers')}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative',
-                color: '#6320EE',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
-            >
-              <MessageSquare size={17} />
-              <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-            </button>
-
-
-
-            {/* HEART / FAVORITES PILL (Mockup) */}
-            <button
-              type="button"
-              title="Quick Action"
-              onClick={() => setView('crm/overview')}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative',
-                color: '#6320EE',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
-            >
-              <Heart size={17} />
-              <span style={{ position: 'absolute', top: '7px', right: '7px', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-            </button>
-
-            {/* USER PROFILE PILL - "Welcome Admin" or "Welcome Manager" (Mockup) */}
+            {/* 3. Professional Language Switch (Segmented Control) */}
             <div
-              style={{ position: 'relative' }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                backgroundColor: '#F1F5F9',
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                padding: '3px'
+              }}
             >
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                style={{
+                  border: 'none',
+                  padding: '5px 9px',
+                  borderRadius: '7px',
+                  backgroundColor: currentLanguage === 'en' ? '#2563EB' : 'transparent',
+                  color: currentLanguage === 'en' ? '#FFFFFF' : '#475569',
+                  fontWeight: currentLanguage === 'en' ? 800 : 700,
+                  fontSize: '0.73rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('ta')}
+                style={{
+                  border: 'none',
+                  padding: '5px 9px',
+                  borderRadius: '7px',
+                  backgroundColor: currentLanguage === 'ta' ? '#2563EB' : 'transparent',
+                  color: currentLanguage === 'ta' ? '#FFFFFF' : '#475569',
+                  fontWeight: currentLanguage === 'ta' ? 800 : 700,
+                  fontSize: '0.73rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                தமிழ்
+              </button>
+            </div>
+
+            {/* 4. Executive User Profile & Role Switcher */}
+            <div ref={profileRef} style={{ position: 'relative' }}>
               <div
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 style={{
@@ -606,19 +957,24 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                   gap: '10px',
                   cursor: 'pointer',
                   padding: '4px 10px 4px 6px',
-                  borderRadius: '30px',
-                  transition: 'background 0.2s',
-                  marginLeft: '4px'
+                  borderRadius: '12px',
+                  border: isProfileOpen ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
+                  backgroundColor: isProfileOpen ? '#EFF6FF' : '#FFFFFF',
+                  transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                onMouseEnter={(e) => {
+                  if (!isProfileOpen) e.currentTarget.style.backgroundColor = '#F8FAFC';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProfileOpen) e.currentTarget.style.backgroundColor = '#FFFFFF';
+                }}
               >
-                <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
+                <div style={{ position: 'relative', width: '38px', height: '38px', flexShrink: 0 }}>
                   {userAvatar ? (
                     <img
                       src={userAvatar}
                       alt="User Avatar"
-                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6320EE' }}
+                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563EB' }}
                     />
                   ) : (
                     <div
@@ -626,51 +982,51 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                         width: '100%',
                         height: '100%',
                         borderRadius: '50%',
-                        backgroundColor: '#EDE9FE',
-                        color: '#6320EE',
+                        backgroundColor: '#EFF6FF',
+                        color: '#2563EB',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '2px solid #6320EE'
+                        border: '2px solid #2563EB'
                       }}
-                      title="Default Admin / Manager Icon"
                     >
-                      <User size={20} />
+                      <User size={19} />
                     </div>
                   )}
-                  <div style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10B981', border: '2px solid #FFFFFF' }} />
+                  <div style={{ position: 'absolute', bottom: '0', right: '0', width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#2563EB', border: '2px solid #FFFFFF' }} />
                 </div>
 
                 <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.2 }}>
-                    {currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager'}
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
                     {currentUserRole === 'admin' ? 'Superadmin' : 'Duty Manager'}
                   </span>
+                  <span style={{ fontSize: '0.67rem', color: '#2563EB', fontWeight: 700 }}>
+                    Chengam HQ
+                  </span>
                 </div>
+                <ChevronDown size={14} color="#64748B" className="desktop-only" />
               </div>
 
               {isProfileOpen && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '50px',
+                    top: '48px',
                     right: 0,
-                    width: '230px',
+                    width: '240px',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '16px',
-                    boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
-                    zIndex: 200,
-                    padding: '10px 0'
+                    border: '1.5px solid #E2E8F0',
+                    borderRadius: '14px',
+                    boxShadow: '0 16px 36px rgba(15, 23, 42, 0.14)',
+                    zIndex: 220,
+                    padding: '8px 0'
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Profile Header & Upload Action */}
-                  <div style={{ padding: '4px 14px 12px 14px', borderBottom: '1px solid #F1F5F9' }}>
+                  <div style={{ padding: '6px 14px 12px 14px', borderBottom: '1px solid #F1F5F9' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, backgroundColor: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6320EE', border: '1.5px solid #6320EE' }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', border: '1.5px solid #2563EB' }}>
                         {userAvatar ? (
                           <img src={userAvatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
@@ -678,11 +1034,11 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                         )}
                       </div>
                       <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1E293B', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                          {currentUserRole === 'admin' ? 'Welcome Admin' : 'Welcome Manager'}
-                        </div>
-                        <div style={{ fontSize: '0.68rem', color: '#64748B' }}>
+                        <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                           {currentUserRole === 'admin' ? 'Superadmin' : 'Duty Manager'}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#2563EB', fontWeight: 700 }}>
+                          Chengam Desk Portal
                         </div>
                       </div>
                     </div>
@@ -692,11 +1048,11 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                       style={{
                         width: '100%',
                         padding: '7px 10px',
-                        backgroundColor: '#F3E8FF',
-                        color: '#6320EE',
-                        border: 'none',
+                        backgroundColor: '#EFF6FF',
+                        color: '#2563EB',
+                        border: '1px solid #DBEAFE',
                         borderRadius: '8px',
-                        fontSize: '0.75rem',
+                        fontSize: '0.74rem',
                         fontWeight: 700,
                         cursor: 'pointer',
                         display: 'flex',
@@ -706,8 +1062,8 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                         transition: 'background 0.2s',
                         marginBottom: userAvatar ? '6px' : '0'
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E9D5FF')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#DBEAFE')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#EFF6FF')}
                     >
                       <Camera size={14} /> {userAvatar ? 'Update Photo' : 'Upload Photo'}
                     </button>
@@ -718,12 +1074,12 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                         style={{
                           width: '100%',
                           padding: '5px 10px',
-                          backgroundColor: 'transparent',
-                          color: '#EF4444',
+                          backgroundColor: '#FEF2F2',
+                          color: '#DC2626',
                           border: '1px solid #FEE2E2',
                           borderRadius: '8px',
                           fontSize: '0.7rem',
-                          fontWeight: 600,
+                          fontWeight: 700,
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -731,7 +1087,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                           gap: '4px'
                         }}
                       >
-                        Reset to Dummy Icon
+                        Reset Icon
                       </button>
                     )}
 
@@ -744,8 +1100,9 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     />
                   </div>
 
-                  <div style={{ padding: '8px 14px 4px 14px', fontSize: '0.65rem', color: '#94A3B8', fontWeight: 800, letterSpacing: '0.05em' }}>
-                    SWITCH ROLE
+                  {/* Switch Role Section */}
+                  <div style={{ padding: '8px 14px 4px 14px', fontSize: '0.65rem', color: '#64748B', fontWeight: 800, letterSpacing: '0.05em' }}>
+                    SWITCH OPERATIONAL ROLE
                   </div>
                   <button
                     onClick={() => {
@@ -754,21 +1111,21 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
+                      padding: '9px 14px',
                       border: 'none',
-                      backgroundColor: 'transparent',
+                      backgroundColor: currentUserRole === 'admin' ? '#EFF6FF' : 'transparent',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      color: '#334155',
-                      fontWeight: currentUserRole === 'admin' ? 700 : 500,
+                      fontSize: '0.82rem',
+                      color: currentUserRole === 'admin' ? '#2563EB' : '#334155',
+                      fontWeight: currentUserRole === 'admin' ? 800 : 600,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
                   >
-                    <span>Administrator</span>
-                    {currentUserRole === 'admin' && <Check size={14} color="#16A34A" />}
+                    <span>Administrator (Full Access)</span>
+                    {currentUserRole === 'admin' && <Check size={16} color="#2563EB" />}
                   </button>
                   <button
                     onClick={() => {
@@ -777,23 +1134,52 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
+                      padding: '9px 14px',
                       border: 'none',
-                      backgroundColor: 'transparent',
+                      backgroundColor: currentUserRole === 'manager' ? '#EFF6FF' : 'transparent',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      color: '#334155',
-                      fontWeight: currentUserRole === 'manager' ? 700 : 500,
+                      fontSize: '0.82rem',
+                      color: currentUserRole === 'manager' ? '#2563EB' : '#334155',
+                      fontWeight: currentUserRole === 'manager' ? 800 : 600,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
                   >
-                    <span>Duty Manager</span>
-                    {currentUserRole === 'manager' && <Check size={14} color="#16A34A" />}
+                    <span>Duty Manager (Desk Access)</span>
+                    {currentUserRole === 'manager' && <Check size={16} color="#2563EB" />}
                   </button>
+
                   <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '4px 0' }} />
+
+                  {/* System Settings Shortcut */}
+                  <button
+                    onClick={() => {
+                      setView('crm/settings');
+                      setIsProfileOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 14px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      color: '#475569',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <Settings size={15} color="#2563EB" /> System Settings
+                  </button>
+
+                  {/* Exit CRM */}
                   <button
                     onClick={() => {
                       setUserRole('public');
@@ -801,20 +1187,22 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
+                      padding: '8px 14px',
                       border: 'none',
                       backgroundColor: 'transparent',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
+                      fontSize: '0.82rem',
                       color: '#DC2626',
-                      fontWeight: 500,
+                      fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FEF2F2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <LogOut size={14} /> Exit CRM view
+                    <LogOut size={15} color="#DC2626" /> Exit CRM View
                   </button>
                 </div>
               )}
@@ -823,65 +1211,8 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* Floating Settings & Theme Tab (matching Mockup) */}
-        <div
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: '240px',
-            zIndex: 100,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '2px',
-            backgroundColor: '#2563EB',
-            padding: '4px',
-            borderTopLeftRadius: '10px',
-            borderBottomLeftRadius: '10px',
-            boxShadow: '-2px 4px 12px rgba(37, 99, 235, 0.3)'
-          }}
-        >
-          <button
-            type="button"
-            title="System Settings"
-            onClick={() => setView('crm/settings')}
-            style={{
-              width: '32px',
-              height: '32px',
-              border: 'none',
-              background: 'transparent',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              borderRadius: '6px'
-            }}
-          >
-            <Settings size={18} />
-          </button>
-          <button
-            type="button"
-            title="Toggle Language"
-            onClick={() => setLanguage(currentLanguage === 'en' ? 'ta' : 'en')}
-            style={{
-              width: '32px',
-              height: '32px',
-              border: 'none',
-              background: 'transparent',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              borderRadius: '6px'
-            }}
-          >
-            <Droplets size={18} />
-          </button>
-        </div>
-
         {/* Page Content viewport */}
-        <main style={{ padding: '24px', flexGrow: 1, backgroundColor: '#F1F5F9' }}>
+        <main style={{ padding: isMobile ? '16px' : '26px 28px', flexGrow: 1, backgroundColor: '#F1F5F9', minHeight: 'calc(100vh - 76px)' }}>
           {children}
         </main>
       </div>
@@ -892,13 +1223,13 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(6px)',
             zIndex: 1100,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px'
+            padding: isMobile ? '10px' : '24px'
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsOfflineModalOpen(false);
@@ -907,13 +1238,14 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
           <div
             style={{
               backgroundColor: '#FFFFFF',
-              borderRadius: '20px',
+              borderRadius: isMobile ? '16px' : '22px',
               width: '100%',
-              maxWidth: '1000px',
-              maxHeight: '90vh',
+              maxWidth: '1080px',
+              maxHeight: '94vh',
               overflowY: 'auto',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-              position: 'relative'
+              boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.4)',
+              position: 'relative',
+              border: '1.5px solid #E2E8F0'
             }}
           >
             {offlineServiceType === 'mahal' ? (

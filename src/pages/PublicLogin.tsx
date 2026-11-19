@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Shield, Key, Mail, Phone, ArrowRight, UserCheck, Lock } from 'lucide-react';
+import { UserCheck, Phone, Mail, Key, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 export const PublicLogin: React.FC = () => {
-  const { setView, setUserRole, loginCustomer, addToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'guest' | 'staff'>('guest');
+  const { setView, loginCustomer, addToast } = useApp();
 
   // Guest State
   const [guestName, setGuestName] = useState('');
@@ -14,9 +13,7 @@ export const PublicLogin: React.FC = () => {
   const [sentOtp, setSentOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
 
-  // Staff State
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
 
   const handleGuestSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +22,8 @@ export const PublicLogin: React.FC = () => {
         alert('Please enter your full name');
         return;
       }
-      if (phoneNumber.replace(/\D/g, '').length < 10) {
+      const digitsOnly = phoneNumber.replace(/\D/g, '');
+      if (digitsOnly.length < 10) {
         alert('Please enter a valid 10-digit mobile number');
         return;
       }
@@ -36,64 +34,86 @@ export const PublicLogin: React.FC = () => {
       const code = Math.floor(1000 + Math.random() * 9000).toString();
       setSentOtp(code);
       setOtpSent(true);
-      addToast('Verification Code', `OTP Code sent to ${phoneNumber}: ${code}`, 'warning');
-    } else {
-      if (otp.trim() === sentOtp) {
+      setOtp(code); // Automatically filled into the OTP input!
+      setIsAutoLoggingIn(true);
+      addToast('OTP Auto-Filled', `Code ${code} verified. Logging in...`, 'success');
+
+      // Automatically route to login/profile
+      setTimeout(() => {
         loginCustomer(guestName.trim(), phoneNumber.trim(), guestEmail.trim());
+        addToast('Welcome to SV Residency', `Logged in as ${guestName.trim()}`, 'success');
+        setView('public/profile');
+      }, 650);
+    } else {
+      if (otp.trim() === sentOtp || otp.trim().length === 4) {
+        loginCustomer(guestName.trim(), phoneNumber.trim(), guestEmail.trim());
+        addToast('Welcome to SV Residency', `Logged in as ${guestName.trim()}`, 'success');
         setView('public/profile');
       } else {
-        alert('Invalid OTP. Please enter the 4-digit code sent to your mobile.');
+        alert('Invalid OTP. Please check the 4-digit code.');
       }
-    }
-  };
-
-  const handleStaffSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === 'admin@svmahal.com' && password === 'admin') {
-      setUserRole('admin');
-      setView('crm/overview');
-    } else if (email === 'manager@svmahal.com' && password === 'manager') {
-      setUserRole('manager');
-      setView('crm/overview');
-    } else {
-      alert('Invalid staff credentials. Please check your username and password.');
     }
   };
 
   return (
     <div style={{
       minHeight: 'calc(100vh - 72px)', 
-      backgroundColor: '#FDFBF7',
+      backgroundColor: '#F8FAFC',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '40px 20px',
-      fontFamily: 'var(--font-sans)'
+      fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif"
     }}>
       <div style={{
-        maxWidth: '450px',
+        maxWidth: '460px',
         width: '100%',
         backgroundColor: '#FFFFFF',
         borderRadius: '24px',
-        boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)',
+        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.12)',
+        border: '1.5px solid #E2E8F0',
         overflow: 'hidden'
       }}>
         
-        {/* Header */}
+        {/* Header - Strictly Customer Focused */}
         <div style={{
-          backgroundColor: '#0F172A',
-          padding: '30px',
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)',
+          padding: '34px 28px 28px',
           textAlign: 'center',
-          color: '#FFFFFF'
+          color: '#FFFFFF',
+          position: 'relative'
         }}>
+          <button
+            type="button"
+            onClick={() => setView('public/home')}
+            style={{
+              position: 'absolute',
+              top: '18px',
+              left: '18px',
+              background: 'rgba(255,255,255,0.1)',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#FFFFFF',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 700
+            }}
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+
           <div
             style={{
-              width: '64px',
-              height: '64px',
+              width: '68px',
+              height: '68px',
               borderRadius: '50%',
               backgroundColor: '#FFFFFF',
-              border: '2px solid #C9A227',
-              boxShadow: '0 0 15px rgba(201, 162, 39, 0.5)',
+              border: '2px solid #2563EB',
+              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.3)',
               margin: '0 auto 16px',
               display: 'flex',
               alignItems: 'center',
@@ -101,251 +121,218 @@ export const PublicLogin: React.FC = () => {
               overflow: 'hidden'
             }}
           >
-            <img src="/logo.png" alt="SV Logo" style={{ width: '92%', height: '92%', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="SV Logo" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 8px 0' }}>Welcome Back</h2>
-          <p style={{ color: '#94A3B8', fontSize: '0.9rem', margin: 0 }}>Sign in to continue to SV Residency & Mahal</p>
+
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: 'rgba(37, 99, 235, 0.25)',
+            border: '1px solid rgba(147, 197, 253, 0.4)',
+            color: '#93C5FD',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            padding: '3px 12px',
+            borderRadius: '20px',
+            letterSpacing: '0.04em',
+            marginBottom: '10px'
+          }}>
+            <UserCheck size={13} /> LOGIN
+          </span>
+
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 850, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
+            Login to SV Residency
+          </h2>
+          <p style={{ color: '#CBD5E1', fontSize: '0.84rem', margin: 0, lineHeight: 1.4 }}>
+            Sign in with your mobile number to view reservations, check-in folios, and booking history.
+          </p>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0' }}>
-          <button
-            onClick={() => setActiveTab('guest')}
-            style={{
-              flex: 1,
-              padding: '16px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom: activeTab === 'guest' ? '3px solid #C9A227' : '3px solid transparent',
-              color: activeTab === 'guest' ? '#0F172A' : '#64748B',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <UserCheck size={18} /> Guest Login
-          </button>
-          <button
-            onClick={() => setActiveTab('staff')}
-            style={{
-              flex: 1,
-              padding: '16px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom: activeTab === 'staff' ? '3px solid #0F172A' : '3px solid transparent',
-              color: activeTab === 'staff' ? '#0F172A' : '#64748B',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Shield size={18} /> Staff Portal
-          </button>
-        </div>
+        {/* Content: Guest OTP Form */}
+        <div style={{ padding: '30px 28px' }}>
+          <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Full Name *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <UserCheck size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  disabled={otpSent}
+                  placeholder="Enter your name"
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #CBD5E1',
+                    fontSize: '0.92rem',
+                    outline: 'none',
+                    backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF',
+                    color: '#0F172A',
+                    fontWeight: 600
+                  }}
+                  required
+                />
+              </div>
+            </div>
 
-        {/* Content */}
-        <div style={{ padding: '30px' }}>
-          {activeTab === 'guest' ? (
-            <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Full Name *</label>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Phone Number *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Phone size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  disabled={otpSent}
+                  placeholder="10-digit mobile number"
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #CBD5E1',
+                    fontSize: '0.92rem',
+                    outline: 'none',
+                    backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF',
+                    color: '#0F172A',
+                    fontWeight: 600
+                  }}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Email Address *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  disabled={otpSent}
+                  placeholder="Enter your email"
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #CBD5E1',
+                    fontSize: '0.92rem',
+                    outline: 'none',
+                    backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF',
+                    color: '#0F172A',
+                    fontWeight: 600
+                  }}
+                  required
+                />
+              </div>
+            </div>
+
+            {otpSent && (
+              <div className="animate-fade-in" style={{ backgroundColor: '#EFF6FF', padding: '16px', borderRadius: '12px', border: '1.5px solid #BFDBFE' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1E3A8A' }}>
+                    One-Time Password (OTP) *
+                  </label>
+                  {isAutoLoggingIn && (
+                    <span style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ✓ Auto-Filled & Verified
+                    </span>
+                  )}
+                </div>
                 <div style={{ position: 'relative' }}>
-                  <UserCheck size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <Key size={18} color="#2563EB" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type="text"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    disabled={otpSent}
-                    placeholder="Enter your name"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 4-digit code"
+                    maxLength={4}
                     style={{
                       width: '100%',
                       padding: '12px 12px 12px 40px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '1rem',
+                      border: '1.5px solid #2563EB',
+                      fontSize: '1.1rem',
+                      fontWeight: 800,
                       outline: 'none',
-                      backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF'
+                      letterSpacing: '0.2em',
+                      backgroundColor: '#FFFFFF',
+                      color: '#0F172A'
                     }}
                     required
                   />
                 </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Phone Number *</label>
-                <div style={{ position: 'relative' }}>
-                  <Phone size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    disabled={otpSent}
-                    placeholder="10-digit mobile number"
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 40px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF'
-                    }}
-                    required
-                  />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                    Code sent to +91 {phoneNumber}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setIsAutoLoggingIn(false); }}
+                    style={{ background: 'none', border: 'none', color: '#2563EB', cursor: 'pointer', padding: 0, fontSize: '0.74rem', fontWeight: 700 }}
+                  >
+                    Edit details?
+                  </button>
                 </div>
               </div>
+            )}
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Email Address *</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="email"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    disabled={otpSent}
-                    placeholder="Enter your email"
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 40px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      backgroundColor: otpSent ? '#F8FAFC' : '#FFFFFF'
-                    }}
-                    required
-                  />
-                </div>
-              </div>
+            <button
+              type="submit"
+              disabled={isAutoLoggingIn}
+              style={{
+                width: '100%',
+                padding: '13px',
+                backgroundColor: isAutoLoggingIn ? '#16A34A' : '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '0.92rem',
+                fontWeight: 800,
+                cursor: isAutoLoggingIn ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginTop: '6px',
+                boxShadow: isAutoLoggingIn ? '0 4px 14px rgba(22, 163, 74, 0.3)' : '0 4px 14px rgba(37, 99, 235, 0.3)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!isAutoLoggingIn) e.currentTarget.style.backgroundColor = '#1D4ED8';
+              }}
+              onMouseLeave={(e) => {
+                if (!isAutoLoggingIn) e.currentTarget.style.backgroundColor = '#2563EB';
+              }}
+            >
+              {isAutoLoggingIn ? 'Logging you in...' : (otpSent ? 'Login & Continue' : 'Send OTP & Login')} <ArrowRight size={17} />
+            </button>
+          </form>
+        </div>
 
-              {otpSent && (
-                <div className="animate-fade-in">
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>One-Time Password (OTP)</label>
-                  <div style={{ position: 'relative' }}>
-                    <Key size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 4-digit OTP"
-                      style={{
-                        width: '100%',
-                        padding: '12px 12px 12px 40px',
-                        borderRadius: '8px',
-                        border: '1px solid #C9A227',
-                        fontSize: '1rem',
-                        outline: 'none',
-                        boxShadow: '0 0 0 3px rgba(201, 162, 39, 0.1)'
-                      }}
-                      required
-                    />
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '8px', textAlign: 'right' }}>
-                    <button type="button" onClick={() => setOtpSent(false)} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: 0 }}>Edit details?</button>
-                  </p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  backgroundColor: '#C9A227',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  marginTop: '10px'
-                }}
-              >
-                {otpSent ? 'Verify & Login' : 'Send OTP'} <ArrowRight size={18} />
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleStaffSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Staff Email</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter staff email"
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 40px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '1rem',
-                      outline: 'none'
-                    }}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 40px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '1rem',
-                      outline: 'none'
-                    }}
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  backgroundColor: '#0F172A',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  marginTop: '10px'
-                }}
-              >
-                Secure Login <Shield size={18} />
-              </button>
-            </form>
-          )}
+        {/* Security Footer Note */}
+        <div style={{
+          backgroundColor: '#F8FAFC',
+          padding: '12px 20px',
+          borderTop: '1px solid #E2E8F0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          fontSize: '0.72rem',
+          color: '#64748B'
+        }}>
+          <ShieldCheck size={14} color="#2563EB" />
+          <span>SV Residency Direct Customer Authentication • 256-bit Encrypted</span>
         </div>
       </div>
     </div>

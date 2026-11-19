@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { MapPin, Phone, Star, Search, ChevronRight, Check, Calendar, Users, Sparkles, Bed, Building, MessageCircle } from 'lucide-react';
-
+import { 
+  MapPin, Phone, Search, ChevronRight, ChevronLeft, Check, Calendar, 
+  Users, Sparkles, Bed, Building, MessageCircle, Maximize2, Eye 
+} from 'lucide-react';
+import { PropertyPhotoTour } from '../components/PropertyPhotoTour';
+import { PropertyGalleryModal } from '../components/PropertyGalleryModal';
 
 export const PublicHome: React.FC = () => {
   const { setView } = useApp();
@@ -25,66 +29,104 @@ export const PublicHome: React.FC = () => {
   // Interactive Interior tabs selector
   const [selectedInterior, setSelectedInterior] = useState<'classic' | 'deluxe' | 'terrace' | 'hall'>('classic');
 
-  // Testimonial state
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  // Interactive Hero Slides with Real Photographs
+  const HERO_SLIDES = [
+    {
+      id: 'aerial-mountain-view',
+      title: 'Scenic Mountain Vistas & Rural Calm',
+      subtitle: 'SV Thirumana Mahal & Residency Campus in Chengam',
+      image: '/images/property/aerial-mountain-view.jpg',
+      tag: 'Drone Panoramic View',
+      badge: 'Majestic Eastern Ghats'
+    },
+    {
+      id: 'room-302-suite',
+      title: 'Executive Deluxe Suite',
+      subtitle: 'Spacious King Bed, Split AC, Wardrobe & Vanity',
+      image: '/images/property/room-302-suite.jpg',
+      tag: 'Authentic Room Photo',
+      badge: 'Deluxe AC Suite'
+    },
+    {
+      id: 'elevator-lobby',
+      title: 'High-Speed Elevator & Black Granite Lobby',
+      subtitle: 'Senior Citizen & Wheelchair Accessible Vertical Access',
+      image: '/images/property/elevator-lobby.jpg',
+      tag: 'Modern Amenity',
+      badge: 'Granite & Teak Finishes'
+    },
+    {
+      id: 'reception-desk',
+      title: '24/7 Front Desk & Auspicious Lord Balaji Sanctum',
+      subtitle: 'Welcoming Traditional Hospitality & Dedicated Service',
+      image: '/images/property/reception-desk.jpg',
+      tag: 'Front Desk',
+      badge: 'Round-the-Clock Support'
+    },
+    {
+      id: 'campus-panoramic',
+      title: 'Grand SV Mahal & Accommodation Complex',
+      subtitle: 'Integrated Wedding Auditorium, Temple & 200+ Parking',
+      image: '/images/property/campus-panoramic.jpg',
+      tag: 'Grand Campus',
+      badge: '1000+ Guests Capacity'
+    }
+  ];
+
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | undefined>(undefined);
+
+  // Card 1 & Card 2 interactive thumbnail states
+  const [card1ActiveImg, setCard1ActiveImg] = useState('/images/property/room-302-suite.jpg');
+  const [card2ActiveImg, setCard2ActiveImg] = useState('/images/property/aerial-mountain-view.jpg');
+
+  // Auto-play hero slides
+  useEffect(() => {
+    if (isHeroPaused) return;
+    const interval = setInterval(() => {
+      setCurrentHeroSlide(prev => (prev + 1) % HERO_SLIDES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHeroPaused, HERO_SLIDES.length]);
 
   const interiorsData = {
     classic: {
-      title: 'Classic Cozy Room',
-      startingPrice: '₹1,500',
-      description: 'Elegant air-conditioned rooms designed for standard transit stays, featuring premium linen, flat-screen TV, and modern attached washrooms.',
-      image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
-      specs: ['Double Bed', 'Free High-Speed Wi-Fi', '24/7 Room Service', 'AC & Water Heater']
+      title: 'Standard Comfort Room',
+      category: 'Comfort Accommodations',
+      description: 'Elegant air-conditioned rooms designed for standard transit stays and pilgrimage yatris, featuring clean linens, flat-screen TV, and modern attached washrooms.',
+      image: '/images/property/room-comfort-2.jpg',
+      specs: ['King/Double Bed', 'Free High-Speed Wi-Fi', '24/7 Hot Water & Power', 'AC & Ceiling Fan']
     },
     deluxe: {
-      title: 'Grand Deluxe Room',
-      startingPrice: '₹2,400',
-      description: 'Spacious deluxe suites offering luxury seating areas, premium toiletries, complimentary refreshments, and panoramic city vistas.',
-      image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
-      specs: ['King Size Bed', 'Complimentary Breakfast', 'Mini Fridge', 'Smart TV with Streaming']
+      title: 'Deluxe Suite',
+      category: 'Executive Luxury Stays',
+      description: 'Spacious deluxe suites offering luxury dark-wood furniture, split air conditioning, dressing vanity, wardrobe, and immaculate porcelain flooring.',
+      image: '/images/property/room-302-suite.jpg',
+      specs: ['King Size Bed', 'Split Air Conditioning', 'Floating LED TV Shelf', 'Dressing Table & Wardrobe']
     },
     terrace: {
-      title: 'Large Penthouse Terrace',
-      startingPrice: '₹4,500',
-      description: 'Exclusive family-sized penthouse featuring a sprawling attached open-air terrace garden, ideal for peaceful evenings and starry nights.',
-      image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=800',
-      specs: ['Two King Beds', 'Terrace Balcony', 'Outdoor Seating', 'Premium Mini Bar']
+      title: 'Sunlit Mountain-View Corridor',
+      category: 'Scenic Hillside Views',
+      description: 'Bright guest floors lined with Italian Calacatta-style marble wall tiles and wide windows overlooking Chengam’s green valley hills.',
+      image: '/images/property/scenic-corridor.jpg',
+      specs: ['Mountain Vista Windows', 'Polished Calacatta Marble', 'Natural Airflow & Sunlight', 'Quiet Guest Wings']
     },
     hall: {
-      title: 'SV Mansion Hall',
-      startingPrice: '₹1,00,000',
-      description: 'Grand air-conditioned banquet hall with luxury lighting, grand entrance gates, professional acoustic speakers, and premium sofa configurations.',
-      image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800',
-      specs: ['1000+ Guests Capacity', 'Auspicious Theme Florals', 'Two AC Green Rooms', '350 Capacity Dining Hall']
+      title: 'SV Mahal Grand Campus & Temple',
+      category: 'Auspicious Banquet & Mandapam',
+      description: 'Grand air-conditioned banquet hall with Dravidian temple shrine, multi-tier gopuram, spacious interlocking paver parking, and luxury rooms opposite.',
+      image: '/images/property/campus-panoramic.jpg',
+      specs: ['1000+ Guests Capacity', 'On-Campus Temple Shrine', 'High-Speed Elevator Access', '200+ Car & Bus Parking']
     }
   };
-
-  const testimonials = [
-    {
-      quote: "The banquet hall at SV Mahal is outstanding. We celebrated my daughter's wedding here, and the lighting, decoration, and space management were flawless. Staff was extremely supportive.",
-      author: "Mr. Rajendran G.",
-      designation: "Chengam Local Resident",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
-    },
-    {
-      quote: "Outstanding hotel rooms at SV Residency. Very clean, premium pearl-white styling, and located right on the main highway. Perfect lodging stay choice when visiting Tiruvannamalai temple.",
-      author: "Aravind Swamy",
-      designation: "Travel Blogger & Architect",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150"
-    },
-    {
-      quote: "We reserved rooms for our wedding guest delegates here. Safe parking space, quick service, and standard GST billing system. Highly professional hospitality.",
-      author: "Meenakshi Sundaram",
-      designation: "Event Management Director",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150"
-    }
-  ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (activeTab === 'rooms') {
       setView('public/rooms');
-      window.location.hash = `public/rooms?in=${checkIn}&out=${checkOut}&guests=${encodeURIComponent(guestsCount)}&range=${encodeURIComponent('₹1,500 - ₹4,500')}`;
+      window.location.hash = `public/rooms?in=${checkIn}&out=${checkOut}&guests=${encodeURIComponent(guestsCount)}`;
     } else {
       setView('public/mahal');
       window.location.hash = `public/mahal?date=${eventDate || new Date().toISOString().split('T')[0]}&type=${eventType}&guests=${encodeURIComponent(eventGuests)}`;
@@ -94,39 +136,241 @@ export const PublicHome: React.FC = () => {
   return (
     <div style={{ backgroundColor: '#FDFBF7', minHeight: '100vh', fontFamily: 'var(--font-sans)', overflowX: 'hidden' }}>
       
-      {/* 1. NEW REDESIGNED HERO SECTION (DIAGONAL LAYOUT & WARM CREAM) */}
-      <section style={{ padding: '0', maxWidth: '100%', margin: '0 auto', position: 'relative', display: 'flex', flexWrap: 'wrap', minHeight: '80vh' }}>
-        
+      {/* 1. NEW REDESIGNED HERO SECTION (INTERACTIVE REAL PHOTO SHOWCASE) */}
+      <section 
+        style={{ padding: '0', maxWidth: '100%', margin: '0 auto', position: 'relative', display: 'flex', flexWrap: 'wrap', minHeight: '82vh' }}
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}
+      >
         {/* Left Content Column */}
-        <div style={{ flex: '1 1 500px', padding: '10% 5%', display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 2 }}>
-          <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', fontWeight: 800, color: '#1E293B', margin: 0, lineHeight: 1.1, fontFamily: 'var(--font-sans)' }}>
-            SV Residency for <span style={{ fontFamily: '"Caveat", cursive', color: '#C9A227', fontSize: '110%', fontWeight: 400 }}>memorable</span> moments rich in emotions
+        <div style={{ flex: '1 1 500px', padding: '8% 5%', display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 2 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(201,162,39,0.12)', border: '1px solid rgba(201,162,39,0.3)', color: '#9A7B1C', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', width: 'fit-content', marginBottom: '14px' }}>
+            <Sparkles size={12} color="#C9A227" /> CHENGAM'S PREMIER WEDDING & LODGING DESTINATION
+          </div>
+          <h2 style={{ fontSize: 'clamp(2.4rem, 4.8vw, 4.2rem)', fontWeight: 800, color: '#1E293B', margin: 0, lineHeight: 1.12, fontFamily: 'var(--font-sans)' }}>
+            SV Residency for <span style={{ fontFamily: '"Caveat", cursive', color: '#C9A227', fontSize: '115%', fontWeight: 400 }}>memorable</span> moments rich in emotions
           </h2>
-          <p style={{ fontSize: '1.1rem', color: '#64748B', marginTop: '24px', marginBottom: '40px', maxWidth: '450px', lineHeight: 1.6 }}>
-            We have 459 rooms spread throughout Chengam with room standards equivalent to 5 star hotels.
+          <p style={{ fontSize: '1.05rem', color: '#64748B', marginTop: '20px', marginBottom: '32px', maxWidth: '500px', lineHeight: 1.6 }}>
+            Spacious air-conditioned suites, high-speed elevator, sunlit mountain-view corridors, and a grand 1,000+ guest wedding hall right in Chengam.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button style={{ backgroundColor: '#1E293B', color: '#FFFFFF', padding: '14px 32px', borderRadius: '30px', fontSize: '1rem', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 25px -5px rgba(30, 41, 59, 0.3)' }}>
-              Take a tour <span style={{ backgroundColor: '#FFFFFF', color: '#1E293B', borderRadius: '50%', width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>▶</span>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px' }}>
+            <button 
+              onClick={() => setView('public/book')}
+              style={{ 
+                backgroundColor: '#C9A227', 
+                color: '#0F172A', 
+                padding: '16px 36px', 
+                borderRadius: '30px', 
+                fontSize: '1rem', 
+                fontWeight: 800, 
+                border: 'none', 
+                cursor: 'pointer', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '10px', 
+                boxShadow: '0 10px 25px -5px rgba(201, 162, 39, 0.4)',
+                transition: 'all 0.2s',
+                letterSpacing: '0.02em'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = '#B38E1B';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = '#C9A227';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <span>Book Now</span>
+              <Calendar size={18} color="#0F172A" />
             </button>
           </div>
         </div>
 
-        {/* Right Image Column with Diagonal Cut */}
+        {/* Right Image Column with Interactive Showcase & Diagonal Cut */}
         <div style={{ 
           flex: '1 1 500px', 
           position: 'relative', 
-          minHeight: '400px',
-          clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)',
-          backgroundImage: 'url("/images/sv-mahal-day.webp")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          boxShadow: '-20px 0 50px rgba(0,0,0,0.1)'
+          minHeight: '440px',
+          clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0% 100%)',
+          backgroundColor: '#0F172A',
+          boxShadow: '-20px 0 50px rgba(0,0,0,0.15)',
+          overflow: 'hidden'
         }}>
-          {/* Floating Pink Badge */}
-          <div style={{ position: 'absolute', top: '20%', right: '10%', backgroundColor: '#DB2777', color: '#FFFFFF', padding: '16px 24px', borderRadius: '16px', boxShadow: '0 15px 30px rgba(219, 39, 119, 0.3)', transform: 'rotate(5deg)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <Sparkles size={20} color="#FCE7F3" />
-            <span style={{ fontWeight: 800, fontSize: '0.9rem', textAlign: 'center' }}>Get personalised<br/>offers now!!</span>
+          {/* Active Background Image with Crossfade */}
+          <img
+            key={HERO_SLIDES[currentHeroSlide].id}
+            src={HERO_SLIDES[currentHeroSlide].image}
+            alt={HERO_SLIDES[currentHeroSlide].title}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              position: 'absolute',
+              inset: 0,
+              animation: 'fadeIn 0.6s ease-in-out'
+            }}
+          />
+
+          {/* Dark overlay gradient */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.2) 50%, rgba(15,23,42,0.4) 100%)'
+          }} />
+
+          {/* Top Left Tag */}
+          <div style={{
+            position: 'absolute',
+            top: '24px',
+            left: '18%',
+            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            color: '#F1D675',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            zIndex: 3
+          }}>
+            <Sparkles size={12} color="#C9A227" />
+            {HERO_SLIDES[currentHeroSlide].tag}
+          </div>
+
+          {/* Slide Navigation Overlay Arrows */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+            }}
+            aria-label="Previous Slide"
+            style={{
+              position: 'absolute',
+              left: '14%',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#FFFFFF',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 3
+            }}
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev + 1) % HERO_SLIDES.length);
+            }}
+            aria-label="Next Slide"
+            style={{
+              position: 'absolute',
+              right: '24px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#FFFFFF',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 3
+            }}
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Bottom Caption & Interactive Slide Switcher Pills */}
+          <div style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '12%',
+            right: '24px',
+            zIndex: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <h4 style={{ margin: '0 0 2px 0', fontSize: '1.15rem', color: '#FFFFFF', fontWeight: 800 }}>
+                  {HERO_SLIDES[currentHeroSlide].title}
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#CBD5E1' }}>
+                  {HERO_SLIDES[currentHeroSlide].subtitle}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedPhotoId(HERO_SLIDES[currentHeroSlide].id);
+                  setGalleryModalOpen(true);
+                }}
+                style={{
+                  background: 'rgba(201, 162, 39, 0.2)',
+                  border: '1px solid #C9A227',
+                  color: '#F1D675',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <Maximize2 size={12} /> Inspect in HD
+              </button>
+            </div>
+
+            {/* Interactive Thumbnail Selector Pills */}
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {HERO_SLIDES.map((slide, idx) => {
+                const isActive = idx === currentHeroSlide;
+                return (
+                  <button
+                    key={slide.id}
+                    onClick={() => setCurrentHeroSlide(idx)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '16px',
+                      border: isActive ? '1px solid #C9A227' : '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: isActive ? 'rgba(201, 162, 39, 0.3)' : 'rgba(15, 23, 42, 0.65)',
+                      color: isActive ? '#F1D675' : '#CBD5E1',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      backdropFilter: 'blur(4px)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {idx + 1}. {slide.badge}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -400,21 +644,21 @@ export const PublicHome: React.FC = () => {
           Explore our most frequently booked highway AC lodging suites and auspicious luxury banquet hall configurations.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
-          {/* Card 1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '30px' }}>
+          {/* Card 1: Residency Lodging with Interactive Thumbnail Switcher */}
           <div
-            onClick={() => setView('public/rooms')}
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: 'var(--shadow-md)',
-              cursor: 'pointer',
               transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s',
-              border: '1px solid #E2E8F0'
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-8px)';
+              e.currentTarget.style.transform = 'translateY(-6px)';
               e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
             }}
             onMouseLeave={(e) => {
@@ -422,33 +666,119 @@ export const PublicHome: React.FC = () => {
               e.currentTarget.style.boxShadow = 'var(--shadow-md)';
             }}
           >
-            <div style={{ height: '220px', backgroundImage: 'url("/images/sv-residency-exterior.webp")', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '16px', right: '16px', backgroundColor: '#FFFFFF', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', boxShadow: 'var(--shadow-sm)' }}>
-                ₹1,500 <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 500 }}>/ night</span>
+            <div style={{ height: '230px', position: 'relative', overflow: 'hidden', backgroundColor: '#0F172A' }}>
+              <img
+                src={card1ActiveImg}
+                alt="SV Residency Real Photo"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.3s ease' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, transparent 60%)' }} />
+
+              <div style={{ position: 'absolute', top: '14px', left: '14px', backgroundColor: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.72rem', fontWeight: 700, color: '#F1D675', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Sparkles size={11} style={{ display: 'inline', marginRight: '4px' }} /> Real Suite Photo
+              </div>
+
+              {/* Interactive Mini-Pills to switch photos right on card */}
+              <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px', display: 'flex', gap: '6px', overflowX: 'auto', zIndex: 2 }}>
+                {[
+                  { label: 'Deluxe Suite', img: '/images/property/room-302-suite.jpg' },
+                  { label: 'King Bed', img: '/images/property/room-deluxe-1.jpg' },
+                  { label: 'Granite Lift', img: '/images/property/elevator-lobby.jpg' },
+                  { label: 'Corridor', img: '/images/property/scenic-corridor.jpg' }
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCard1ActiveImg(item.img);
+                    }}
+                    style={{
+                      backgroundColor: card1ActiveImg === item.img ? '#C9A227' : 'rgba(15, 23, 42, 0.85)',
+                      color: card1ActiveImg === item.img ? '#0F172A' : '#FFFFFF',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <div style={{ padding: '20px' }}>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 6px 0', fontFamily: 'var(--font-sans)' }}>SV Residency Lodging Stay</h4>
-              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+
+            <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'var(--font-sans)' }}>
+                  SV Residency Lodging Stay
+                </h4>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 14px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <MapPin size={12} color="#CBD5E1" /> Main Road, Chengam Highway
               </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => setView('public/rooms')}
+                  style={{
+                    flex: 1,
+                    padding: '9px',
+                    borderRadius: '8px',
+                    backgroundColor: '#0F172A',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View Room Rates
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPhotoId('room-302-suite');
+                    setGalleryModalOpen(true);
+                  }}
+                  style={{
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#F1F5F9',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Eye size={13} /> HD Photos
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Card 2 */}
+          {/* Card 2: SV Mahal with Drone & Ground Perspectives */}
           <div
-            onClick={() => setView('public/mahal')}
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: 'var(--shadow-md)',
-              cursor: 'pointer',
               transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s',
-              border: '1px solid #E2E8F0'
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-8px)';
+              e.currentTarget.style.transform = 'translateY(-6px)';
               e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
             }}
             onMouseLeave={(e) => {
@@ -456,33 +786,117 @@ export const PublicHome: React.FC = () => {
               e.currentTarget.style.boxShadow = 'var(--shadow-md)';
             }}
           >
-            <div style={{ height: '220px', backgroundImage: 'url("/images/sv-mahal-day.webp")', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '16px', right: '16px', backgroundColor: '#FFFFFF', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', boxShadow: 'var(--shadow-sm)' }}>
-                ₹1,00,000 <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 500 }}>/ event</span>
+            <div style={{ height: '230px', position: 'relative', overflow: 'hidden', backgroundColor: '#0F172A' }}>
+              <img
+                src={card2ActiveImg}
+                alt="SV Thirumana Mahal Architecture"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.3s ease' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, transparent 60%)' }} />
+
+              <div style={{ position: 'absolute', top: '14px', left: '14px', backgroundColor: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.72rem', fontWeight: 700, color: '#F1D675', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Sparkles size={11} style={{ display: 'inline', marginRight: '4px' }} /> 1000+ Guests
+              </div>
+
+              {/* Interactive Mini-Pills */}
+              <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px', display: 'flex', gap: '6px', overflowX: 'auto', zIndex: 2 }}>
+                {[
+                  { label: 'Drone View', img: '/images/property/aerial-mountain-view.jpg' },
+                  { label: 'Campus', img: '/images/property/campus-panoramic.jpg' },
+                  { label: 'Temple Shrine', img: '/images/property/temple-shrine.jpg' },
+                  { label: 'Facade', img: '/images/sv-mahal-day.webp' }
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCard2ActiveImg(item.img);
+                    }}
+                    style={{
+                      backgroundColor: card2ActiveImg === item.img ? '#C9A227' : 'rgba(15, 23, 42, 0.85)',
+                      color: card2ActiveImg === item.img ? '#0F172A' : '#FFFFFF',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <div style={{ padding: '20px' }}>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 6px 0', fontFamily: 'var(--font-sans)' }}>SV Thirumana Mahal (Daytime Grandeur)</h4>
-              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+
+            <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 6px 0', fontFamily: 'var(--font-sans)' }}>
+                SV Thirumana Mahal (Grand Architecture)
+              </h4>
+              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 14px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <MapPin size={12} color="#CBD5E1" /> Opposite Residency, Chengam
               </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => setView('public/mahal')}
+                  style={{
+                    flex: 1,
+                    padding: '9px',
+                    borderRadius: '8px',
+                    backgroundColor: '#C9A227',
+                    color: '#0F172A',
+                    border: 'none',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Explore Hall
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPhotoId('aerial-mountain-view');
+                    setGalleryModalOpen(true);
+                  }}
+                  style={{
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#F1F5F9',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Eye size={13} /> HD Drone
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Card 3 */}
+          {/* Card 3: Night Illumination */}
           <div
-            onClick={() => setView('public/mahal')}
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: 'var(--shadow-md)',
-              cursor: 'pointer',
               transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s',
-              border: '1px solid #E2E8F0'
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-8px)';
+              e.currentTarget.style.transform = 'translateY(-6px)';
               e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
             }}
             onMouseLeave={(e) => {
@@ -490,20 +904,70 @@ export const PublicHome: React.FC = () => {
               e.currentTarget.style.boxShadow = 'var(--shadow-md)';
             }}
           >
-            <div style={{ height: '220px', backgroundImage: 'url("/images/sv-mahal-night.webp")', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '16px', right: '16px', backgroundColor: '#FFFFFF', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', boxShadow: 'var(--shadow-sm)' }}>
-                1000+ Guests <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 500 }}>Capacity</span>
+            <div style={{ height: '230px', backgroundImage: 'url("/images/sv-mahal-night.webp")', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, transparent 60%)' }} />
+              <div style={{ position: 'absolute', top: '14px', right: '14px', backgroundColor: '#FFFFFF', padding: '5px 12px', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', boxShadow: 'var(--shadow-sm)' }}>
+                1000+ Guests <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 500 }}>Capacity</span>
+              </div>
+              <div style={{ position: 'absolute', top: '14px', left: '14px', backgroundColor: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.72rem', fontWeight: 700, color: '#F1D675', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Sparkles size={11} style={{ display: 'inline', marginRight: '4px' }} /> Evening Spectacular
               </div>
             </div>
-            <div style={{ padding: '20px' }}>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 6px 0', fontFamily: 'var(--font-sans)' }}>SV Mahal Festive Night Illumination</h4>
-              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 6px 0', fontFamily: 'var(--font-sans)' }}>
+                SV Mahal Festive Night Illumination
+              </h4>
+              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 14px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <MapPin size={12} color="#CBD5E1" /> Luxury AC Banquet Hall, Chengam
               </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => setView('public/mahal')}
+                  style={{
+                    flex: 1,
+                    padding: '9px',
+                    borderRadius: '8px',
+                    backgroundColor: '#0F172A',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Book Hall Date
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPhotoId('campus-panoramic');
+                    setGalleryModalOpen(true);
+                  }}
+                  style={{
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#F1F5F9',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Eye size={13} /> HD View
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* 2B. INTERACTIVE PROPERTY & SUITES PHOTO TOUR (ALL 10 REAL PHOTOGRAPHS) */}
+      <PropertyPhotoTour />
 
       {/* 43 Authentic Wedding Decors & Stage Mandapam Showcase Preview */}
       <section style={{ padding: '60px 0', backgroundColor: '#FFFFFF' }}>
@@ -587,104 +1051,6 @@ export const PublicHome: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. DYNAMIC INTERACTIVE TESTIMONIALS SEGMENT (Avatars layout from mockup) */}
-      <section style={{ backgroundColor: '#F8FAFC', padding: '80px 0 60px 0', position: 'relative' }}>
-        
-        {/* Dark Blue Wave Banner from mockup */}
-        <div className="container">
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #0F2942 0%, #1E3A5F 100%)',
-              borderRadius: '24px',
-              padding: '40px',
-              color: '#FFFFFF',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '30px',
-              alignItems: 'center',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Background vector accents */}
-            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)' }} />
-            
-            {/* Quote details */}
-            <div style={{ zIndex: 1 }}>
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
-                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill="#C9A227" color="#C9A227" />)}
-              </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#E2E8F0', marginBottom: '16px' }}>
-                What our client say's
-              </h3>
-              
-              <blockquote style={{ fontSize: '0.95rem', fontStyle: 'italic', margin: '0 0 20px 0', lineHeight: 1.6, color: '#CBD5E1' }}>
-                "{testimonials[activeTestimonial].quote}"
-              </blockquote>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img
-                  src={testimonials[activeTestimonial].avatar}
-                  alt={testimonials[activeTestimonial].author}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #0284C7' }}
-                />
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{testimonials[activeTestimonial].author}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{testimonials[activeTestimonial].designation}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dynamic floating avatars panel */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', zIndex: 1 }}>
-              <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em' }}>CLICK GUEST AVATARS TO LOAD STORIES</span>
-              
-              <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                {testimonials.map((test, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveTestimonial(idx)}
-                    style={{
-                      background: 'none',
-                      border: activeTestimonial === idx ? '3px solid #10B981' : '2px solid rgba(255,255,255,0.3)',
-                      borderRadius: '50%',
-                      padding: '4px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s',
-                      transform: activeTestimonial === idx ? 'scale(1.15)' : 'scale(1)'
-                    }}
-                  >
-                    <img
-                      src={test.avatar}
-                      alt={test.author}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                {testimonials.map((_, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setActiveTestimonial(idx)}
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: activeTestimonial === idx ? '#10B981' : 'rgba(255,255,255,0.3)',
-                      cursor: 'pointer'
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
       {/* 3. INTERACTIVE LUXURY INTERIORS SECTION (From mockup left-side selection list) */}
       <section style={{ padding: '80px 0' }}>
         <div className="container">
@@ -745,7 +1111,7 @@ export const PublicHome: React.FC = () => {
                         {interiorsData[key].title}
                       </h4>
                       <span style={{ fontSize: '0.75rem', color: isActive ? '#0284C7' : '#94A3B8', fontWeight: 600 }}>
-                        Starts at {interiorsData[key].startingPrice}
+                        {interiorsData[key].category}
                       </span>
                     </div>
                   </div>
@@ -874,7 +1240,7 @@ export const PublicHome: React.FC = () => {
                 <a href="https://wa.me/919500821550?text=Hello%20SV%20Residency%2C%20I%20would%20like%20to%20inquire%20about%20room%20availability%20and%20rates." target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', backgroundColor: '#16A34A', color: '#FFFFFF', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
                   <MessageCircle size={15} /> WhatsApp Us
                 </a>
-                <a href="https://maps.google.com/?q=SV+MAHAL+Chengam+Thukkapet" target="_blank" rel="noreferrer" style={{ padding: '10px 16px', border: '1px solid #CBD5E1', color: '#475569', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', backgroundColor: '#FFFFFF' }}>
+                <a href="https://maps.app.goo.gl/zRvUWvK4A74i88W17" target="_blank" rel="noreferrer" style={{ padding: '10px 16px', border: '1px solid #CBD5E1', color: '#475569', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', backgroundColor: '#FFFFFF' }}>
                   View Map Directions
                 </a>
               </div>
@@ -887,13 +1253,20 @@ export const PublicHome: React.FC = () => {
                 <MapPin size={36} color="#DC2626" style={{ margin: '0 auto 8px auto' }} />
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#0F2942', fontWeight: 800 }}>SV.MAHAL & SV.RESIDENCY</h4>
                 <p style={{ fontSize: '0.75rem', color: '#64748B', maxWidth: '240px', margin: '0 auto 16px auto' }}>Main Road, Thukkapet, Chengam, Tamil Nadu - 606701</p>
-                <a href="https://maps.google.com/?q=SV+MAHAL+Chengam+Thukkapet" target="_blank" rel="noreferrer" style={{ padding: '8px 16px', backgroundColor: '#0F2942', color: '#FFFFFF', fontSize: '0.75rem', borderRadius: '4px', fontWeight: 700, textDecoration: 'none' }}>Open Live Google Maps</a>
+                <a href="https://maps.app.goo.gl/zRvUWvK4A74i88W17" target="_blank" rel="noreferrer" style={{ padding: '8px 16px', backgroundColor: '#0F2942', color: '#FFFFFF', fontSize: '0.75rem', borderRadius: '4px', fontWeight: 700, textDecoration: 'none' }}>Open Live Google Maps</a>
               </div>
             </div>
 
           </div>
         </div>
       </section>
+
+      {/* Lightbox Photo Explorer Modal */}
+      <PropertyGalleryModal
+        isOpen={galleryModalOpen}
+        onClose={() => setGalleryModalOpen(false)}
+        initialPhotoId={selectedPhotoId}
+      />
 
     </div>
   );

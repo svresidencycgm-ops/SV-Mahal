@@ -35,7 +35,7 @@ export const CONTACT_INFO = {
     state: 'Tamil Nadu',
     fullShort: 'Main Road, Thukkapet, Chengam, Tamil Nadu - 606701',
     fullPostal: 'No.859/B, SV Thirumana Mahal Opposite, Bangalore Main Road, Chengam, Tamil Nadu - 606701',
-    googleMapsUrl: 'https://maps.google.com/?q=SV+MAHAL+Chengam+Thukkapet'
+    googleMapsUrl: 'https://maps.app.goo.gl/zRvUWvK4A74i88W17'
   },
   gstin: '33GTSPD9038L1Z1'
 };

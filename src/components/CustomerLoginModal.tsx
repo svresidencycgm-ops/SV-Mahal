@@ -70,10 +70,17 @@ export const CustomerLoginModal: React.FC<CustomerLoginModalProps> = ({ isOpen, 
     playBellSound();
 
     addToast(
-      'OTP Auto-Generated',
-      `Verification code sent & autofilled: ${code}`,
+      'OTP Auto-Filled',
+      `Verification code ${code} verified. Logging in...`,
       'success'
     );
+
+    // Auto login & close
+    setTimeout(() => {
+      loginCustomer(name, phone, email);
+      if (onSuccess) onSuccess();
+      onClose();
+    }, 650);
   };
 
   const handleResendOtp = () => {

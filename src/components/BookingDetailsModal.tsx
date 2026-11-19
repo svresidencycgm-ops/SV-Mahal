@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { generateInvoicePdf } from '../utils/pdfGenerator';
 import { printInvoice } from '../utils/invoicePrinter';
@@ -638,7 +638,7 @@ Front Desk: 95008 21550 | 90437 80215`;
   };
 
   // Live recalculation of final checkout financials for Mahal & Residency
-  const liveCheckoutFinancials = useMemo(() => {
+  const liveCheckoutFinancials = (() => {
     if (!selectedBooking) return null;
     if (selectedBooking.serviceType === 'mahal') {
       const pkgPrice = selectedBooking.packageName === 'Basic' ? 100000 : (selectedBooking.packageName === 'Standard' ? 150000 : 220000);
@@ -673,7 +673,7 @@ Front Desk: 95008 21550 | 90437 80215`;
         checkoutBillingType
       );
     }
-  }, [selectedBooking, checkoutDiscount, checkoutBillingType, chkElectricity, chkRooms, chkGenerator, chkDamages, chkOther, checkoutInTime, checkoutTime]);
+  })();
 
   const handleBrowserPrint = () => {
     setIsPrintSelectorOpen(true);

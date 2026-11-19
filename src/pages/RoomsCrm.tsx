@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Edit, X } from 'lucide-react';
+import { Edit, X, Camera } from 'lucide-react';
 import type { Room } from '../types';
 
 export const RoomsCrm: React.FC = () => {
@@ -156,6 +156,24 @@ export const RoomsCrm: React.FC = () => {
                 gap: '12px'
               }}
             >
+              {/* Room Photo Preview */}
+              <div style={{ height: '120px', position: 'relative', overflow: 'hidden', backgroundColor: '#0F172A', borderRadius: '6px' }}>
+                <img
+                  src={room.images?.[0] || (room.type === 'Deluxe' ? '/images/property/room-302-suite.jpg' : room.type === 'Standard' ? '/images/property/room-comfort-2.jpg' : '/images/property/room-deluxe-1.jpg')}
+                  alt={`Room ${room.number}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', bottom: '6px', left: '8px', color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Camera size={11} color="#C9A227" /> Room {room.number}
+                </div>
+                {room.images && room.images.length > 0 && (
+                  <div style={{ position: 'absolute', top: '6px', right: '8px', backgroundColor: 'rgba(0,0,0,0.65)', color: '#F1D675', padding: '2px 6px', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 700 }}>
+                    {room.images.length} Photos
+                  </div>
+                )}
+              </div>
+
               {/* Card Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>

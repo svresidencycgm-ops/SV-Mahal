@@ -14,7 +14,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom'],
     status: 'Available',
     description: 'A comfortable standard room ideal for budget travelers, featuring essential amenities and a cozy queen bed.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg', '/images/property/reception-desk.jpg']
   },
   {
     id: 'room-102',
@@ -27,7 +27,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom'],
     status: 'Available',
     description: 'A comfortable standard room ideal for budget travelers, featuring essential amenities and a cozy queen bed.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg', '/images/property/reception-desk.jpg']
   },
   {
     id: 'room-103',
@@ -40,7 +40,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom'],
     status: 'Available',
     description: 'A comfortable standard room ideal for budget travelers, featuring essential amenities and a cozy queen bed.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg', '/images/property/reception-desk.jpg']
   },
   {
     id: 'room-104',
@@ -53,7 +53,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom'],
     status: 'Available',
     description: 'A comfortable standard room ideal for budget travelers, featuring essential amenities and a cozy queen bed.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg', '/images/property/reception-desk.jpg']
   },
   {
     id: 'room-105',
@@ -66,7 +66,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'TV', 'Intercom', 'Attached Bathroom'],
     status: 'Available',
     description: 'A comfortable standard room ideal for budget travelers, featuring essential amenities and a cozy queen bed.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg', '/images/property/reception-desk.jpg']
   },
   // Deluxe Rooms: 106-110
   {
@@ -80,7 +80,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water'],
     status: 'Available',
     description: 'An elegant air-conditioned deluxe room featuring a spacious king bed, modern interiors, and mini-fridge.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-107',
@@ -93,7 +93,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water'],
     status: 'Available',
     description: 'An elegant air-conditioned deluxe room featuring a spacious king bed, modern interiors, and mini-fridge.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-108',
@@ -106,7 +106,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water'],
     status: 'Available',
     description: 'An elegant air-conditioned deluxe room featuring a spacious king bed, modern interiors, and mini-fridge.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-109',
@@ -119,7 +119,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water'],
     status: 'Available',
     description: 'An elegant air-conditioned deluxe room featuring a spacious king bed, modern interiors, and mini-fridge.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-110',
@@ -132,7 +132,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Intercom', 'Hot Water'],
     status: 'Available',
     description: 'An elegant air-conditioned deluxe room featuring a spacious king bed, modern interiors, and mini-fridge.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
 
   // 2nd Floor - 10 rooms (201-210)
@@ -148,7 +148,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Balcony', 'Luxury Toiletries'],
     status: 'Available',
     description: 'A luxurious premium room offering partial town views from the balcony, a coffee maker, and premium bed set.',
-    images: []
+    images: ['/images/property/room-deluxe-1.jpg', '/images/property/room-302-suite.jpg', '/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg']
   },
   {
     id: 'room-202',
@@ -161,7 +161,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Balcony', 'Luxury Toiletries'],
     status: 'Available',
     description: 'A luxurious premium room offering partial town views from the balcony, a coffee maker, and premium bed set.',
-    images: []
+    images: ['/images/property/room-deluxe-1.jpg', '/images/property/room-302-suite.jpg', '/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg']
   },
   {
     id: 'room-203',
@@ -174,7 +174,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Balcony', 'Luxury Toiletries'],
     status: 'Available',
     description: 'A luxurious premium room offering partial town views from the balcony, a coffee maker, and premium bed set.',
-    images: []
+    images: ['/images/property/room-deluxe-1.jpg', '/images/property/room-302-suite.jpg', '/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg']
   },
   {
     id: 'room-204',
@@ -187,7 +187,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Balcony', 'Luxury Toiletries'],
     status: 'Available',
     description: 'A luxurious premium room offering partial town views from the balcony, a coffee maker, and premium bed set.',
-    images: []
+    images: ['/images/property/room-deluxe-1.jpg', '/images/property/room-302-suite.jpg', '/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg']
   },
   {
     id: 'room-205',
@@ -200,7 +200,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Balcony', 'Luxury Toiletries'],
     status: 'Available',
     description: 'A luxurious premium room offering partial town views from the balcony, a coffee maker, and premium bed set.',
-    images: []
+    images: ['/images/property/room-deluxe-1.jpg', '/images/property/room-302-suite.jpg', '/images/property/room-comfort-2.jpg', '/images/property/scenic-corridor.jpg']
   },
   // Family Rooms: 206-210
   {
@@ -214,7 +214,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Separate Seating Area', 'Luxury Toiletries'],
     status: 'Available',
     description: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and standard amenities for group comfort.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-207',
@@ -227,7 +227,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Separate Seating Area', 'Luxury Toiletries'],
     status: 'Available',
     description: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and standard amenities for group comfort.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-208',
@@ -240,7 +240,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Separate Seating Area', 'Luxury Toiletries'],
     status: 'Available',
     description: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and standard amenities for group comfort.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-209',
@@ -253,7 +253,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Separate Seating Area', 'Luxury Toiletries'],
     status: 'Available',
     description: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and standard amenities for group comfort.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
   {
     id: 'room-210',
@@ -266,7 +266,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Mini Fridge', 'Coffee Maker', 'Safe Deposit Box', 'Separate Seating Area', 'Luxury Toiletries'],
     status: 'Available',
     description: 'Spacious family suite equipped with two double beds, dedicated lounge seating, and standard amenities for group comfort.',
-    images: []
+    images: ['/images/property/room-302-suite.jpg', '/images/property/room-deluxe-1.jpg', '/images/property/scenic-corridor.jpg', '/images/property/elevator-lobby.jpg']
   },
 
   // Mahal Guest Rooms (6 rooms: M101-M106)
@@ -281,7 +281,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   },
   {
     id: 'room-m102',
@@ -294,7 +294,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   },
   {
     id: 'room-m103',
@@ -307,7 +307,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   },
   {
     id: 'room-m104',
@@ -320,7 +320,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   },
   {
     id: 'room-m105',
@@ -333,7 +333,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   },
   {
     id: 'room-m106',
@@ -346,7 +346,7 @@ export const SEED_ROOMS: Room[] = [
     amenities: ['Free Wi-Fi', 'AC', 'TV', 'Attached Bathroom', 'Intercom'],
     status: 'Available',
     description: 'Cozy guest room located in the SV Mahal banquet wing, perfect for wedding guests and close relatives.',
-    images: []
+    images: ['/images/property/room-comfort-2.jpg', '/images/property/courtyard-parking.jpg', '/images/property/campus-panoramic.jpg']
   }
 ];
 

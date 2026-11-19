@@ -7,15 +7,20 @@ import { generateInvoicePdf } from '../utils/pdfGenerator';
 import { printInvoice } from '../utils/invoicePrinter';
 import { 
   Building, Bed, CheckCircle, ChevronRight, ChevronLeft, Sparkles, 
-  UtensilsCrossed, ShieldAlert, Download, Printer 
+  UtensilsCrossed, ShieldAlert, Download, Printer, Eye, Camera 
 } from 'lucide-react';
 import type { Booking, Payment } from '../types';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
 import { uploadToCloudinary } from '../services/cloudinary';
+import { PropertyGalleryModal } from '../components/PropertyGalleryModal';
 
 export const BookingFlow: React.FC = () => {
   const { rooms, bookings, payments, mahalConfig, addBooking, setView, currentUserRole, customerUser } = useApp();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Gallery Modal
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | undefined>(undefined);
 
   // Wizard Step State
   const [step, setStep] = useState(1);
@@ -465,6 +470,99 @@ export const BookingFlow: React.FC = () => {
                       <input type="number" min="1" max="5" value={roomCount} onChange={(e) => setRoomCount(Math.max(1, Number(e.target.value)))} className="modern-input" />
                     </div>
                   </div>
+
+                  {/* Real Suite Photo Preview */}
+                  {(() => {
+                    const previewMap: Record<string, { src: string; id: string; label: string; features: string[] }> = {
+                      Standard: {
+                        src: '/images/property/room-comfort-2.jpg',
+                        id: 'room-comfort-2',
+                        label: 'Standard Comfort Room',
+                        features: ['Queen Bed', 'Attached Washroom', 'Free Wi-Fi', '24/7 Hot Water']
+                      },
+                      Deluxe: {
+                        src: '/images/property/room-302-suite.jpg',
+                        id: 'room-302-suite',
+                        label: 'Deluxe Suite',
+                        features: ['King Bed', 'Split AC', 'Smart TV Console', 'Dressing Vanity', 'Wardrobe']
+                      },
+                      Premium: {
+                        src: '/images/property/room-deluxe-1.jpg',
+                        id: 'room-deluxe-1',
+                        label: 'Executive Premium Suite',
+                        features: ['King + Single Bed', 'Split AC', 'Mountain View Corridor', 'Luxury Toiletries']
+                      },
+                      'Family Room': {
+                        src: '/images/property/room-302-suite.jpg',
+                        id: 'room-302-suite',
+                        label: 'Spacious Family Suite',
+                        features: ['2 Double Beds', 'Split AC', 'Elevator Access', 'Seating Lounge']
+                      }
+                    };
+                    const activePreview = previewMap[roomType] || previewMap.Deluxe;
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '16px',
+                        alignItems: 'center',
+                        padding: '14px',
+                        backgroundColor: '#F8FAFC',
+                        borderRadius: '10px',
+                        border: '1px solid #E2E8F0'
+                      }}>
+                        <div style={{
+                          width: '140px',
+                          height: '95px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          flexShrink: 0
+                        }}>
+                          <img src={activePreview.src} alt={activePreview.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.6) 0%, transparent 60%)' }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#C9A227', fontWeight: 800 }}>
+                            <Camera size={12} /> AUTHENTIC SUITE PREVIEW
+                          </div>
+                          <h4 style={{ margin: '2px 0 6px 0', fontSize: '1rem', color: '#0F172A', fontWeight: 800 }}>
+                            {activePreview.label}
+                          </h4>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                            {activePreview.features.map((f, i) => (
+                              <span key={i} style={{ backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', color: '#475569', fontWeight: 600 }}>
+                                ✓ {f}
+                              </span>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPhotoId(activePreview.id);
+                              setGalleryModalOpen(true);
+                            }}
+                            style={{
+                              backgroundColor: '#0F172A',
+                              color: '#F1D675',
+                              border: '1px solid #C9A227',
+                              borderRadius: '6px',
+                              padding: '5px 12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Eye size={12} /> Inspect Suite in HD
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="modern-grid">
                     <div className="modern-input-group">
                       <label className="modern-label">TOTAL GUEST COUNT</label>
@@ -504,6 +602,63 @@ export const BookingFlow: React.FC = () => {
                         <option value="Standard">Standard Package (₹1,50,000)</option>
                         <option value="Premium">Premium Package (₹2,20,000)</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Real Mahal Venue Preview */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '14px',
+                    backgroundColor: '#FDFBF7',
+                    borderRadius: '10px',
+                    border: '1px solid #F1E5C9'
+                  }}>
+                    <div style={{
+                      width: '140px',
+                      height: '95px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      flexShrink: 0
+                    }}>
+                      <img src="/images/property/aerial-mountain-view.jpg" alt="SV Mahal Venue" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.6) 0%, transparent 60%)' }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#C9A227', fontWeight: 800 }}>
+                        <Camera size={12} /> SV MAHAL CAMPUS PREVIEW
+                      </div>
+                      <h4 style={{ margin: '2px 0 4px 0', fontSize: '1rem', color: '#0F172A', fontWeight: 800 }}>
+                        1,000+ Guests AC Banquet Hall & Temple
+                      </h4>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: '#64748B' }}>
+                        Western Ghats mountain backdrop, covered portico, 200+ car parking, and guest suites right opposite.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPhotoId('aerial-mountain-view');
+                          setGalleryModalOpen(true);
+                        }}
+                        style={{
+                          backgroundColor: '#0F172A',
+                          color: '#F1D675',
+                          border: '1px solid #C9A227',
+                          borderRadius: '6px',
+                          padding: '5px 12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Eye size={12} /> Inspect Venue in HD
+                      </button>
                     </div>
                   </div>
 
@@ -1042,6 +1197,13 @@ export const BookingFlow: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PropertyGalleryModal
+        isOpen={galleryModalOpen}
+        onClose={() => setGalleryModalOpen(false)}
+        initialPhotoId={selectedPhotoId}
+      />
 
     </div>
   );

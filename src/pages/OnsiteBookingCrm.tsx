@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Building, Check, Search, Upload, Info, FileText, Camera, ShieldAlert } from 'lucide-react';
+import { 
+  Building, Check, Search, Upload, Info, FileText, Camera, ShieldAlert,
+  X, DoorOpen, DoorClosed
+} from 'lucide-react';
 import type { Room } from '../types';
 import { invoiceService } from '../services/invoiceService';
 import { uploadToCloudinary } from '../services/cloudinary';
@@ -243,53 +246,92 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
   const mahalRooms = rooms.filter(r => r.floor === 'Mahal');
 
   return (
-    <div className="animate-fade-in" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'var(--font-sans)' }}>
+    <div className="animate-fade-in" style={{ padding: '24px 20px', maxWidth: '1150px', margin: '0 auto', fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" }}>
       
       {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid #E2E8F0', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1.5px solid #E2E8F0', paddingBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', color: '#0F2942', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Front-Desk Walk-In Booking</h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
-            Seamless walk-in checkout wizard for room assignment, Aadhaar collection, and payment settlement.
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '20px', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '0.72rem', fontWeight: 800, marginBottom: '6px' }}>
+            <span>SV RESIDENCY • WALK-IN FRONT DESK</span>
+          </div>
+          <h2 style={{ fontSize: '1.5rem', color: '#0F172A', fontWeight: 850, margin: 0, letterSpacing: '-0.02em' }}>
+            Front-Desk Walk-In Check-In
+          </h2>
+          <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '4px 0 0 0' }}>
+            Instant room key assignment, guest identification, and tax receipt settlement.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Tab switcher removed as requested, serviceType is determined by prop */}
-          <div style={{ display: 'none' }}></div>
-          {onClose && (
-            <button onClick={onClose} style={{ padding: '8px', border: '1px solid #E2E8F0', borderRadius: '6px', backgroundColor: '#FFFFFF', cursor: 'pointer', color: '#64748B' }}>
-              Cancel
-            </button>
-          )}
-        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              border: '1px solid #E2E8F0',
+              backgroundColor: '#F8FAFC',
+              cursor: 'pointer',
+              color: '#475569',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#FEF2F2';
+              e.currentTarget.style.color = '#DC2626';
+              e.currentTarget.style.borderColor = '#FEE2E2';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#F8FAFC';
+              e.currentTarget.style.color = '#475569';
+              e.currentTarget.style.borderColor = '#E2E8F0';
+            }}
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* STEP TRACKER WIDGET */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        justifyContent: 'space-between',
+        marginBottom: '24px',
+        backgroundColor: '#F8FAFC',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        border: '1px solid #E2E8F0'
+      }}>
         {[
-          { num: 1, label: serviceType === 'room' ? 'Choose Room' : 'Confirm Service' },
-          { num: 2, label: 'Dates & Guests' },
-          { num: 3, label: 'Profiles & Contact' },
-          { num: 4, label: 'Required Uploads' },
-          { num: 5, label: 'Billing & Settle' }
+          { num: 1, label: serviceType === 'room' ? 'Choose Room' : 'Service' },
+          { num: 2, label: 'Stay Dates' },
+          { num: 3, label: 'Guest Details' },
+          { num: 4, label: 'ID Verification' },
+          { num: 5, label: 'Settlement' }
         ].map(step => (
-          <div key={step.num} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep === step.num ? 1 : 0.6 }}>
+          <div key={step.num} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep === step.num ? 1 : 0.7 }}>
             <span style={{
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              backgroundColor: currentStep === step.num ? '#0284C7' : (currentStep > step.num ? '#16A34A' : '#94A3B8'),
+              backgroundColor: currentStep === step.num ? '#2563EB' : (currentStep > step.num ? '#0F172A' : '#CBD5E1'),
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
-              fontSize: '0.85rem'
+              fontSize: '0.8rem',
+              boxShadow: currentStep === step.num ? '0 2px 6px rgba(37, 99, 235, 0.35)' : 'none'
             }}>
-              {currentStep > step.num ? <Check size={14} /> : step.num}
+              {currentStep > step.num ? <Check size={14} strokeWidth={2.5} /> : step.num}
             </span>
-            <span style={{ fontSize: '0.85rem', fontWeight: currentStep === step.num ? 800 : 500, color: currentStep === step.num ? '#0F2942' : '#64748B' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: currentStep === step.num ? 800 : 600, color: currentStep === step.num ? '#0F172A' : '#64748B' }}>
               {step.label}
             </span>
           </div>
@@ -297,28 +339,28 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
       </div>
 
       {/* 2-COLUMN LAYOUT FOR DESKTOP */}
-      <div className="responsive-wizard">
+      <div className="responsive-wizard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', alignItems: 'start' }}>
         
         {/* Left Form View */}
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ backgroundColor: '#FFFFFF', border: '1.5px solid #E2E8F0', padding: '22px', borderRadius: '16px', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }}>
           
           {/* STEP 1: ROOM SELECTION */}
           {currentStep === 1 && (
             <div>
-              <h3 style={{ margin: '0 0 16px 0', color: '#0F2942', fontWeight: 800, fontSize: '1.15rem' }}>
-                {serviceType === 'room' ? 'Select Room Stay Unit' : 'Confirm Mahal Hall Stay'}
+              <h3 style={{ margin: '0 0 8px 0', color: '#0F172A', fontWeight: 850, fontSize: '1.15rem' }}>
+                {serviceType === 'room' ? 'Select Vacant Room' : 'Confirm SV Mahal Hall'}
               </h3>
 
               {serviceType === 'room' ? (
                 <div>
-                  <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '20px' }}>
-                    Click a room below to select it for assignment. Red units indicate occupied status.
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '16px' }}>
+                    Click an unlocked door below to assign the key. Red doors indicate currently occupied rooms.
                   </p>
 
-                  <h4 style={{ fontSize: '0.85rem', color: '#0F2942', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #F1F5F9', paddingBottom: '4px' }}>
-                    Residency Rooms (20 Rooms Inventory)
+                  <h4 style={{ fontSize: '0.82rem', color: '#0F172A', fontWeight: 800, textTransform: 'uppercase', marginBottom: '10px', borderBottom: '1px solid #F1F5F9', paddingBottom: '4px', letterSpacing: '0.04em' }}>
+                    Residency Rooms (Floors 1 & 2 • 20 Keys)
                   </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))', gap: '10px', marginBottom: '24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px', marginBottom: '20px' }}>
                     {residencyRooms.map(room => {
                       const isSel = selectedRoom?.id === room.id;
                       const isOccupied = room.status === 'Occupied' || room.status === 'Blocked' || room.status === 'Maintenance';
@@ -328,28 +370,37 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                           type="button"
                           onClick={() => { if (!isOccupied) setSelectedRoom(room); }}
                           style={{
-                            padding: '12px 8px',
-                            borderRadius: '8px',
-                            border: isSel ? '2px solid #0284C7' : '1px solid #CBD5E1',
-                            backgroundColor: isSel ? '#F0F9FF' : (isOccupied ? '#FEE2E2' : '#FFFFFF'),
-                            color: isSel ? '#0284C7' : (isOccupied ? '#DC2626' : '#1E293B'),
+                            padding: '10px 6px',
+                            borderRadius: '10px',
+                            border: isSel ? '2px solid #2563EB' : (isOccupied ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0'),
+                            backgroundColor: isSel ? '#EFF6FF' : (isOccupied ? '#FEF2F2' : '#FFFFFF'),
+                            color: isSel ? '#2563EB' : (isOccupied ? '#DC2626' : '#0F172A'),
                             cursor: isOccupied ? 'not-allowed' : 'pointer',
                             fontWeight: 800,
                             textAlign: 'center',
-                            transition: 'all 0.15s ease'
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}
                         >
-                          <div style={{ fontSize: '1rem' }}>{room.number}</div>
-                          <div style={{ fontSize: '0.6rem', fontWeight: 500, color: '#64748B' }}>{room.type}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {isOccupied ? <DoorClosed size={15} color="#DC2626" /> : <DoorOpen size={15} color="#2563EB" />}
+                            <span style={{ fontSize: '0.92rem', fontWeight: 850 }}>{room.number}</span>
+                          </div>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 600, color: isOccupied ? '#DC2626' : '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                            {isOccupied ? 'Occupied' : room.type}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
 
-                  <h4 style={{ fontSize: '0.85rem', color: '#0F2942', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #F1F5F9', paddingBottom: '4px' }}>
-                    Mahal Rooms (6 Rooms Inventory)
+                  <h4 style={{ fontSize: '0.82rem', color: '#0F172A', fontWeight: 800, textTransform: 'uppercase', marginBottom: '10px', borderBottom: '1px solid #F1F5F9', paddingBottom: '4px', letterSpacing: '0.04em' }}>
+                    Mahal Guest Suites (Floor 3 • 6 Keys)
                   </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))', gap: '10px', marginBottom: '24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px', marginBottom: '20px' }}>
                     {mahalRooms.map(room => {
                       const isSel = selectedRoom?.id === room.id;
                       const isOccupied = room.status === 'Occupied' || room.status === 'Blocked' || room.status === 'Maintenance';
@@ -359,30 +410,43 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                           type="button"
                           onClick={() => { if (!isOccupied) setSelectedRoom(room); }}
                           style={{
-                            padding: '12px 8px',
-                            borderRadius: '8px',
-                            border: isSel ? '2px solid #0284C7' : '1px solid #CBD5E1',
-                            backgroundColor: isSel ? '#F0F9FF' : (isOccupied ? '#FEE2E2' : '#FFFFFF'),
-                            color: isSel ? '#0284C7' : (isOccupied ? '#DC2626' : '#1E293B'),
+                            padding: '10px 6px',
+                            borderRadius: '10px',
+                            border: isSel ? '2px solid #2563EB' : (isOccupied ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0'),
+                            backgroundColor: isSel ? '#EFF6FF' : (isOccupied ? '#FEF2F2' : '#FFFFFF'),
+                            color: isSel ? '#2563EB' : (isOccupied ? '#DC2626' : '#0F172A'),
                             cursor: isOccupied ? 'not-allowed' : 'pointer',
                             fontWeight: 800,
                             textAlign: 'center',
-                            transition: 'all 0.15s ease'
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}
                         >
-                          <div style={{ fontSize: '1rem' }}>{room.number}</div>
-                          <div style={{ fontSize: '0.6rem', fontWeight: 500, color: '#64748B' }}>{room.type}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {isOccupied ? <DoorClosed size={15} color="#DC2626" /> : <DoorOpen size={15} color="#2563EB" />}
+                            <span style={{ fontSize: '0.92rem', fontWeight: 850 }}>{room.number}</span>
+                          </div>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 600, color: isOccupied ? '#DC2626' : '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                            {isOccupied ? 'Occupied' : room.type}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
 
                   {selectedRoom && (
-                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px', borderRadius: '8px', marginTop: '20px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ backgroundColor: '#F8FAFC', border: '1.5px solid #DBEAFE', padding: '16px', borderRadius: '12px', marginTop: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
                         <div>
-                          <strong style={{ fontSize: '0.9rem', color: '#0F2942' }}>Selected: Room {selectedRoom.number}</strong>
-                          <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block' }}>{selectedRoom.type} • {selectedRoom.floor} • Std Rate: ₹{selectedRoom.price}/night</span>
+                          <strong style={{ fontSize: '0.94rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Check size={16} color="#2563EB" strokeWidth={3} /> Selected: Door {selectedRoom.number}
+                          </strong>
+                          <span style={{ fontSize: '0.76rem', color: '#475569', display: 'block', marginTop: '2px' }}>
+                            {selectedRoom.type} • {selectedRoom.floor} • Standard Rate: ₹{selectedRoom.price}/night
+                          </span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
@@ -390,12 +454,12 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                             onClick={() => setRateType('standard')}
                             style={{
                               padding: '6px 12px',
-                              borderRadius: '4px',
+                              borderRadius: '8px',
                               border: 'none',
-                              backgroundColor: rateType === 'standard' ? '#0F2942' : '#E2E8F0',
+                              backgroundColor: rateType === 'standard' ? '#2563EB' : '#E2E8F0',
                               color: rateType === 'standard' ? '#FFFFFF' : '#475569',
-                              fontWeight: 700,
-                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
                               cursor: 'pointer'
                             }}
                           >
@@ -406,12 +470,12 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                             onClick={() => setRateType('custom')}
                             style={{
                               padding: '6px 12px',
-                              borderRadius: '4px',
+                              borderRadius: '8px',
                               border: 'none',
-                              backgroundColor: rateType === 'custom' ? '#0F2942' : '#E2E8F0',
+                              backgroundColor: rateType === 'custom' ? '#2563EB' : '#E2E8F0',
                               color: rateType === 'custom' ? '#FFFFFF' : '#475569',
-                              fontWeight: 700,
-                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
                               cursor: 'pointer'
                             }}
                           >
@@ -422,7 +486,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
 
                       {rateType === 'custom' && (
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '6px' }}>
+                          <label style={{ display: 'block', fontSize: '0.72rem', color: '#64748B', fontWeight: 800, marginBottom: '6px' }}>
                             ENTER CUSTOM RATE (INR PER NIGHT) *
                           </label>
                           <input
@@ -430,7 +494,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                             placeholder="e.g. 1800"
                             value={customPrice}
                             onChange={(e) => setCustomPrice(e.target.value)}
-                            style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '4px', outline: 'none' }}
+                            style={{ width: '100%', padding: '10px', border: '1.5px solid #2563EB', borderRadius: '8px', outline: 'none', fontWeight: 700, backgroundColor: '#FFFFFF' }}
                           />
                         </div>
                       )}
@@ -438,9 +502,9 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                   )}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '30px 10px', border: '1px dashed #CBD5E1', borderRadius: '8px' }}>
-                  <Building size={36} color="#0F2942" style={{ marginBottom: '12px' }} />
-                  <h4 style={{ margin: '0 0 6px 0', color: '#0F2942' }}>SV Mahal Wedding & Banquet Hall</h4>
+                <div style={{ textAlign: 'center', padding: '30px 10px', border: '1.5px dashed #CBD5E1', borderRadius: '12px' }}>
+                  <Building size={36} color="#2563EB" style={{ marginBottom: '12px' }} />
+                  <h4 style={{ margin: '0 0 6px 0', color: '#0F172A', fontWeight: 850 }}>SV Mahal Wedding & Banquet Hall</h4>
                   <p style={{ fontSize: '0.8rem', color: '#64748B', maxWidth: '380px', margin: '0 auto' }}>
                     Banquet hall reservation with standard wedding/reception schedules. Price scales are configured at check-out billing step.
                   </p>
@@ -883,18 +947,21 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                   onClick={handleRegisterOnsiteBooking}
                   style={{
                     width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#16A34A',
+                    padding: '14px',
+                    backgroundColor: '#2563EB',
                     color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '10px',
                     fontWeight: 800,
                     fontSize: '1rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 6px -1px rgba(22, 163, 74, 0.2)'
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
                 >
-                  Register Onsite Booking & Checked-In
+                  Complete Check-In & Issue Key
                 </button>
               </div>
 
@@ -908,12 +975,13 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
               disabled={currentStep === 1}
               onClick={() => setCurrentStep(prev => prev - 1)}
               style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
+                padding: '10px 18px',
+                borderRadius: '8px',
                 border: '1px solid #CBD5E1',
                 backgroundColor: '#FFFFFF',
                 color: '#475569',
                 fontWeight: 700,
+                fontSize: '0.82rem',
                 cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
                 opacity: currentStep === 1 ? 0.5 : 1
               }}
@@ -927,17 +995,18 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                 disabled={!canGoToNextStep()}
                 onClick={() => setCurrentStep(prev => prev + 1)}
                 style={{
-                  padding: '8px 20px',
-                  borderRadius: '6px',
+                  padding: '10px 24px',
+                  borderRadius: '8px',
                   border: 'none',
-                  backgroundColor: '#0F2942',
+                  backgroundColor: !canGoToNextStep() ? '#94A3B8' : '#2563EB',
                   color: '#FFFFFF',
-                  fontWeight: 700,
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
                   cursor: !canGoToNextStep() ? 'not-allowed' : 'pointer',
-                  opacity: !canGoToNextStep() ? 0.5 : 1
+                  boxShadow: canGoToNextStep() ? '0 2px 8px rgba(37, 99, 235, 0.25)' : 'none'
                 }}
               >
-                Next Step
+                Proceed to Step {currentStep + 1} →
               </button>
             )}
           </div>
@@ -947,9 +1016,9 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
         {/* Right Live Invoice Summary Panel */}
         <div style={{ position: 'sticky', top: '24px' }}>
           
-          <div style={{ backgroundColor: '#0F2942', color: '#FFFFFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-md)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 800, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileText size={18} color="#C9A227" /> Booking Stay Summary
+          <div style={{ backgroundColor: '#0F172A', color: '#FFFFFF', padding: '22px', borderRadius: '16px', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.15)', border: '1px solid #1E293B' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 850, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={18} color="#2563EB" /> Booking Summary
             </h3>
 
             {/* Selected stay summary */}

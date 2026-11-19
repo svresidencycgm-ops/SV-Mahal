@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, Star, Check, ChevronLeft, ChevronRight, X, Sparkles, Compass, Phone, MessageCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { 
+  Calendar, Star, Check, ChevronLeft, ChevronRight, X, Sparkles, Compass, 
+  Phone, MessageCircle, ArrowRight, ShieldCheck, Eye, Maximize2 
+} from 'lucide-react';
 import { CustomerLoginModal } from '../components/CustomerLoginModal';
 import { MahalDecorsGallery } from '../components/MahalDecorsGallery';
+import { PropertyGalleryModal } from '../components/PropertyGalleryModal';
 
 export const PublicMahal: React.FC = () => {
   const { bookings, mahalConfig, customerUser, addToast, addBooking, setView } = useApp();
@@ -13,6 +17,10 @@ export const PublicMahal: React.FC = () => {
   const [hoveredStatus, setHoveredStatus] = useState<string>('');
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Gallery Modal State
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | undefined>(undefined);
 
   // Calendar View Toggles
   const [viewType, setViewType] = useState<'month' | 'year'>('month');
@@ -782,74 +790,305 @@ export const PublicMahal: React.FC = () => {
           </p>
         </div>
 
-        {/* Authentic Property Photography */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '24px',
-            marginBottom: '40px'
-          }}
-        >
-          {/* Day View */}
-          <div
-            style={{
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid #E2E8F0',
-              backgroundColor: '#FFFFFF',
-              position: 'relative'
-            }}
-          >
-            <div style={{ height: '260px', overflow: 'hidden' }}>
-              <img
-                src="/images/sv-mahal-day.webp"
-                alt="SV Thirumana Mahal Front View"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+        {/* Authentic Property Photography Showcase */}
+        <div style={{ marginBottom: '45px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
+            <div>
+              <span style={{ fontSize: '0.72rem', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Sparkles size={13} color="#C9A227" /> 100% REAL VENUE PHOTOGRAPHS
+              </span>
+              <h3 style={{ fontSize: '1.7rem', color: '#0F172A', fontWeight: 800, margin: '4px 0 0 0', fontFamily: 'var(--font-sans)' }}>
+                Campus Architecture, Temple Shrine & Vistas
+              </h3>
             </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ fontSize: '0.72rem', color: '#0284C7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                DAYTIME ARCHITECTURE
-              </div>
-              <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.1rem', color: '#0F172A', fontWeight: 800 }}>
-                Grand Facade & Temple Shrine
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
-                Iconic purple & pink facade with sacred temple gopuram shrine in the front courtyard.
-              </p>
-            </div>
+            <button
+              onClick={() => {
+                setSelectedPhotoId('aerial-mountain-view');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                padding: '10px 18px',
+                backgroundColor: '#0F172A',
+                color: '#F1D675',
+                border: '1px solid #C9A227',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Maximize2 size={14} /> Open Full Virtual Tour (10 HD Views)
+            </button>
           </div>
 
-          {/* Night View */}
           <div
             style={{
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid #E2E8F0',
-              backgroundColor: '#FFFFFF',
-              position: 'relative'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '20px'
             }}
           >
-            <div style={{ height: '260px', overflow: 'hidden' }}>
-              <img
-                src="/images/sv-mahal-night.webp"
-                alt="SV Thirumana Mahal Night Illumination"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ fontSize: '0.72rem', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                FESTIVE EVENT ILLUMINATION
+            {/* View 1: Drone Mountain View */}
+            <div
+              onClick={() => {
+                setSelectedPhotoId('aerial-mountain-view');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <div style={{ height: '220px', position: 'relative', overflow: 'hidden' }}>
+                <img
+                  src="/images/property/aerial-mountain-view.jpg"
+                  alt="SV Thirumana Mahal Aerial Drone View"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                  Drone Vista
+                </div>
+                <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Eye size={12} /> Tap to zoom
+                </div>
               </div>
-              <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.1rem', color: '#0F172A', fontWeight: 800 }}>
-                Wedding Evening Light Spectacular
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
-                Multi-color LED lighting, grand portico, and dining entrance for celebrations.
-              </p>
+              <div style={{ padding: '16px 20px' }}>
+                <div style={{ fontSize: '0.72rem', color: '#0284C7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  PANORAMIC BACKDROP
+                </div>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.05rem', color: '#0F172A', fontWeight: 800 }}>
+                  Mountain Horizon & Paddy Fields
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
+                  High-altitude drone view showing the grand rooftop terrace with the serene Western Ghats mountain horizon.
+                </p>
+              </div>
+            </div>
+
+            {/* View 2: Full Campus View */}
+            <div
+              onClick={() => {
+                setSelectedPhotoId('campus-panoramic');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <div style={{ height: '220px', position: 'relative', overflow: 'hidden' }}>
+                <img
+                  src="/images/property/campus-panoramic.jpg"
+                  alt="SV Thirumana Mahal Grand Campus"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                  Grand Campus
+                </div>
+                <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Eye size={12} /> Tap to zoom
+                </div>
+              </div>
+              <div style={{ padding: '16px 20px' }}>
+                <div style={{ fontSize: '0.72rem', color: '#0284C7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  MAIN ARCHITECTURE
+                </div>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.05rem', color: '#0F172A', fontWeight: 800 }}>
+                  Grand Portico & Paved Courtyard
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
+                  Glass curtain facade, covered rain-sheltered entrance foyer, and spacious 200+ car & bus parking.
+                </p>
+              </div>
+            </div>
+
+            {/* View 3: Temple Shrine */}
+            <div
+              onClick={() => {
+                setSelectedPhotoId('temple-shrine');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <div style={{ height: '220px', position: 'relative', overflow: 'hidden' }}>
+                <img
+                  src="/images/property/temple-shrine.jpg"
+                  alt="Sri Vinayagar Temple Shrine"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                  Sacred Temple
+                </div>
+                <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Eye size={12} /> Tap to zoom
+                </div>
+              </div>
+              <div style={{ padding: '16px 20px' }}>
+                <div style={{ fontSize: '0.72rem', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  AUSPICIOUS BLESSINGS
+                </div>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.05rem', color: '#0F172A', fontWeight: 800 }}>
+                  Sri Vinayagar Temple Gopuram Shrine
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
+                  Sacred Dravidian gopuram temple situated right at the entrance courtyard for wedding rituals.
+                </p>
+              </div>
+            </div>
+
+            {/* View 4: Night View */}
+            <div
+              onClick={() => {
+                setSelectedPhotoId('campus-panoramic');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <div style={{ height: '220px', position: 'relative', overflow: 'hidden' }}>
+                <img
+                  src="/images/sv-mahal-night.webp"
+                  alt="SV Thirumana Mahal Night Illumination"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                  Night Illumination
+                </div>
+                <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Eye size={12} /> Tap to zoom
+                </div>
+              </div>
+              <div style={{ padding: '16px 20px' }}>
+                <div style={{ fontSize: '0.72rem', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  FESTIVE EVENT ILLUMINATION
+                </div>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.05rem', color: '#0F172A', fontWeight: 800 }}>
+                  Wedding Evening Light Spectacular
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
+                  Multi-color LED lighting, grand portico, and dining entrance for celebrations.
+                </p>
+              </div>
+            </div>
+
+            {/* View 5: Opposite Guest Lodging (SV Residency) */}
+            <div
+              onClick={() => {
+                setSelectedPhotoId('room-302-suite');
+                setGalleryModalOpen(true);
+              }}
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 20px -5px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <div style={{ height: '220px', position: 'relative', overflow: 'hidden' }}>
+                <img
+                  src="/images/property/room-302-suite.jpg"
+                  alt="SV Residency Guest Rooms"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.7) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(15,23,42,0.85)', color: '#F1D675', padding: '3px 8px', borderRadius: '12px', fontSize: '0.68rem', fontWeight: 700 }}>
+                  Guest Lodging
+                </div>
+                <div style={{ position: 'absolute', bottom: '8px', right: '10px', color: '#FFFFFF', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Eye size={12} /> Tap to zoom
+                </div>
+              </div>
+              <div style={{ padding: '16px 20px' }}>
+                <div style={{ fontSize: '0.72rem', color: '#0284C7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ACCOMMODATION WING
+                </div>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.05rem', color: '#0F172A', fontWeight: 800 }}>
+                  30+ Guest Rooms with Lift Access
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>
+                  Located directly opposite the hall, with automatic elevator and split AC suites for wedding guests.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -1901,6 +2140,13 @@ export const PublicMahal: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PropertyGalleryModal
+        isOpen={galleryModalOpen}
+        onClose={() => setGalleryModalOpen(false)}
+        initialPhotoId={selectedPhotoId}
+      />
     </div>
   );
 

@@ -51,7 +51,23 @@ export const storageService = {
   },
 
   getRooms(): Room[] {
-    return storageService.getData<Room[]>(KEYS.ROOMS);
+    const rooms = storageService.getData<Room[]>(KEYS.ROOMS);
+    let hasUpdates = false;
+    const updated = rooms.map(r => {
+      if (!r.images || r.images.length === 0) {
+        const seed = SEED_ROOMS.find(s => s.id === r.id || s.type === r.type);
+        if (seed && seed.images && seed.images.length > 0) {
+          hasUpdates = true;
+          return { ...r, images: seed.images };
+        }
+      }
+      return r;
+    });
+    if (hasUpdates) {
+      storageService.setData(KEYS.ROOMS, updated);
+      return updated;
+    }
+    return rooms;
   },
   saveRooms(rooms: Room[]): void {
     storageService.setData(KEYS.ROOMS, rooms);

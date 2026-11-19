@@ -7,6 +7,8 @@ import { CustomerLoginModal } from './components/CustomerLoginModal';
 // Public pages
 import { PublicHome } from './pages/PublicHome';
 import { PublicLogin } from './pages/PublicLogin';
+import { ManagerLogin } from './pages/ManagerLogin';
+import { AdminLogin } from './pages/AdminLogin';
 import { PublicRooms } from './pages/PublicRooms';
 import { PublicMahal } from './pages/PublicMahal';
 import { BookingFlow } from './pages/BookingFlow';
@@ -27,6 +29,7 @@ import { OnsiteBookingCrm } from './pages/OnsiteBookingCrm';
 import { MahalOnsiteBookingCrm } from './pages/MahalOnsiteBookingCrm';
 import { OnlineRequestsCrm } from './pages/OnlineRequestsCrm';
 import { OtaChannelsCrm } from './pages/OtaChannelsCrm';
+import { LiveDoorMatrix } from './pages/LiveDoorMatrix';
 import { PublicProfile } from './pages/PublicProfile';
 
 import { Menu, X, ShieldAlert, Phone, MessageCircle, MapPin } from 'lucide-react';
@@ -125,7 +128,15 @@ const AppContent: React.FC = () => {
       case 'public/profile':
         return <PublicProfile />;
       case 'public/login':
+      case 'login':
+      case 'guest-login':
         return <PublicLogin />;
+      case 'login/manager':
+      case 'manager-login':
+        return <ManagerLogin />;
+      case 'login/admin':
+      case 'admin-login':
+        return <AdminLogin />;
       case 'public/home':
       default:
         return <PublicHome />;
@@ -180,6 +191,8 @@ const AppContent: React.FC = () => {
         return <OnlineRequestsCrm />;
       case 'crm/ota-channels':
         return <OtaChannelsCrm />;
+      case 'crm/door-matrix':
+        return <LiveDoorMatrix />;
       case 'crm/overview':
       default:
         return <DashboardOverview />;
@@ -347,7 +360,7 @@ const AppContent: React.FC = () => {
 
               {/* Nav links and actions */}
               <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <span className="desktop-only" style={{ display: 'flex', gap: '20px', fontSize: '0.875rem', fontWeight: 600 }}>
+                <span className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '0.875rem', fontWeight: 600 }}>
                   <button onClick={() => setView('public/home')} style={{ background: 'none', border: 'none', color: currentView === 'public/home' ? '#C9A227' : '#CBD5E1', cursor: 'pointer' }}>Home</button>
                   <button onClick={() => setView('public/rooms')} style={{ background: 'none', border: 'none', color: currentView.startsWith('public/rooms') ? '#C9A227' : '#CBD5E1', cursor: 'pointer' }}>Residency Rooms</button>
                   <button onClick={() => setView('public/mahal')} style={{ background: 'none', border: 'none', color: currentView.startsWith('public/mahal') ? '#C9A227' : '#CBD5E1', cursor: 'pointer' }}>SV Mahal</button>
@@ -410,7 +423,7 @@ const AppContent: React.FC = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0269A1')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0284C7')}
                     >
-                      Login / Staff Portal
+                      Login
                     </button>
                   )}
                 </div>
@@ -611,7 +624,7 @@ const AppContent: React.FC = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      Login / Staff Portal
+                      Login
                     </button>
                   )}
                 </div>
@@ -829,6 +842,7 @@ const AppContent: React.FC = () => {
                   <button onClick={() => setView('public/rooms')} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', textAlign: 'left' }}>Rooms Stay</button>
                   <button onClick={() => setView('public/mahal')} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', textAlign: 'left' }}>SV Mahal</button>
                   <button onClick={() => setView('public/book')} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', textAlign: 'left' }}>Book Now</button>
+                  <button onClick={() => setView('public/login')} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', textAlign: 'left' }}>Login</button>
                   <a href={CONTACT_INFO.address.googleMapsUrl} target="_blank" rel="noreferrer" style={{ color: '#0284C7', textDecoration: 'none', marginTop: '6px', fontSize: '0.8rem' }}>
                     Open Map Directions ↗
                   </a>
