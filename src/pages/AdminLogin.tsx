@@ -1,30 +1,33 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ShieldAlert, Mail, Lock, ArrowLeft, ShieldCheck, KeyRound } from 'lucide-react';
+import { ShieldAlert, User, Lock, ArrowLeft, ShieldCheck, KeyRound } from 'lucide-react';
+import { verifyAdminLogin, getAdminCredentials } from '../services/authCredentials';
 
 export const AdminLogin: React.FC = () => {
   const { setView, setUserRole, addToast } = useApp();
+  const currentCreds = getAdminCredentials();
 
-  const [email, setEmail] = useState('admin@svmahal.com');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState(currentCreds.username || 'admin');
+  const [password, setPassword] = useState(currentCreds.password || 'admin');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (email.trim().toLowerCase() === 'admin@svmahal.com' && password === 'admin') {
+    if (verifyAdminLogin(username, password)) {
       setUserRole('admin');
       addToast('Executive Admin Authenticated', 'Master access granted to Administration & Finance Centers.', 'success');
       setView('crm/overview');
     } else {
-      setErrorMsg('Invalid Administrator credentials. Please verify your executive email and master key.');
+      setErrorMsg('Invalid Administrator credentials. Please verify your username and password.');
     }
   };
 
   const handleFillDemoAdmin = () => {
-    setEmail('admin@svmahal.com');
-    setPassword('admin');
+    const creds = getAdminCredentials();
+    setUsername(creds.username);
+    setPassword(creds.password);
     setErrorMsg('');
   };
 
@@ -142,15 +145,15 @@ export const AdminLogin: React.FC = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                Executive Work Email *
+                Admin Username or Email *
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <User size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@svmahal.com"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin or admin@svmahal.com"
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
@@ -169,7 +172,7 @@ export const AdminLogin: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                Master Key / Password *
+                Password *
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -177,7 +180,7 @@ export const AdminLogin: React.FC = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter administrator master key"
+                  placeholder="Enter administrator password"
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
@@ -204,7 +207,7 @@ export const AdminLogin: React.FC = () => {
               justifyContent: 'space-between'
             }}>
               <div style={{ fontSize: '0.74rem', color: '#991B1B', fontWeight: 600 }}>
-                Default: <strong>admin@svmahal.com</strong> / <strong>admin</strong>
+                Username: <strong>{currentCreds.username}</strong> / Password: <strong>••••••</strong>
               </div>
               <button
                 type="button"

@@ -1,11 +1,21 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Database, Download, Upload, RefreshCw, ShieldAlert, Cloud, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Database, Download, Upload, RefreshCw, ShieldAlert, Cloud, CheckCircle2, AlertCircle, KeyRound, Shield, Lock, User, Mail, Save } from 'lucide-react';
 import { getCloudinaryConfig, saveCloudinaryConfig, uploadToCloudinary, isCloudinaryConfigured } from '../services/cloudinary';
+import { getAdminCredentials, saveAdminCredentials, getManagerCredentials, saveManagerCredentials } from '../services/authCredentials';
 
 export const SettingsCrm: React.FC = () => {
   const { exportAppData, importAppData, resetAppData, currentUserRole, addToast } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Authentication Credentials State
+  const [adminUsername, setAdminUsername] = useState('admin');
+  const [adminEmail, setAdminEmail] = useState('admin@svmahal.com');
+  const [adminPassword, setAdminPassword] = useState('admin');
+
+  const [managerUsername, setManagerUsername] = useState('manager');
+  const [managerEmail, setManagerEmail] = useState('manager@svmahal.com');
+  const [managerPassword, setManagerPassword] = useState('manager');
 
   // Cloudinary Settings State
   const [cloudName, setCloudName] = useState('');
@@ -18,6 +28,18 @@ export const SettingsCrm: React.FC = () => {
   });
 
   useEffect(() => {
+    // Load Credentials
+    const aCreds = getAdminCredentials();
+    setAdminUsername(aCreds.username);
+    setAdminEmail(aCreds.email);
+    setAdminPassword(aCreds.password);
+
+    const mCreds = getManagerCredentials();
+    setManagerUsername(mCreds.username);
+    setManagerEmail(mCreds.email);
+    setManagerPassword(mCreds.password);
+
+    // Load Cloudinary
     const cfg = getCloudinaryConfig();
     setCloudName(cfg.cloudName || '');
     setUploadPreset(cfg.uploadPreset || '');
@@ -26,6 +48,34 @@ export const SettingsCrm: React.FC = () => {
       setCloudStatus({ connected: true, message: `Connected to Cloud: ${cfg.cloudName}` });
     }
   }, []);
+
+  const handleSaveAdminCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminUsername.trim() || !adminPassword.trim()) {
+      addToast('Validation Error', 'Admin username and password cannot be empty.', 'danger');
+      return;
+    }
+    saveAdminCredentials({
+      username: adminUsername.trim(),
+      email: adminEmail.trim(),
+      password: adminPassword.trim()
+    });
+    addToast('Admin Credentials Saved', `Admin username set to "${adminUsername.trim()}". Password updated.`, 'success');
+  };
+
+  const handleSaveManagerCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!managerUsername.trim() || !managerPassword.trim()) {
+      addToast('Validation Error', 'Manager username and password cannot be empty.', 'danger');
+      return;
+    }
+    saveManagerCredentials({
+      username: managerUsername.trim(),
+      email: managerEmail.trim(),
+      password: managerPassword.trim()
+    });
+    addToast('Manager Credentials Saved', `Manager username set to "${managerUsername.trim()}". Password updated.`, 'success');
+  };
 
   const handleSaveCloudinary = () => {
     saveCloudinaryConfig({
@@ -114,12 +164,223 @@ export const SettingsCrm: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', color: '#0F172A', margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 800 }}>
-            Database Backup & Restore Settings
+            System Settings & Security Credentials
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
-            Export local storage records, restore previous backup configurations, or reset variables.
+          <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+            Manage staff login credentials, cloud multimedia sync, database backups, and system reset controls.
           </p>
         </div>
+      </div>
+
+      {/* PORTAL CREDENTIALS SECTION */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+        
+        {/* Admin Credentials Card */}
+        {currentUserRole === 'admin' && (
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '14px',
+            border: '2px solid #DC2626',
+            padding: '22px',
+            boxShadow: '0 4px 14px rgba(220, 38, 38, 0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #FEE2E2', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <KeyRound size={20} color="#DC2626" />
+                <h3 style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: 850, margin: 0 }}>
+                  🏛️ Executive Admin Credentials
+                </h3>
+              </div>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#FEF2F2', color: '#DC2626' }}>
+                Level 1 Admin
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0, lineHeight: 1.4 }}>
+              Set short username and password for Executive Admin portal sign-in.
+            </p>
+
+            <form onSubmit={handleSaveAdminCredentials} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                  Short Username *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <User size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    placeholder="e.g. admin"
+                    style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                  Executive Work Email
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="e.g. admin@svmahal.com"
+                    style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                  Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="Enter password"
+                    style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                style={{
+                  marginTop: '4px',
+                  padding: '9px',
+                  backgroundColor: '#DC2626',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'background-color 0.15s'
+                }}
+              >
+                <Save size={14} /> Update Admin Login
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Manager Credentials Card */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '2px solid #2563EB',
+          padding: '22px',
+          boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #DBEAFE', paddingBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={20} color="#2563EB" />
+              <h3 style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: 850, margin: 0 }}>
+                🛡️ Duty Manager Credentials
+              </h3>
+            </div>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#EFF6FF', color: '#2563EB' }}>
+              Operations Desk
+            </span>
+          </div>
+
+          <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0, lineHeight: 1.4 }}>
+            Set short username and password for Duty Manager portal sign-in.
+          </p>
+
+          <form onSubmit={handleSaveManagerCredentials} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                Short Username *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <User size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  value={managerUsername}
+                  onChange={(e) => setManagerUsername(e.target.value)}
+                  placeholder="e.g. manager"
+                  style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                Work Email
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="email"
+                  value={managerEmail}
+                  onChange={(e) => setManagerEmail(e.target.value)}
+                  placeholder="e.g. manager@svmahal.com"
+                  style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                Password *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  value={managerPassword}
+                  onChange={(e) => setManagerPassword(e.target.value)}
+                  placeholder="Enter password"
+                  style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, outline: 'none' }}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                marginTop: '4px',
+                padding: '9px',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'background-color 0.15s'
+              }}
+            >
+              <Save size={14} /> Update Manager Login
+            </button>
+          </form>
+        </div>
+
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>

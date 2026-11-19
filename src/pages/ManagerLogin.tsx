@@ -1,35 +1,38 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Shield, Mail, Lock, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Shield, User, Lock, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { verifyManagerLogin, verifyAdminLogin, getManagerCredentials } from '../services/authCredentials';
 
 export const ManagerLogin: React.FC = () => {
   const { setView, setUserRole, addToast } = useApp();
+  const currentCreds = getManagerCredentials();
 
-  const [email, setEmail] = useState('manager@svmahal.com');
-  const [password, setPassword] = useState('manager');
+  const [username, setUsername] = useState(currentCreds.username || 'manager');
+  const [password, setPassword] = useState(currentCreds.password || 'manager');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (email.trim().toLowerCase() === 'manager@svmahal.com' && password === 'manager') {
+    if (verifyManagerLogin(username, password)) {
       setUserRole('manager');
       addToast('Duty Manager Authenticated', 'Welcome to Front Desk & Operations Management.', 'info');
       setView('crm/overview');
-    } else if (email.trim().toLowerCase() === 'admin@svmahal.com' && password === 'admin') {
+    } else if (verifyAdminLogin(username, password)) {
       // Also allow admin credentials to elevate to admin role
       setUserRole('admin');
       addToast('Executive Admin Authenticated', 'Elevated session to Executive Administration Center.', 'success');
       setView('crm/overview');
     } else {
-      setErrorMsg('Invalid Manager credentials. Please check your work email and password.');
+      setErrorMsg('Invalid Manager credentials. Please check your username and password.');
     }
   };
 
   const handleFillDemoManager = () => {
-    setEmail('manager@svmahal.com');
-    setPassword('manager');
+    const creds = getManagerCredentials();
+    setUsername(creds.username);
+    setPassword(creds.password);
     setErrorMsg('');
   };
 
@@ -147,15 +150,15 @@ export const ManagerLogin: React.FC = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                Manager Work Email *
+                Manager Username or Email *
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <User size={18} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="manager@svmahal.com"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="manager or manager@svmahal.com"
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
@@ -209,7 +212,7 @@ export const ManagerLogin: React.FC = () => {
               justifyContent: 'space-between'
             }}>
               <div style={{ fontSize: '0.74rem', color: '#1E3A8A', fontWeight: 600 }}>
-                Default: <strong>manager@svmahal.com</strong> / <strong>manager</strong>
+                Username: <strong>{currentCreds.username}</strong> / Password: <strong>••••••</strong>
               </div>
               <button
                 type="button"
