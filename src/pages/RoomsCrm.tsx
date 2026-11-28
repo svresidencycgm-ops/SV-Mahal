@@ -283,7 +283,7 @@ export const RoomsCrm: React.FC = () => {
               {isAddMode ? 'Add New Room' : `Configure Room attributes: ${selectedRoom?.number}`}
             </h3>
             <form onSubmit={handleSaveRoom} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="crm-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>ROOM NUMBER</label>
                   <input
@@ -306,7 +306,7 @@ export const RoomsCrm: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="crm-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>SUITE TYPE</label>
                   <select
@@ -332,7 +332,7 @@ export const RoomsCrm: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="crm-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>MAX CAPACITY</label>
                   <input

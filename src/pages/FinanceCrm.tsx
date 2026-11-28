@@ -199,7 +199,7 @@ export const FinanceCrm: React.FC = () => {
         </div>
       ) : (
         /* EXPENSES LEDGER WITH INPUT FORM */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
           
           {/* Add expense form */}
           <form onSubmit={handleAddExpenseSubmit} style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '24px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '14px', alignSelf: 'flex-start' }}>
@@ -207,7 +207,7 @@ export const FinanceCrm: React.FC = () => {
               Record New Expense
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="crm-grid-2">
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>CATEGORY</label>
                 <select
@@ -238,7 +238,7 @@ export const FinanceCrm: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="crm-grid-2">
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>DATE</label>
                 <input

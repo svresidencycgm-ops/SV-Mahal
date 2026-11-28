@@ -135,7 +135,7 @@ Phone / WhatsApp: 95008 21550 / 90437 80215`;
           </p>
         </div>
       ) : (
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+        <div className="crm-table-wrap" style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#0F2942', fontWeight: 700 }}>

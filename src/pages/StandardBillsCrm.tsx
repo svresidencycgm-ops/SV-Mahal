@@ -127,7 +127,7 @@ export const StandardBillsCrm: React.FC = () => {
           <span>Active Filter Count: {filteredStdBookings.length} Invoices</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '6px 12px', width: '300px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '6px 12px', width: '100%', maxWidth: '300px' }}>
           <Search size={16} color="#94A3B8" style={{ marginRight: '8px' }} />
           <input
             type="text"
@@ -140,7 +140,7 @@ export const StandardBillsCrm: React.FC = () => {
       </div>
 
       {/* DATA GRID TABLE */}
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+      <div className="crm-table-wrap" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
             <tr style={{ color: '#475569', fontWeight: 700 }}>

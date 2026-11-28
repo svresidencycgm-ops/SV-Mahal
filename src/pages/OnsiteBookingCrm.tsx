@@ -339,7 +339,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
       </div>
 
       {/* 2-COLUMN LAYOUT FOR DESKTOP */}
-      <div className="responsive-wizard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', alignItems: 'start' }}>
+      <div className="responsive-wizard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '20px', alignItems: 'start' }}>
         
         {/* Left Form View */}
         <div style={{ backgroundColor: '#FFFFFF', border: '1.5px solid #E2E8F0', padding: '22px', borderRadius: '16px', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }}>
@@ -521,7 +521,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                 Set the check-in and check-out dates and times. A local check-out time is printed directly on the generated invoice.
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px', marginTop: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '6px' }}>
                     CHECK-IN DATE & TIME *
@@ -548,7 +548,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '6px' }}>
                     HEADCOUNT (GUEST COUNT) *
@@ -635,7 +635,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <h4 style={{ margin: 0, fontSize: '1rem', color: '#0F2942', fontWeight: 800 }}>Primary Guest Details</h4>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="crm-grid-2">
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>FULL NAME *</label>
                     <input type="text" required value={name} onChange={(e) => setName(e.target.value.toUpperCase())} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
@@ -646,7 +646,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="crm-grid-2">
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>EMAIL ADDRESS</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value.toUpperCase())} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
@@ -665,7 +665,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
                   </label>
 
                   {isCompanyBooking && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px', backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <div className="crm-grid-2" style={{ marginTop: '12px', backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>COMPANY REGISTERED NAME *</label>
                         <input type="text" required value={companyName} onChange={(e) => setCompanyName(e.target.value.toUpperCase())} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none', backgroundColor: '#FFFFFF' }} />
@@ -874,7 +874,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
               </div>
 
               {/* Financial inputs */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="crm-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>DISCOUNT APPLIED (INR)</label>
                   <input
@@ -898,7 +898,7 @@ export const OnsiteBookingCrm: React.FC<OnsiteBookingCrmProps> = ({ initialServi
               </div>
 
               {/* Payment Methods */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid #F1F5F9', paddingTop: '16px' }}>
+              <div className="crm-grid-2" style={{ borderTop: '1px solid #F1F5F9', paddingTop: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>PAYMENT METHOD</label>
                   <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as any)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none', backgroundColor: '#FFFFFF' }}>

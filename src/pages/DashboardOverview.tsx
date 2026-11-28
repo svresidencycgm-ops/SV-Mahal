@@ -310,7 +310,7 @@ export const DashboardOverview: React.FC = () => {
       {/* 2. HIGH-IMPACT METRICS KPI CARDS (Blue, Red & White Only) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))',
         gap: '16px'
       }}>
         {/* Card 1: Residency Occupancy Rate (Royal Blue Surface) */}
@@ -686,19 +686,20 @@ export const DashboardOverview: React.FC = () => {
       {/* 4. SPLIT ROW: RECENT BOOKINGS & ARRIVALS (Left) + SV MAHAL BANQUETS (Right) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
         gap: '22px',
         alignItems: 'stretch'
       }}>
         {/* Left Column: Recent Bookings Table with Search */}
-        <div style={{
+        <div className="crm-card-pad" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '18px',
           padding: '24px',
           border: '1px solid #E2E8F0',
           boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          minWidth: 0
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
@@ -950,12 +951,10 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           {/* Campus Highlights summary in Blue & White */}
-          <div style={{
+          <div className="crm-grid-2" style={{
             marginTop: '16px',
             paddingTop: '14px',
             borderTop: '1px solid #F1F5F9',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '10px'
           }}>
             <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE', padding: '10px', borderRadius: '10px' }}>
@@ -977,7 +976,7 @@ export const DashboardOverview: React.FC = () => {
       {/* 5. VERIFIED GUEST REVIEWS & MANAGEMENT FAST TRACKS (Blue, Red & White) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
         gap: '22px'
       }}>
         {/* Guest Feedback Moderation Queue */}

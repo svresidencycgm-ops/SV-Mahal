@@ -340,7 +340,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
           {currentStep === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h3 style={{ margin: 0, color: '#0F2942', fontWeight: 800, fontSize: '1.15rem' }}>Event & Package Details</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Event Type</label>
                   <select value={eventType} onChange={e => setEventType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }}>
@@ -374,7 +374,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h3 style={{ margin: 0, color: '#0F2942', fontWeight: 800, fontSize: '1.15rem' }}>Customer Profile</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Full Name *</label>
                   <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value.toUpperCase())} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
@@ -390,7 +390,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
               </div>
 
               <h4 style={{ margin: '16px 0 0 0', color: '#0F2942', fontWeight: 800, fontSize: '1rem' }}>Corporate Billing Details (Optional)</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Company Name</label>
                   <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value.toUpperCase())} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
@@ -412,7 +412,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
                 <h4 style={{ margin: '0 0 12px 0', color: '#991B1B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <AlertCircle size={16} /> Initial EB Meter Capture (Mandatory)
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'end' }}>
+                <div className="crm-grid-2" style={{ gap: '16px', alignItems: 'end' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>Current EB Units *</label>
                     <input type="number" value={ebInitialUnits} onChange={e => setEbInitialUnits(e.target.value)} placeholder="e.g. 14500" required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }} />
@@ -454,7 +454,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
 
               <div style={{ border: '1px solid #E2E8F0', padding: '20px', borderRadius: '8px' }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#0F2942', fontWeight: 800 }}>ID Proof Upload</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'end' }}>
+                <div className="crm-grid-2" style={{ gap: '16px', alignItems: 'end' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>ID Type</label>
                     <select value={idType} onChange={e => setIdType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }}>
@@ -481,7 +481,7 @@ export const MahalOnsiteBookingCrm: React.FC<MahalOnsiteBookingCrmProps> = ({ on
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <h3 style={{ margin: 0, color: '#0F2942', fontWeight: 800, fontSize: '1.15rem' }}>Billing & Payment</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="crm-grid-2" style={{ gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginBottom: '4px' }}>BILLING TYPE</label>
                   <select value={billingType} onChange={(e) => setBillingType(e.target.value as any)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #CBD5E1', outline: 'none' }}>

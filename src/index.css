@@ -764,3 +764,77 @@ dialog::backdrop {
   }
 }
 
+/* =========================================================
+   ADMIN & MANAGER CRM RESPONSIVE UTILITIES (ALL DEVICES)
+   ========================================================= */
+.crm-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.crm-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.crm-grid-sidebar {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.crm-grid-split {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+}
+
+.crm-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crm-table-wrap table {
+  min-width: 640px;
+}
+
+@media (max-width: 1024px) {
+  .crm-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .crm-grid-sidebar,
+  .crm-grid-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .crm-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .crm-card-pad {
+    padding: 16px !important;
+  }
+  .crm-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .crm-portal main {
+    padding: 14px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .crm-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+

@@ -115,7 +115,7 @@ export const BillInventoryCrm: React.FC = () => {
       </div>
 
       {/* Aggregate Overview Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <div className="crm-grid-4">
         <div style={{ backgroundColor: '#FFFFFF', padding: '20px', borderRadius: '8px', border: '1px solid #E2E8F0', borderLeft: '4px solid #0F2942' }}>
           <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Total Invoices</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A' }}>{filteredBookings.length}</div>
@@ -138,7 +138,7 @@ export const BillInventoryCrm: React.FC = () => {
         
         {/* Filters */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ position: 'relative', width: '350px' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '350px' }}>
             <Search size={16} color="#64748B" style={{ position: 'absolute', left: '12px', top: '10px' }} />
             <input
               type="text"

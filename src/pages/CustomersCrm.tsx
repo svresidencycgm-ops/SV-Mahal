@@ -54,11 +54,11 @@ export const CustomersCrm: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: selectedCust ? '1.1fr 0.9fr' : '1fr', gap: '24px', transition: 'all 0.3s' }}>
+    <div className={`animate-fade-in ${selectedCust ? 'crm-grid-split' : ''}`} style={{ display: 'grid', transition: 'all 0.3s', minWidth: 0 }}>
       
       {/* LEFT COLUMN: CUSTOMERS LIST */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+        <div className="crm-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', color: '#0F172A', margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 800 }}>
               Customers Database CRM
@@ -223,7 +223,7 @@ export const CustomersCrm: React.FC = () => {
             const m = getCustomerMetrics(selectedCust.phone);
             return (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="crm-grid-2">
                   <div style={{ padding: '12px', borderRadius: '6px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
                     <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700 }}>TOTAL BOOKINGS</div>
                     <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A' }}>{m.totalBookings}</div>

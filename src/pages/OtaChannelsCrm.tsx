@@ -397,7 +397,7 @@ export const OtaChannelsCrm: React.FC = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
           gap: '20px',
           marginBottom: '24px'
         }}
@@ -961,8 +961,8 @@ export const OtaChannelsCrm: React.FC = () => {
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
-              width: '460px',
-              maxWidth: '100%',
+              width: '100%',
+              maxWidth: '460px',
               overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
             }}
@@ -1020,7 +1020,7 @@ export const OtaChannelsCrm: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="crm-grid-2" style={{ gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                     Guest Full Name:
@@ -1065,7 +1065,7 @@ export const OtaChannelsCrm: React.FC = () => {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="crm-grid-2" style={{ gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                     Check-in Date:

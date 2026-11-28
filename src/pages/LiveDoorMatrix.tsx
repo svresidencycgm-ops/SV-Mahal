@@ -203,7 +203,7 @@ export const LiveDoorMatrix: React.FC = () => {
       {/* 2. STATS BANNER CARDS */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
         gap: '14px'
       }}>
         {/* Total Inventory Keys */}
@@ -260,7 +260,7 @@ export const LiveDoorMatrix: React.FC = () => {
       </div>
 
       {/* 3. INTERACTIVE DOOR GRID SECTION */}
-      <div style={{
+      <div className="crm-card-pad" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '18px',
         padding: '24px',
@@ -288,7 +288,8 @@ export const LiveDoorMatrix: React.FC = () => {
             borderRadius: '10px',
             padding: '7px 12px',
             gap: '8px',
-            width: 'clamp(220px, 25vw, 360px)'
+            width: '100%',
+            maxWidth: '360px'
           }}>
             <Search size={15} color="#2563EB" />
             <input
@@ -409,7 +410,7 @@ export const LiveDoorMatrix: React.FC = () => {
         {/* Door Cards Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 190px), 1fr))',
           gap: '16px'
         }}>
           {filteredDoors.map(({ room, door }) => {

@@ -87,7 +87,7 @@ export const ExpensesCrm: React.FC = () => {
       </div>
 
       {/* TWO PANEL CONTENT */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
+      <div className="crm-grid-sidebar">
         
         {/* Left Side: Form */}
         <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
@@ -202,7 +202,7 @@ export const ExpensesCrm: React.FC = () => {
             Operational Expense Outflow Ledger
           </h3>
 
-          <div style={{ maxHeight: '550px', overflowY: 'auto' }}>
+          <div className="crm-table-wrap" style={{ maxHeight: '550px', overflowY: 'auto' }}>
             {expenses.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
                 No expenses logged in database.

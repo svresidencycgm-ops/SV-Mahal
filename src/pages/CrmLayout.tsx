@@ -72,16 +72,19 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     }
   }, [currentView, setView]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isTabletOrMobile, setIsTabletOrMobile] = useState(window.innerWidth <= 1024);
   
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
+      const compact = window.innerWidth <= 1024;
       setIsMobile(mobile);
-      if (mobile) setIsSidebarOpen(false);
+      setIsTabletOrMobile(compact);
+      if (compact) setIsSidebarOpen(false);
       else setIsSidebarOpen(true);
     };
     window.addEventListener('resize', handleResize);
@@ -324,10 +327,10 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
     >
       
       {/* 1. SIDEBAR PANEL */}
-      {isMobile && isSidebarOpen && (
+      {isTabletOrMobile && isSidebarOpen && (
         <div 
           onClick={() => setIsSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 90, backdropFilter: 'blur(4px)' }} 
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 95, backdropFilter: 'blur(4px)' }} 
         />
       )}
       <aside
@@ -341,9 +344,9 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
           flexDirection: 'column',
           zIndex: 100,
           overflow: 'hidden',
-          position: isMobile ? 'fixed' : 'relative',
-          left: isMobile ? 0 : 'auto',
-          top: isMobile ? 0 : 'auto',
+          position: isTabletOrMobile ? 'fixed' : 'relative',
+          left: isTabletOrMobile ? 0 : 'auto',
+          top: isTabletOrMobile ? 0 : 'auto',
           height: '100vh',
           boxShadow: '4px 0 15px rgba(0,0,0,0.1)'
         }}
@@ -440,7 +443,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                         key={item.view}
                         onClick={() => {
                           setView(item.view);
-                          if (isMobile) setIsSidebarOpen(false);
+                          if (isTabletOrMobile) setIsSidebarOpen(false);
                         }}
                         style={{
                           display: 'flex',
@@ -505,19 +508,19 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
         </div>
       </aside>
       {/* 2. MAIN LAYOUT AND HEADER */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', flexGrow: 1, width: isMobile ? '100%' : (isSidebarOpen ? 'calc(100% - var(--sidebar-width))' : '100%'), transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', overflowX: 'hidden', flexGrow: 1, minWidth: 0, width: isTabletOrMobile ? '100%' : (isSidebarOpen ? 'calc(100% - var(--sidebar-width))' : '100%'), transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
         
         {/* Header Bar - Modern Executive Blue/Red/White Module Header */}
         <header
           style={{
-            height: '76px',
+            height: isMobile ? '64px' : '76px',
             backgroundColor: '#FFFFFF',
             borderBottom: '1.5px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: isMobile ? '0 16px' : '0 28px',
-            gap: isMobile ? '10px' : '20px',
+            padding: isMobile ? '0 12px' : '0 28px',
+            gap: isMobile ? '8px' : '20px',
             position: 'sticky',
             top: 0,
             zIndex: 90,
@@ -525,7 +528,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
           }}
         >
           {/* Left: Menu toggle & Hierarchy Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '16px', minWidth: 0, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '16px', minWidth: 0, flex: 1 }}>
             <button
               type="button"
               aria-label="Toggle navigation menu"
@@ -743,6 +746,31 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
               <span>New Check-In</span>
             </button>
 
+            <button
+              type="button"
+              title="New Room Check-In"
+              onClick={() => {
+                setOfflineServiceType('room');
+                setIsOfflineModalOpen(true);
+              }}
+              className="mobile-only"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                flexShrink: 0
+              }}
+            >
+              <Plus size={18} strokeWidth={2.5} />
+            </button>
+
             {/* 2. Interactive Operational Alerts Popover (Bell) */}
             <div ref={notificationRef} style={{ position: 'relative' }}>
               <button
@@ -802,8 +830,8 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                   style={{
                     position: 'absolute',
                     top: '48px',
-                    right: 0,
-                    width: isMobile ? '280px' : '330px',
+                    right: isMobile ? '-48px' : 0,
+                    width: isMobile ? 'min(320px, calc(100vw - 24px))' : '330px',
                     backgroundColor: '#FFFFFF',
                     border: '1.5px solid #E2E8F0',
                     borderRadius: '14px',
@@ -900,8 +928,9 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
               )}
             </div>
 
-            {/* 3. Professional Language Switch (Segmented Control) */}
+            {/* 3. Professional Language Switch (Segmented Control - Desktop) */}
             <div
+              className="desktop-only"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1013,7 +1042,7 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     position: 'absolute',
                     top: '48px',
                     right: 0,
-                    width: '240px',
+                    width: 'min(240px, calc(100vw - 24px))',
                     backgroundColor: '#FFFFFF',
                     border: '1.5px solid #E2E8F0',
                     borderRadius: '14px',
@@ -1067,6 +1096,23 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     >
                       <Camera size={14} /> {userAvatar ? 'Update Photo' : 'Upload Photo'}
                     </button>
+
+                    <div className="mobile-only" style={{ marginTop: '8px', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setLanguage('en')}
+                        style={{ flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #E2E8F0', backgroundColor: currentLanguage === 'en' ? '#2563EB' : '#F8FAFC', color: currentLanguage === 'en' ? '#FFFFFF' : '#475569', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLanguage('ta')}
+                        style={{ flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #E2E8F0', backgroundColor: currentLanguage === 'ta' ? '#2563EB' : '#F8FAFC', color: currentLanguage === 'ta' ? '#FFFFFF' : '#475569', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        தமிழ்
+                      </button>
+                    </div>
 
                     {userAvatar && (
                       <button
