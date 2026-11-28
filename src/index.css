@@ -299,13 +299,6 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Hide sidebar by default on mobile */
-@media (max-width: 768px) {
-  :root {
-    --sidebar-width: 0px;
-  }
-}
-
 .glass-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);

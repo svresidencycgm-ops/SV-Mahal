@@ -330,29 +330,31 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
       {isTabletOrMobile && isSidebarOpen && (
         <div 
           onClick={() => setIsSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 95, backdropFilter: 'blur(4px)' }} 
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.55)', zIndex: 999, backdropFilter: 'blur(4px)' }} 
         />
       )}
       <aside
         style={{
-          width: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
-          minWidth: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
+          width: isSidebarOpen ? (isMobile ? '265px' : 'var(--sidebar-width)') : '0px',
+          minWidth: isSidebarOpen ? (isMobile ? '265px' : 'var(--sidebar-width)') : '0px',
+          maxWidth: isTabletOrMobile ? '85vw' : 'none',
           background: 'var(--sidebar-gradient)',
           color: '#FFFFFF',
           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
-          zIndex: 100,
+          zIndex: 1000,
           overflow: 'hidden',
           position: isTabletOrMobile ? 'fixed' : 'relative',
           left: isTabletOrMobile ? 0 : 'auto',
           top: isTabletOrMobile ? 0 : 'auto',
           height: '100vh',
-          boxShadow: '4px 0 15px rgba(0,0,0,0.1)'
+          boxShadow: '4px 0 20px rgba(0,0,0,0.22)'
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: '18px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ padding: '18px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <div
             style={{
               width: '42px',
@@ -379,9 +381,32 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
               SV. MAHAL <span style={{ color: '#3B82F6' }}>&</span> RESIDENCY
             </div>
             <div style={{ fontSize: '0.62rem', color: '#93C5FD', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
-              Admin Operations Portal
+              {currentUserRole === 'admin' ? 'Admin Operations Portal' : 'Manager Duty Portal'}
             </div>
           </div>
+          </div>
+          {isTabletOrMobile && (
+            <button
+              type="button"
+              aria-label="Close sidebar"
+              onClick={() => setIsSidebarOpen(false)}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         {/* Categorized Navigation Buckets - Strict Blue, Red & White Theme */}
