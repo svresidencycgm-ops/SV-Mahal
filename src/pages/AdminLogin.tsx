@@ -4,7 +4,7 @@ import { ShieldAlert, User, Lock, ArrowLeft, ShieldCheck, KeyRound } from 'lucid
 import { verifyAdminLogin, getAdminCredentials } from '../services/authCredentials';
 
 export const AdminLogin: React.FC = () => {
-  const { setView, setUserRole, addToast } = useApp();
+  const { setView, loginStaff, addToast } = useApp();
   const currentCreds = getAdminCredentials();
 
   const [username, setUsername] = useState(currentCreds.username || 'admin');
@@ -16,9 +16,8 @@ export const AdminLogin: React.FC = () => {
     setErrorMsg('');
 
     if (verifyAdminLogin(username, password)) {
-      setUserRole('admin');
+      loginStaff('admin');
       addToast('Executive Admin Authenticated', 'Master access granted to Administration & Finance Centers.', 'success');
-      setView('crm/overview');
     } else {
       setErrorMsg('Invalid Administrator credentials. Please verify your username and password.');
     }

@@ -4,7 +4,7 @@ import { Shield, User, Lock, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-r
 import { verifyManagerLogin, verifyAdminLogin, getManagerCredentials } from '../services/authCredentials';
 
 export const ManagerLogin: React.FC = () => {
-  const { setView, setUserRole, addToast } = useApp();
+  const { setView, loginStaff, addToast } = useApp();
   const currentCreds = getManagerCredentials();
 
   const [username, setUsername] = useState(currentCreds.username || 'manager');
@@ -16,14 +16,12 @@ export const ManagerLogin: React.FC = () => {
     setErrorMsg('');
 
     if (verifyManagerLogin(username, password)) {
-      setUserRole('manager');
+      loginStaff('manager');
       addToast('Duty Manager Authenticated', 'Welcome to Front Desk & Operations Management.', 'info');
-      setView('crm/overview');
     } else if (verifyAdminLogin(username, password)) {
-      // Also allow admin credentials to elevate to admin role
-      setUserRole('admin');
-      addToast('Executive Admin Authenticated', 'Elevated session to Executive Administration Center.', 'success');
-      setView('crm/overview');
+      // Admin can access the Manager profile directly
+      loginStaff('admin', 'manager');
+      addToast('Admin Viewing Manager Desk', 'Logged into Duty Manager profile with Executive session.', 'success');
     } else {
       setErrorMsg('Invalid Manager credentials. Please check your username and password.');
     }
@@ -258,49 +256,28 @@ export const ManagerLogin: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Switch to Admin or Customer */}
+          {/* Quick Switch to Customer */}
           <div style={{
             marginTop: '28px',
             paddingTop: '20px',
             borderTop: '1px solid #F1F5F9',
             textAlign: 'center'
           }}>
-            <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginBottom: '8px' }}>
-              Switch to another login portal:
-            </span>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setView('login/admin')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#DC2626',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  padding: 0
-                }}
-              >
-                🏛️ Executive Admin Portal
-              </button>
-              <span style={{ color: '#CBD5E1' }}>•</span>
-              <button
-                type="button"
-                onClick={() => setView('public/login')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#475569',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  padding: 0
-                }}
-              >
-                👤 Guest / Customer Login
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setView('public/login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#475569',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                padding: 0
+              }}
+            >
+              👤 Guest / Customer Login
+            </button>
           </div>
         </div>
 

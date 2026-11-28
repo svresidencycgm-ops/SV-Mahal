@@ -37,6 +37,7 @@ interface AppContextType {
   notifications: Notification[];
   currentView: string;
   currentUserRole: UserRole;
+  authenticatedRole: UserRole;
   selectedBooking: Booking | null;
   toasts: ToastItem[];
   customerUser: { name: string; phone: string; email: string } | null;
@@ -44,6 +45,7 @@ interface AppContextType {
   // Basic State Setters / Navigators
   setView: (view: string) => void;
   setUserRole: (role: UserRole) => void;
+  loginStaff: (authRole: UserRole, activeRole?: UserRole) => void;
   setSelectedBooking: (booking: Booking | null) => void;
   loginCustomer: (name: string, phone: string, email: string) => void;
   logoutCustomer: () => void;
@@ -217,6 +219,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Navigation and Auth states
   const [currentView, setCurrentView] = useState<string>('public/home');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('public');
+  const [authenticatedRole, setAuthenticatedRole] = useState<UserRole>('public');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [customerUser, setCustomerUser] = useState<{ name: string; phone: string; email: string } | null>(null);
@@ -324,13 +327,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     window.location.hash = view;
   };
 
+  const loginStaff = (authRole: UserRole, activeRole?: UserRole) => {
+    const targetRole = activeRole || authRole;
+    setAuthenticatedRole(authRole);
+    setCurrentUserRole(targetRole);
+    setView(targetRole === 'public' ? 'public/home' : 'crm/overview');
+    addLog(`Authenticated as ${authRole} (active profile: ${targetRole})`, 'Auth', authRole);
+  };
+
   const setUserRole = (role: UserRole) => {
-    setCurrentUserRole(role);
     if (role === 'public') {
+      setAuthenticatedRole('public');
+      setCurrentUserRole('public');
       setView('public/home');
-    } else {
-      setView('crm/overview');
+      addLog('Exited CRM to public view', 'Auth', 'public');
+      return;
     }
+
+    // Prevent Managers from elevating to Admin role
+    if (role === 'admin' && authenticatedRole !== 'admin') {
+      addToast('Access Denied', 'Duty Managers cannot switch into the Administrator profile.', 'danger');
+      return;
+    }
+
+    setCurrentUserRole(role);
+    setView('crm/overview');
     addLog(`Switched role to ${role}`, 'Auth', role);
   };
 
@@ -1031,11 +1052,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         notifications,
         currentView,
         currentUserRole,
+        authenticatedRole,
         selectedBooking,
         toasts,
         customerUser,
         setView,
         setUserRole,
+        loginStaff,
         setSelectedBooking,
         loginCustomer,
         logoutCustomer,

@@ -18,7 +18,7 @@ interface CrmLayoutProps {
 
 export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
   const { 
-    currentView, setView, currentUserRole, setUserRole, 
+    currentView, setView, currentUserRole, authenticatedRole, setUserRole, 
     globalSearch, setSelectedBooking, bookings, rooms,
     currentLanguage, setLanguage, addToast
   } = useApp();
@@ -1171,56 +1171,65 @@ export const CrmLayout: React.FC<CrmLayoutProps> = ({ children }) => {
                     />
                   </div>
 
-                  {/* Switch Role Section */}
-                  <div style={{ padding: '8px 14px 4px 14px', fontSize: '0.65rem', color: '#64748B', fontWeight: 800, letterSpacing: '0.05em' }}>
-                    SWITCH OPERATIONAL ROLE
-                  </div>
-                  <button
-                    onClick={() => {
-                      setUserRole('admin');
-                      setIsProfileOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '9px 14px',
-                      border: 'none',
-                      backgroundColor: currentUserRole === 'admin' ? '#EFF6FF' : 'transparent',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontSize: '0.82rem',
-                      color: currentUserRole === 'admin' ? '#2563EB' : '#334155',
-                      fontWeight: currentUserRole === 'admin' ? 800 : 600,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span>Administrator (Full Access)</span>
-                    {currentUserRole === 'admin' && <Check size={16} color="#2563EB" />}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUserRole('manager');
-                      setIsProfileOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '9px 14px',
-                      border: 'none',
-                      backgroundColor: currentUserRole === 'manager' ? '#EFF6FF' : 'transparent',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontSize: '0.82rem',
-                      color: currentUserRole === 'manager' ? '#2563EB' : '#334155',
-                      fontWeight: currentUserRole === 'manager' ? 800 : 600,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span>Duty Manager (Desk Access)</span>
-                    {currentUserRole === 'manager' && <Check size={16} color="#2563EB" />}
-                  </button>
+                  {/* Switch Role Section — Only available when authenticated as Admin */}
+                  {authenticatedRole === 'admin' ? (
+                    <>
+                      <div style={{ padding: '8px 14px 4px 14px', fontSize: '0.65rem', color: '#64748B', fontWeight: 800, letterSpacing: '0.05em' }}>
+                        SWITCH OPERATIONAL ROLE
+                      </div>
+                      <button
+                        onClick={() => {
+                          setUserRole('admin');
+                          setIsProfileOpen(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 14px',
+                          border: 'none',
+                          backgroundColor: currentUserRole === 'admin' ? '#EFF6FF' : 'transparent',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '0.82rem',
+                          color: currentUserRole === 'admin' ? '#2563EB' : '#334155',
+                          fontWeight: currentUserRole === 'admin' ? 800 : 600,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span>Administrator (Full Access)</span>
+                        {currentUserRole === 'admin' && <Check size={16} color="#2563EB" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setUserRole('manager');
+                          setIsProfileOpen(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 14px',
+                          border: 'none',
+                          backgroundColor: currentUserRole === 'manager' ? '#EFF6FF' : 'transparent',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '0.82rem',
+                          color: currentUserRole === 'manager' ? '#2563EB' : '#334155',
+                          fontWeight: currentUserRole === 'manager' ? 800 : 600,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span>Duty Manager (Desk Access)</span>
+                        {currentUserRole === 'manager' && <Check size={16} color="#2563EB" />}
+                      </button>
+                    </>
+                  ) : (
+                    <div style={{ padding: '8px 14px', fontSize: '0.76rem', color: '#2563EB', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>🛡️ Duty Manager (Desk Access)</span>
+                      <Check size={15} color="#2563EB" />
+                    </div>
+                  )}
 
                   <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '4px 0' }} />
 
